@@ -1,0 +1,12 @@
+product_version: 0.0.0
+phase: product-definition-lock
+status: locked
+execution_environment: local-only
+server_use_allowed_from: 0.1.0
+initial_character: miku
+authentication: clerk-dual-whitelist
+repository_visibility: private
+public_distribution: false
+model_training_started: false
+dataset_collection_started: false
+server_validation_started: false

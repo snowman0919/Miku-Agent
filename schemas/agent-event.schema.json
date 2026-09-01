@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/agent-event.schema.json",
+  "title": "Agent Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol_version", "event_id", "session_id", "sequence", "timestamp", "type", "source", "trace_id", "payload"],
+  "properties": {
+    "protocol_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "event_id": {"type": "string", "format": "uuid"},
+    "session_id": {"type": "string", "format": "uuid"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "type": {"enum": ["speech.input.started", "speech.input.ended", "speech.output.started", "speech.output.interrupted", "transcript.partial", "transcript.final", "tool.requested", "tool.started", "tool.progress", "tool.completed", "tool.failed", "memory.retrieved", "memory.proposed", "memory.committed", "memory.conflict", "codex.workspace.started", "codex.progress", "codex.completed", "codex.failed", "scheduler.triggered", "scheduler.completed", "character.state.changed", "reaction.requested"]},
+    "source": {"enum": ["mobile", "desktop", "backend", "voice-runtime", "memory", "codex-orchestrator", "scheduler", "character-runtime"]},
+    "trace_id": {"type": "string", "format": "uuid"},
+    "payload": {"type": "object"}
+  }
+}

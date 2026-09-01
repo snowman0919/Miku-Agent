@@ -1,0 +1,1 @@
+{"protocol_version":"1.0.0","event_id":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","session_id":"99999999-9999-4999-8999-999999999999","sequence":1,"timestamp":"2026-09-02T00:00:00Z","type":"tool.started","source":"backend","trace_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","payload":{"call_id":"88888888-8888-4888-8888-888888888888"}}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset-source.schema.json",
+  "title": "Dataset Source",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source_id", "source_type", "origin", "acquisition_method", "rights_status", "character_id", "language", "raw_duration", "provenance", "hash", "status"],
+  "properties": {
+    "source_id": {"type": "string", "format": "uuid"},
+    "source_type": {"enum": ["speech", "singing", "text", "interaction"]},
+    "origin": {"type": "string", "minLength": 1},
+    "acquisition_method": {"type": "string", "minLength": 1},
+    "rights_status": {"enum": ["owned", "licensed", "permitted", "unknown", "restricted", "rejected"]},
+    "character_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{1,31}$"},
+    "language": {"type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$"},
+    "raw_duration": {"type": "number", "minimum": 0},
+    "provenance": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}},
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "status": {"enum": ["accepted", "quarantine", "rejected"]}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "accepted"}}, "required": ["status"]}, "then": {"properties": {"rights_status": {"enum": ["owned", "licensed", "permitted"]}}}}
+  ]
+}

@@ -1,0 +1,84 @@
+version: 0.0.0
+phase: product-definition-lock
+repository:
+  visibility: private
+  public_distribution: false
+  data_in_git: false
+  weights_in_git: false
+  media_assets_in_git: false
+  secrets_in_git: false
+execution:
+  local_only: true
+  server_allowed_from: 0.1.0
+  production_deployment_allowed: false
+character:
+  initial_character_id: miku
+  strategy: character_specific_finetuning
+  relationship: [best_friend, ally, supporter, collaborator]
+  future_profile_fields:
+    - character_id
+    - character_profile_version
+    - persona_model_version
+    - voice_profile_version
+    - vrm_asset_version
+    - animation_profile_version
+    - memory_namespace
+model:
+  base_family: nvidia-nemotron-voicechat
+  base_size: 11b
+  stt_languages: [ko, en]
+  llm_full_tuning_allowed_after_lora_validation: true
+  tts_engine: integrated
+  voice_mode: static_speaker_adaptation
+  codec_frozen: true
+  training_branches: [korean_persona_agentic, korean_agentic_persona, korean_persona_agentic_joint, composed_adapters]
+auth:
+  provider: clerk
+  signup_gate: clerk_allowlist
+  runtime_gate: backend_access_grant
+  default_policy: deny
+  identifier_preference: exact_email
+  user_primary_key: internal_uuid
+  account_states: [pending, active, suspended, revoked]
+  roles: [owner, tester]
+memory:
+  namespace: user_and_character
+  inferred_memory: enabled
+  versioned_history: true
+  user_control: required
+  silent_overwrite: false
+transport:
+  audio: binary_websocket
+  audio_path: /ws/audio
+  events: websocket
+  events_path: /ws/events
+  external_api: https
+  internal_rpc: grpc
+  webrtc: false
+clients:
+  mobile: flutter
+  desktop: unity
+  ui_code_shared: false
+  local_model_size: 2b_to_4b
+  local_model_multimodal: true
+  server_precedence: true
+codex:
+  runtime: docker
+  internet: allowed
+  container_root: allowed
+  privileged: false
+  host_docker_socket: false
+  default_lifetime_days: 30
+  local_pc_access_requires_approval: true
+scheduler:
+  server_side: true
+  delivery: push
+  permission_levels: [notify-only, read-only, tool-use, workspace-write, external-write]
+animation:
+  controller: hierarchical_hybrid
+  direct_llm_bone_transforms: false
+data:
+  minimum_effective_speech_hours: 30
+  speech_singing_separated: true
+  unknown_rights_accepted: false
+

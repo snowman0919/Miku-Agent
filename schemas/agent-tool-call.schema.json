@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/agent-tool-call.schema.json",
+  "title": "Agent Tool Call",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["call_id", "tool_name", "schema_version", "schema_fingerprint", "arguments", "requested_permission", "idempotency_key", "session_id", "trace_id"],
+  "properties": {
+    "call_id": {"type": "string", "format": "uuid"},
+    "tool_name": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "schema_fingerprint": {"type": "string", "pattern": "^sha256:[0-9a-f]{8,64}$"},
+    "arguments": {"type": "object"},
+    "requested_permission": {"enum": ["notify-only", "read-only", "tool-use", "workspace-write", "external-write"]},
+    "idempotency_key": {"type": "string", "pattern": "^[A-Za-z0-9_-]{16,128}$"},
+    "session_id": {"type": "string", "format": "uuid"},
+    "trace_id": {"type": "string", "format": "uuid"}
+  }
+}

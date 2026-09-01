@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/auth-access-grant.schema.json",
+  "title": "Authentication Access Grant",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["grant_id", "provider", "provider_subject", "internal_user_id", "identifier", "role", "status", "created_at", "updated_at", "revision"],
+  "properties": {
+    "grant_id": {"type": "string", "format": "uuid"},
+    "provider": {"const": "clerk"},
+    "provider_subject": {"type": "string", "pattern": "^user_[A-Za-z0-9]+$"},
+    "internal_user_id": {"type": "string", "format": "uuid"},
+    "identifier": {"type": "string", "format": "email"},
+    "role": {"enum": ["owner", "tester"]},
+    "status": {"enum": ["pending", "active", "suspended", "revoked"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"},
+    "revoked_at": {"type": ["string", "null"], "format": "date-time"},
+    "revocation_reason": {"type": ["string", "null"], "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "revoked"}}, "required": ["status"]}, "then": {"required": ["revoked_at", "revocation_reason"], "properties": {"revoked_at": {"type": "string", "format": "date-time"}, "revocation_reason": {"type": "string", "minLength": 1}}}}
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/scheduler-task.schema.json",
+  "title": "Scheduler Task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "owner_user_id", "character_id", "schedule", "timezone", "action", "permission", "delivery", "memory_policy", "status", "created_at", "updated_at"],
+  "properties": {
+    "task_id": {"type": "string", "format": "uuid"},
+    "owner_user_id": {"type": "string", "format": "uuid"},
+    "character_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{1,31}$"},
+    "schedule": {"type": "string", "minLength": 1},
+    "timezone": {"type": "string", "pattern": "^[A-Za-z_]+/[A-Za-z_]+$"},
+    "action": {"type": "object", "minProperties": 1},
+    "permission": {"enum": ["notify-only", "read-only", "tool-use", "workspace-write", "external-write"]},
+    "approval_policy": {"type": "object", "additionalProperties": false, "required": ["required", "scope", "max_age_seconds"], "properties": {"required": {"const": true}, "scope": {"type": "string", "minLength": 1}, "max_age_seconds": {"type": "integer", "minimum": 1}}},
+    "delivery": {"type": "object", "additionalProperties": false, "required": ["channel", "include_full_result"], "properties": {"channel": {"const": "push"}, "include_full_result": {"const": false}}},
+    "memory_policy": {"enum": ["none", "result_only", "propose", "commit_if_preapproved"]},
+    "status": {"enum": ["active", "paused", "completed", "expired", "revoked"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "allOf": [
+    {"if": {"properties": {"permission": {"const": "external-write"}}, "required": ["permission"]}, "then": {"required": ["approval_policy"]}}
+  ]
+}

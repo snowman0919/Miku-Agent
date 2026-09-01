@@ -1,0 +1,16 @@
+product_version: 0.0.0
+repository_commit: 0123456789abcdef0123456789abcdef01234567
+release_date: '2026-09-02'
+phase: product-definition-lock
+component_versions: {product_contract: 0.0.0}
+schema_version: 1.0.0
+accepted_adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010]
+document_hashes:
+  README.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  docs/product-charter.md: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  docs/persona-constitution.md: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  spec/product-lock.yaml: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  docs/security-and-threat-model.md: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+validation_report: reports/v0.0.0-validation.md
+known_risks: [voicechat_11b_rtx5090_feasibility]
+next_version: 0.1.0

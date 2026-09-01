@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/model-profile.schema.json",
+  "title": "Model Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["model_id", "base_model", "version", "stt_languages", "llm_tuning_mode", "persona_adapter", "agentic_adapter", "tts_profile", "codec_frozen", "training_stage", "evaluation_report"],
+  "properties": {
+    "model_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+    "base_model": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "stt_languages": {"type": "array", "minItems": 2, "uniqueItems": true, "allOf": [{"contains": {"const": "ko"}}, {"contains": {"const": "en"}}], "items": {"type": "string", "pattern": "^[a-z]{2}$"}},
+    "llm_tuning_mode": {"enum": ["base", "lora", "adapter_composition", "full_parameter", "joint_calibration"]},
+    "persona_adapter": {"type": ["string", "null"]},
+    "agentic_adapter": {"type": ["string", "null"]},
+    "tts_profile": {"type": "string", "minLength": 1},
+    "codec_frozen": {"const": true},
+    "training_stage": {"enum": ["definition", "reference", "pilot", "validated", "calibration", "released"]},
+    "evaluation_report": {"type": "string", "pattern": "^reports/.+\\.md$"}
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/reaction-command.schema.json",
+  "title": "Reaction Command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["command_id", "character_id", "command", "issued_at", "payload"],
+  "properties": {
+    "command_id": {"type": "string", "format": "uuid"},
+    "character_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{1,31}$"},
+    "command": {"enum": ["set_emotion", "play_gesture", "set_gaze_target", "set_posture", "acknowledge_touch", "enter_state"]},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "payload": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["emotion", "intensity"], "properties": {"emotion": {"type": "string", "minLength": 1}, "intensity": {"type": "number", "minimum": 0, "maximum": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["gesture_id"], "properties": {"gesture_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]+$"}, "intensity": {"type": "number", "minimum": 0, "maximum": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["target"], "properties": {"target": {"enum": ["user", "screen", "point", "none"]}, "point_id": {"type": "string"}}},
+        {"type": "object", "additionalProperties": false, "required": ["posture_id"], "properties": {"posture_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]+$"}}},
+        {"type": "object", "additionalProperties": false, "required": ["region_id"], "properties": {"region_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]+$"}}},
+        {"type": "object", "additionalProperties": false, "required": ["state"], "properties": {"state": {"enum": ["IDLE", "LISTENING", "THINKING", "SPEAKING", "TOOL_WORK", "WAITING", "NOTIFYING", "SLEEPING", "ERROR"]}}}
+      ]
+    }
+  }
+}

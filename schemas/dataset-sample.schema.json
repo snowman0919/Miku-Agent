@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset-sample.schema.json",
+  "title": "Dataset Sample",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sample_id", "source_id", "audio_path", "duration", "language", "raw_text", "spoken_text", "normalized_text", "character_id", "emotion", "speech_likeness", "singing_likeness", "rights_status", "status"],
+  "properties": {
+    "sample_id": {"type": "string", "format": "uuid"},
+    "source_id": {"type": "string", "format": "uuid"},
+    "audio_path": {"type": "string", "pattern": "^object://[A-Za-z0-9/_-]+$"},
+    "duration": {"type": "number", "exclusiveMinimum": 0},
+    "language": {"type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$"},
+    "raw_text": {"type": "string"},
+    "spoken_text": {"type": "string"},
+    "normalized_text": {"type": "string"},
+    "character_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{1,31}$"},
+    "emotion": {"type": "string", "minLength": 1},
+    "speech_likeness": {"type": "number", "minimum": 0, "maximum": 1},
+    "singing_likeness": {"type": "number", "minimum": 0, "maximum": 1},
+    "quality_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "alignment_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "rights_status": {"enum": ["owned", "licensed", "permitted", "unknown", "restricted", "rejected"]},
+    "status": {"enum": ["accepted", "quarantine", "rejected"]}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "accepted"}}, "required": ["status"]}, "then": {"required": ["quality_score", "alignment_score"], "properties": {"rights_status": {"enum": ["owned", "licensed", "permitted"]}, "spoken_text": {"type": "string", "minLength": 1}, "character_id": {"type": "string", "minLength": 1}}}}
+  ]
+}

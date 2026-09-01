@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/character-profile.schema.json",
+  "title": "Character Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["character_id", "display_name", "profile_version", "persona_dimensions", "hard_constraints", "relationship_modes", "voice_profile_id", "asset_profile_id", "animation_profile_id"],
+  "properties": {
+    "character_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{1,31}$"},
+    "display_name": {"type": "string", "minLength": 1},
+    "profile_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "persona_dimensions": {"type": "object", "minProperties": 12, "additionalProperties": {"type": "number", "minimum": -1, "maximum": 1}},
+    "hard_constraints": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "relationship_modes": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"enum": ["best_friend", "ally", "supporter", "collaborator"]}},
+    "voice_profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+$"},
+    "asset_profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+$"},
+    "animation_profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+$"}
+  }
+}

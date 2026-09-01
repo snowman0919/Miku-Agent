@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/memory-commit.schema.json",
+  "title": "Memory Commit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commit_id", "namespace_id", "parent_ids", "actor", "timestamp", "operations", "reason"],
+  "properties": {
+    "commit_id": {"type": "string", "format": "uuid"},
+    "namespace_id": {"type": "string", "pattern": "^usr_[A-Za-z0-9]+:char_[a-z0-9_-]+$"},
+    "parent_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "uuid"}},
+    "actor": {"type": "object", "additionalProperties": false, "required": ["type", "id"], "properties": {"type": {"enum": ["user", "model", "tool", "system"]}, "id": {"type": "string", "minLength": 1}}},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "operations": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["operation", "memory_id", "expected_revision"], "properties": {"operation": {"enum": ["create", "replace", "supersede", "reject", "delete", "restore"]}, "memory_id": {"type": "string", "format": "uuid"}, "expected_revision": {"type": ["integer", "null"], "minimum": 1}, "replacement_memory_id": {"type": ["string", "null"], "format": "uuid"}}}},
+    "reason": {"type": "string", "minLength": 1}
+  }
+}
