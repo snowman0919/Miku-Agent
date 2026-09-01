@@ -1,0 +1,6 @@
+entries:
+  - identifier: user@example.invalid
+    identifier_type: exact_email
+    role: tester
+    status: pending
+

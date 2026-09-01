@@ -1,0 +1,7 @@
+provider: clerk
+token_audience: miku-agent-api
+default_policy: deny
+runtime_authorization_recheck_seconds: 300
+critical_action_recheck: true
+secrets_on_client: false
+
