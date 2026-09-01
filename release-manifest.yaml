@@ -22,7 +22,7 @@ accepted_adrs:
 document_hashes:
   README.md: 9a7c35dc26289389f982dc45147fd24cb3fb471b67ed5d1e2eb04b1b45a35a86
   docs/product-charter.md: 593dbb3a4fc393e2832e656e8c8c3ac0cc2397e7d21fe9bd4335f62ff26fc7fc
-  docs/persona-constitution.md: b22f18931e3b40447f4b00c036f892dd6a64afc33dff3f5fb90c412d1b8d7e89
+  docs/persona-constitution.md: 7b9ab6c67ba9d2387187a865e9ac8a0e3c90c205acb891aa8a1cd917f0e484d3
   docs/security-and-threat-model.md: 43c151c6364e5086b5bafacd044023d184619d4bcebadc93a1739aa51ea39037
   docs/data-governance.md: c8a518fe8017644708050ca2838e03f29c7322aea4c602b13d947d916061c993
   docs/memory-architecture.md: 9d963a4cd7ba1f4fa9e030e1b66a09b97e26c2bf45f0f4ffff8d7012931f3408

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import subprocess
 from dataclasses import dataclass
@@ -57,6 +58,19 @@ SECRET_PATTERNS = {
     "private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     "GitHub token": re.compile(r"\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}"),
     "generic live secret": re.compile(r"\b(?:sk_" r"live|sk-[A-Za-z0-9]{20,})"),
+}
+
+DECISION_EVIDENCE = {
+    "0001": ("docs/persona-constitution.md", ("캐릭터별", "character_id", "miku")),
+    "0002": ("docs/system-context.md", ("server", "local", "우선")),
+    "0003": ("docs/authentication-and-access-control.md", ("Clerk", "backend access grant", "deny")),
+    "0004": ("docs/memory-architecture.md", ("namespace", "version", "evidence")),
+    "0005": ("docs/realtime-protocol.md", ("/ws/audio", "/ws/events", "WebRTC")),
+    "0006": ("docs/client-experience.md", ("Flutter", "Unity", "UI code")),
+    "0007": ("docs/codex-execution.md", ("Docker", "privileged", "Docker socket")),
+    "0008": ("docs/model-boundaries.md", ("DuplexSTT", "DuplexEARTTS", "Codec")),
+    "0009": ("docs/data-governance.md", ("private repository", "Git", "rights")),
+    "0010": ("docs/animation-and-embodiment.md", ("procedural", "FSM", "per-frame bone")),
 }
 
 
@@ -189,6 +203,43 @@ def check_adrs_and_traceability() -> Check:
     return Check("ADR and traceability", "PASS", f"10 accepted ADRs, {len(rows)} decision links")
 
 
+def check_decision_consistency() -> Check:
+    """Require each accepted ADR and its source document to carry the same decision anchors."""
+    for adr_number, (document, anchors) in DECISION_EVIDENCE.items():
+        adr_path = next((ROOT / "docs" / "adr").glob(f"{adr_number}-*.md"), None)
+        if adr_path is None:
+            raise AssertionError(f"ADR-{adr_number} is missing")
+        adr_text = adr_path.read_text(encoding="utf-8").lower()
+        document_text = (ROOT / document).read_text(encoding="utf-8").lower()
+        for anchor in anchors:
+            lowered = anchor.lower()
+            if lowered not in adr_text:
+                raise AssertionError(f"ADR-{adr_number} lost decision anchor {anchor!r}")
+            if lowered not in document_text:
+                raise AssertionError(f"{document} conflicts with ADR-{adr_number}: missing {anchor!r}")
+    return Check("ADR/document consistency", "PASS", "10 accepted decisions share required semantic anchors")
+
+
+def check_manifest_integrity() -> Check:
+    manifest = load_data(ROOT / "release-manifest.yaml")
+    expected_adrs = [f"ADR-{number:04d}" for number in range(1, 11)]
+    if manifest["accepted_adrs"] != expected_adrs:
+        raise AssertionError("release manifest accepted ADR inventory is incomplete or out of order")
+    for relative, expected in manifest["document_hashes"].items():
+        path = ROOT / relative
+        if not path.is_file():
+            raise AssertionError(f"release manifest hashes missing document: {relative}")
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != expected:
+            raise AssertionError(f"release manifest hash mismatch: {relative}")
+    remote_exists = subprocess.run(
+        ["git", "remote", "get-url", "origin"], cwd=ROOT, text=True, capture_output=True,
+    ).returncode == 0
+    if remote_exists and manifest["repository_commit"] == "pending-finalization":
+        raise AssertionError("release manifest commit remains pending after origin configuration")
+    return Check("release manifest integrity", "PASS", f"{len(manifest['document_hashes'])} document hashes and 10 ADRs verified")
+
+
 def check_capability_evaluations() -> Check:
     matrix = load_data(ROOT / "spec" / "v1-capability-matrix.yaml")
     gates = load_data(ROOT / "spec" / "v1-acceptance-gates.yaml")
@@ -268,6 +319,8 @@ def run_all() -> list[Check]:
     checks.append(check_root_contracts())
     checks.append(check_product_invariants())
     checks.append(check_adrs_and_traceability())
+    checks.append(check_decision_consistency())
+    checks.append(check_manifest_integrity())
     checks.append(check_capability_evaluations())
     checks.append(check_documents())
     checks.extend(check_repository_safety())
