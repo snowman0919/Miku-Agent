@@ -1,0 +1,36 @@
+product_version: 0.0.0
+repository_commit: pending-finalization
+release_date: '2026-09-02'
+phase: product-definition-lock
+component_versions:
+  product_contract: 0.0.0
+  protocol_contract: 0.0.0
+  client_runtime: not-started
+  server_runtime: not-started
+schema_version: 1.0.0
+accepted_adrs:
+  - ADR-0001
+  - ADR-0002
+  - ADR-0003
+  - ADR-0004
+  - ADR-0005
+  - ADR-0006
+  - ADR-0007
+  - ADR-0008
+  - ADR-0009
+  - ADR-0010
+document_hashes:
+  README.md: 9a7c35dc26289389f982dc45147fd24cb3fb471b67ed5d1e2eb04b1b45a35a86
+  docs/product-charter.md: 593dbb3a4fc393e2832e656e8c8c3ac0cc2397e7d21fe9bd4335f62ff26fc7fc
+  docs/persona-constitution.md: b22f18931e3b40447f4b00c036f892dd6a64afc33dff3f5fb90c412d1b8d7e89
+  docs/security-and-threat-model.md: 43c151c6364e5086b5bafacd044023d184619d4bcebadc93a1739aa51ea39037
+  docs/data-governance.md: c8a518fe8017644708050ca2838e03f29c7322aea4c602b13d947d916061c993
+  docs/memory-architecture.md: 9d963a4cd7ba1f4fa9e030e1b66a09b97e26c2bf45f0f4ffff8d7012931f3408
+  docs/evaluation-policy.md: ab8fd7e85166338904462716ab7c9e68f0aa7091360eb555f7c0d201c13ebbfe
+  spec/product-lock.yaml: bfa41bd956b08296d3883317b5e579c9afb13b7579e7004e5bc43afa4678ee18
+validation_report: reports/v0.0.0-validation.md
+known_risks:
+  - voicechat_11b_rtx5090_feasibility
+  - legal_rights_of_voice_sources
+  - clerk_production_plan_dependency
+next_version: 0.1.0
