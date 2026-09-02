@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/gpu-worker/model-binding.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["model_id", "provider", "repository", "task", "license", "revision", "weight_file", "weight_sha256", "config_sha256", "required_dtype", "peak_vram_mib", "environment", "status"],
+  "properties": {"model_id": {"type": "string", "minLength": 1}, "provider": {"type": "string", "minLength": 1}, "repository": {"type": "string", "minLength": 1}, "task": {"type": "string", "minLength": 1}, "license": {"type": "string", "minLength": 1}, "revision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"}, "weight_file": {"type": "string", "minLength": 1}, "weight_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "required_dtype": {"type": "string", "minLength": 1}, "peak_vram_mib": {"type": ["number", "null"], "minimum": 0}, "environment": {"type": "string", "minLength": 1}, "status": {"enum": ["candidate", "selected", "fallback", "blocked", "rejected"]}}
+}

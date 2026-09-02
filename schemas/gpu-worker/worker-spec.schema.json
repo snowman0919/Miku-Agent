@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/gpu-worker/worker-spec.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol_version", "code_commit", "software_environment", "determinism"],
+  "properties": {
+    "protocol_version": {"const": 1}, "code_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "software_environment": {"type": "object", "minProperties": 1},
+    "determinism": {"enum": ["deterministic", "best_effort"]}, "seed": {"type": ["integer", "null"]},
+    "model_binding": {"type": ["object", "null"], "additionalProperties": false, "required": ["model_id", "revision", "weight_sha256", "config_sha256", "license"], "properties": {"model_id": {"type": "string", "minLength": 1}, "revision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"}, "weight_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "license": {"type": "string", "minLength": 1}}}
+  }
+}

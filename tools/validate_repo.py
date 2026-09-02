@@ -316,22 +316,28 @@ def check_manifest_integrity() -> Check:
     if manifest["accepted_adrs"] != expected_adrs:
         raise AssertionError("manifest accepted ADR inventory is incomplete or out of order")
     definition = manifest["release_identity"]["definition_commit"]
+    tag = manifest["release_identity"].get("tag")
+    tag_exists = bool(tag) and git("rev-parse", "--verify", f"refs/tags/{tag}", check=False).returncode == 0
     historical_v010 = (
         manifest.get("product_version") == "0.1.0"
-        and commit_exists("v0.1.0")
+        and tag == "v0.1.0"
+        and tag_exists
         and git("merge-base", "--is-ancestor", "v0.1.0^{commit}", "HEAD", check=False).returncode == 0
         and git("diff", "--quiet", "v0.1.0", "--", "release-manifest.yaml", check=False).returncode == 0
     )
+    release_ref = tag if tag_exists else "HEAD"
     if historical_v010:
         binding_mode = "historical-release-descendant:" + validate_definition_binding(
-            definition, release_ref="v0.1.0", allow_preparation=False
+            definition, release_ref=release_ref, allow_preparation=False
         )
     else:
-        binding_mode = validate_definition_binding(definition, allow_preparation=True)
+        binding_mode = validate_definition_binding(
+            definition, release_ref=release_ref, allow_preparation=True
+        )
     validate_document_hashes(definition, manifest["document_hashes"])
     return Check(
         "release manifest integrity", "PASS",
-        f"format 2 {binding_mode}; {len(manifest['document_hashes'])} hashes bound to {definition}",
+        f"format 2 {binding_mode} at {release_ref}; {len(manifest['document_hashes'])} hashes bound to {definition}",
     )
 
 

@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Run OpenCode with one credential loaded safely and redact captured output."""
+
+from __future__ import annotations
+
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+def read_key(path: Path, name: str) -> str:
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() == name:
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+                value = value[1:-1]
+            return value
+    return ""
+
+
+def redact(text: str, secret: str) -> str:
+    if secret:
+        text = text.replace(secret, "[REDACTED]")
+    text = re.sub(r"(?i)(authorization\s*:\s*bearer\s+)\S+", r"\1[REDACTED]", text)
+    text = re.sub(r"\b(?:sk-[A-Za-z0-9_-]{16,}|github_pat_[A-Za-z0-9_]{16,})\b", "[REDACTED]", text)
+    return text
+
+
+def main() -> int:
+    env_path = Path(os.environ.get("MIKU_SUBAGENT_ENV", Path(__file__).resolve().parents[2] / ".env"))
+    secret = read_key(env_path, "OPENCODE_API_KEY")
+    if not secret:
+        print("OPENCODE_API_KEY=missing", file=sys.stderr)
+        return 78
+    environment = os.environ.copy()
+    environment["OPENCODE_API_KEY"] = secret
+    completed = subprocess.run(["opencode", *sys.argv[1:]], capture_output=True, text=True, env=environment)
+    sys.stdout.write(redact(completed.stdout, secret))
+    sys.stderr.write(redact(completed.stderr, secret))
+    return completed.returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

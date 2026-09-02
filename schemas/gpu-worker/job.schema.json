@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/gpu-worker/job.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol_version", "job_id", "task_type", "created_at", "priority", "inputs", "transform", "resource_request"],
+  "properties": {
+    "protocol_version": {"const": 1},
+    "job_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "task_type": {"enum": ["source_separation", "asr_transcribe", "forced_alignment", "speaker_embedding", "speaker_similarity", "audio_embedding", "speech_singing_score", "prosody_extract", "audio_quality", "miku_voice_consistency", "persona_critic", "agentic_critic", "synthetic_persona_generate", "synthetic_agentic_generate"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "priority": {"type": "integer", "minimum": 0, "maximum": 100},
+    "inputs": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "path", "sha256", "size_bytes"], "properties": {"id": {"type": "string", "minLength": 1}, "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "size_bytes": {"type": "integer", "minimum": 0}}}},
+    "transform": {"type": "object", "additionalProperties": false, "required": ["name", "version", "parameters"], "properties": {"name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "parameters": {"type": "object"}}},
+    "resource_request": {"type": "object", "additionalProperties": false, "required": ["gpu_count", "min_vram_bytes", "cpu_threads", "ram_bytes"], "properties": {"gpu_count": {"type": "integer", "minimum": 0, "maximum": 1}, "min_vram_bytes": {"type": "integer", "minimum": 0}, "cpu_threads": {"type": ["integer", "null"], "minimum": 1}, "ram_bytes": {"type": ["integer", "null"], "minimum": 1}}}
+  }
+}
