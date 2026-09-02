@@ -1,0 +1,1 @@
+"""Dependency-isolated worker contracts."""
