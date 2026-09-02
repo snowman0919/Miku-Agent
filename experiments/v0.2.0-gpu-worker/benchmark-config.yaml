@@ -1,0 +1,21 @@
+protocol_version: 1
+hardware_requirement:
+  gpu_name: NVIDIA GeForce RTX 5090
+  exclusive: true
+benchmark_modes: [cold, warm, batch_scaling]
+tasks:
+  audio_quality:
+    pilot_count: 50
+    backend: reference_pcm16
+  prosody_extract:
+    pilot_count: 50
+    backend: reference_pcm16
+  source_separation:
+    status: unresolved
+  asr_transcribe:
+    status: unresolved
+  forced_alignment:
+    status: unresolved
+  speaker_embedding:
+    status: unresolved
+
