@@ -23,6 +23,22 @@ def test_rights_gate_rejects_unknown_and_agent_self_promotion(foundry):
         assert row[0] == "quarantine"
 
 
+def test_infrastructure_fixture_cannot_be_promoted(foundry):
+    _, registry = foundry
+    source_id = source(registry)
+    with registry.transaction() as connection:
+        connection.execute(
+            "UPDATE sources SET corpus_class='infrastructure_fixture' WHERE source_id=?",
+            (source_id,),
+        )
+    register_rights(
+        registry, source_id, "owned", "record", "fixture", "training",
+        reviewer="operator", actor_type="user",
+    )
+    with pytest.raises(PermissionError):
+        promote_training(registry, source_id, actor="operator")
+
+
 def test_cleared_rights_require_evidence_and_all_gates(foundry):
     _, registry = foundry
     source_id = source(registry)

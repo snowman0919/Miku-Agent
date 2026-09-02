@@ -39,7 +39,7 @@ def make_package(root: Path, task: str, index: int, code_commit: str) -> Path:
     write_json(package / "job.json", {"protocol_version": 1, "job_id": job_id, "task_type": task, "created_at": "2026-09-03T00:00:00Z", "priority": 50, "inputs": [item], "transform": {"name": task, "version": "reference-1", "parameters": {"frame_ms": 20} if task == "prosody_extract" else {}}, "resource_request": {"gpu_count": 0, "min_vram_bytes": 0, "cpu_threads": 1, "ram_bytes": 67108864}})
     write_json(package / "input-manifest.json", {"protocol_version": 1, "job_id": job_id, "inputs": [{"id": item["id"], "sha256": item["sha256"], "size_bytes": item["size_bytes"]}]})
     write_json(package / "worker-spec.json", {"protocol_version": 1, "code_commit": code_commit, "software_environment": {"python": f"{sys.version_info.major}.{sys.version_info.minor}"}, "determinism": "deterministic", "seed": index, "model_binding": None})
-    write_json(package / "source-binding.json", {"protocol_version": 1, "job_id": job_id, "source_ids": [f"generated-tone-{index}"], "rights_status": "owned"})
+    write_json(package / "source-binding.json", {"protocol_version": 1, "job_id": job_id, "foundry_code_commit": code_commit, "source_ids": [f"generated-tone-{index}"], "rights_status": "owned"})
     return package
 
 
@@ -78,4 +78,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

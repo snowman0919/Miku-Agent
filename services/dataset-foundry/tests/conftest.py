@@ -23,4 +23,5 @@ def source(registry: Registry, *, family: str = "family-a", quality: str = "pass
     return register_source(registry, source_id=None, source_type="speech", title="fixture", origin="test-fixture",
                            acquisition_method="test generation", language="ko-KR", character_id="miku",
                            derivative_family=family, quality_status=quality, review_status=review,
-                           training_status=training)
+                           training_status=training,
+                           corpus_class="accepted_corpus" if training == "accepted" else "quarantine_real_corpus")

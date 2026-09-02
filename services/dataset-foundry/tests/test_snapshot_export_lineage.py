@@ -15,9 +15,15 @@ from miku_foundry.store import ObjectStore
 def _audio_row(registry, source_id: str, digest: str, training_status: str = "accepted") -> None:
     with registry.transaction() as connection:
         connection.execute(
-            "INSERT INTO audio_samples VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            """INSERT INTO audio_samples(
+                 sample_id,source_id,object_sha256,duration_ms,language,raw_text,spoken_text,
+                 normalized_text,modality,quality_ppm,alignment_ppm,review_weight_ppm,
+                 source_tier_weight_ppm,quality_tier,training_status,parent_object_sha256,
+                 segment_start_ms,segment_end_ms,clip_object_sha256,segment_fingerprint
+               ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (registry.new_id(), source_id, digest, 1000, "ko-KR", "안녕", "안녕", "안녕", "speech",
-             1000000, 1000000, 1000000, 1000000, "gold", training_status),
+             1000000, 1000000, 1000000, 1000000, "gold", training_status,
+             digest, 0, 1000, digest, registry.segment_fingerprint(digest, 0, 1000, "안녕")),
         )
 
 

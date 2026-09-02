@@ -1,1 +1,125 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://miku-agent.invalid/schemas/dataset/agentic-trajectory.schema.json","title":"Agentic Trajectory","type":"object","additionalProperties":false,"required":["trajectory_id","source_id","task_type","events","execution_backed","failure_recovery","verified","provenance","training_status"],"properties":{"trajectory_id":{"type":"string","format":"uuid"},"source_id":{"type":"string","format":"uuid"},"task_type":{"type":"string"},"events":{"type":"array","minItems":2,"items":{"type":"object"}},"execution_backed":{"type":"boolean"},"failure_recovery":{"type":"boolean"},"verified":{"type":"boolean"},"provenance":{"type":"object","minProperties":1},"training_status":{"enum":["quarantine","holdout","accepted","rejected"]}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset/agentic-trajectory.schema.json",
+  "title": "Agentic Trajectory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trajectory_id",
+    "source_id",
+    "task_type",
+    "events",
+    "execution_backed",
+    "failure_recovery",
+    "verification_status",
+    "execution_receipt_sha256",
+    "environment_binding",
+    "test_receipt",
+    "side_effect_class",
+    "provenance",
+    "training_status"
+  ],
+  "properties": {
+    "trajectory_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "task_type": {
+      "type": "string"
+    },
+    "events": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object"
+      }
+    },
+    "execution_backed": {
+      "type": "boolean"
+    },
+    "failure_recovery": {
+      "type": "boolean"
+    },
+    "verification_status": {
+      "enum": [
+        "unverified",
+        "synthetic_expected",
+        "execution_backed",
+        "human_verified",
+        "failed"
+      ]
+    },
+    "execution_receipt_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "environment_binding": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "test_receipt": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "side_effect_class": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "training_status": {
+      "enum": [
+        "quarantine",
+        "holdout",
+        "accepted",
+        "rejected"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution_backed": {
+            "const": true
+          }
+        },
+        "required": [
+          "execution_backed"
+        ]
+      },
+      "then": {
+        "properties": {
+          "verification_status": {
+            "const": "execution_backed"
+          },
+          "execution_receipt_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "environment_binding": {
+            "type": "object",
+            "minProperties": 1
+          },
+          "test_receipt": {
+            "type": "object",
+            "minProperties": 1
+          }
+        }
+      }
+    }
+  ]
+}

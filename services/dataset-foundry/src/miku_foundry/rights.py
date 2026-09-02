@@ -37,6 +37,11 @@ def promote_training(registry: Registry, source_id: str, *, actor: str) -> None:
             raise PermissionError("rights evidence expired")
         if source["quality_status"] != "passed" or source["review_status"] != "reviewed":
             raise PermissionError("quality and review gates must pass independently")
-        connection.execute("UPDATE sources SET training_status='accepted' WHERE source_id=?", (source_id,))
+        if source["corpus_class"] in {"infrastructure_fixture", "evaluation_corpus"}:
+            raise PermissionError("fixture and evaluation sources cannot be training promoted")
+        connection.execute(
+            "UPDATE sources SET training_status='accepted', corpus_class='accepted_corpus' WHERE source_id=?",
+            (source_id,),
+        )
         registry.audit(connection, "training.promoted", actor, "source", source_id,
                        {"rights_id": rights["rights_id"]})

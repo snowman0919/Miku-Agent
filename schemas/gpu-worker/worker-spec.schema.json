@@ -7,6 +7,6 @@
     "protocol_version": {"const": 1}, "code_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "software_environment": {"type": "object", "minProperties": 1},
     "determinism": {"enum": ["deterministic", "best_effort"]}, "seed": {"type": ["integer", "null"]},
-    "model_binding": {"type": ["object", "null"], "additionalProperties": false, "required": ["model_id", "revision", "weight_sha256", "config_sha256", "license"], "properties": {"model_id": {"type": "string", "minLength": 1}, "revision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"}, "weight_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "license": {"type": "string", "minLength": 1}}}
+    "model_binding": {"type": ["object", "null"], "additionalProperties": false, "required": ["model_id", "revision", "weight_sha256", "config_sha256", "environment_lock_sha256", "dtype", "license"], "properties": {"model_id": {"type": "string", "minLength": 1}, "revision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"}, "weight_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "environment_lock_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "dtype": {"type": "string", "minLength": 1}, "license": {"type": "string", "minLength": 1}}}
   }
 }

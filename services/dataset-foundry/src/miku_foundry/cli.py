@@ -20,11 +20,13 @@ from .review_server import serve
 from .rights import promote_training, register_rights
 from .split import assign_group, leakage_findings
 from .store import ObjectStore
+from .worker_import import import_worker_result
 
 
 WRITE_COMMANDS = {"init", "ingest", "register-source", "register-rights", "plan-transform", "run-job",
                   "segment", "transcribe", "align", "normalize", "score", "dedup", "split", "snapshot",
                   "export", "queue-5090", "pilot"}
+WRITE_COMMANDS.add("import-worker-result")
 
 
 def _json(value: object) -> None:
@@ -104,6 +106,10 @@ def parser() -> argparse.ArgumentParser:
     review.add_parser("export")
     command = sub.add_parser("verify-release")
     command.add_argument("receipt")
+    command = sub.add_parser("import-worker-result")
+    command.add_argument("package")
+    command.add_argument("--actor", required=True)
+    command.add_argument("--dry-run", action="store_true")
     return root
 
 
@@ -122,6 +128,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if not paths.registry.exists():
         raise RuntimeError("foundry is not initialized")
+    registry.initialize()
 
     if args.command == "doctor":
         usage = shutil.disk_usage(paths.root)
@@ -226,6 +233,11 @@ def main(argv: list[str] | None = None) -> int:
                 failures.append({"path": name, "expected": expected, "actual": actual})
         _json({"failures": failures})
         return int(bool(failures))
+    elif args.command == "import-worker-result":
+        if dry_run:
+            _json({"would_import_worker_result": args.package, "actor": args.actor})
+        else:
+            _json(import_worker_result(paths, registry, Path(args.package), actor=args.actor))
     return 0
 
 

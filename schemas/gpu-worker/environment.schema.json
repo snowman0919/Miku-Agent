@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/gpu-worker/environment.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["hostname", "platform", "python", "code_commit", "gpu"],
+  "properties": {
+    "hostname": {"type": "string", "minLength": 1},
+    "platform": {"type": "string", "minLength": 1},
+    "python": {"type": "string", "minLength": 1},
+    "code_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "gpu": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["name", "uuid", "driver", "memory_total_mib"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "uuid": {"type": "string", "minLength": 1},
+        "driver": {"type": "string", "minLength": 1},
+        "memory_total_mib": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

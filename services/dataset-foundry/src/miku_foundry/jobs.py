@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 from .config import FoundryPaths
@@ -37,23 +38,86 @@ def authorize_remote_5090(registry: Registry, job_id: str, grant: dict[str, obje
         job = connection.execute("SELECT * FROM jobs WHERE job_id=?", (job_id,)).fetchone()
         if not job or job["state"] not in {"prepared", "waiting_for_lease"}:
             raise PermissionError("remote job is not eligible")
+        manifest = json.loads(job["input_manifest_json"])
+        expected_digest = hashlib.sha256(
+            canonical_json(manifest["input_object_hashes"]).encode()
+        ).hexdigest()
+        if (
+            grant["input_digest"] != expected_digest
+            or grant["code_commit"] != manifest["foundry_code_commit"]
+        ):
+            raise PermissionError("remote grant source binding differs from the prepared job")
         connection.execute("UPDATE jobs SET state='staged', updated_at=? WHERE job_id=?",
                            (registry.now(), job_id))
 
 
 def prepare_remote_package(paths: FoundryPaths, registry: Registry,
                            manifest: dict[str, object]) -> tuple[str, str]:
-    required = {"input_object_hashes", "code_commit", "worker_spec", "source_binding"}
+    required = {
+        "task_type", "input_object_hashes", "foundry_code_commit", "worker_spec",
+        "source_binding", "transform", "resource_request", "created_at",
+    }
     missing = sorted(required - manifest.keys())
     if missing:
         raise ValueError(f"remote manifest missing fields: {missing}")
     job_id = ensure_job(registry, "remote-5090", manifest)
     package = paths.root / "jobs" / "remote-5090" / job_id
     package.mkdir(parents=True, exist_ok=True, mode=0o700)
+    inputs = []
+    with registry.connect() as connection:
+        binding = manifest["source_binding"]
+        source_ids = binding.get("source_ids", [])
+        if not source_ids:
+            raise ValueError("remote source binding requires at least one source")
+        for source_id in source_ids:
+            rights = registry.current_rights(connection, source_id)
+            if not rights or rights["status"] != binding.get("rights_status"):
+                raise PermissionError("remote source binding differs from current rights")
+        for index, digest in enumerate(manifest["input_object_hashes"]):
+            row = connection.execute(
+                "SELECT size_bytes,media_type FROM objects WHERE sha256=?", (digest,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"unknown input object: {digest}")
+            suffix = ".wav" if row["media_type"] == "audio/wav" else ".bin"
+            relative = f"inputs/input-{index}{suffix}"
+            target = package / relative
+            target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            source = paths.object_path(digest)
+            if not target.exists():
+                os.link(source, target)
+            inputs.append({
+                "id": f"input-{index}", "path": relative, "sha256": digest,
+                "size_bytes": row["size_bytes"],
+            })
+    worker_spec = {**manifest["worker_spec"], "protocol_version": 1}
+    source_binding = {
+        **manifest["source_binding"],
+        "protocol_version": 1,
+        "job_id": job_id,
+        "foundry_code_commit": manifest["foundry_code_commit"],
+    }
     files = {
-        "input-manifest.json": {"job_id": job_id, "input_object_hashes": manifest["input_object_hashes"]},
-        "worker-spec.json": manifest["worker_spec"],
-        "source-binding.json": manifest["source_binding"],
+        "job.json": {
+            "protocol_version": 1,
+            "job_id": job_id,
+            "task_type": manifest["task_type"],
+            "created_at": manifest["created_at"],
+            "priority": manifest.get("priority", 50),
+            "inputs": inputs,
+            "transform": manifest["transform"],
+            "resource_request": manifest["resource_request"],
+        },
+        "input-manifest.json": {
+            "protocol_version": 1,
+            "job_id": job_id,
+            "inputs": [
+                {key: item[key] for key in ("id", "sha256", "size_bytes")}
+                for item in inputs
+            ],
+        },
+        "worker-spec.json": worker_spec,
+        "source-binding.json": source_binding,
         "expected-output.schema.json": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",

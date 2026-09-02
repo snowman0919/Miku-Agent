@@ -16,10 +16,28 @@ from .hashing import canonical_json_bytes, sha256_file, transform_fingerprint
 from .locking import GpuLock
 from .metrics import GpuSampler, MetricsRecorder, environment_snapshot, nvidia_smi_command
 from .protocol import assert_noncanonical_output, resolve_package_path, validate_job_package, validate_schema
-from .tasks import run_audio_quality, run_prosody
+from .registry import REPOSITORY_ROOT, validate_binding
+from .tasks import (
+    run_alignment,
+    run_asr,
+    run_audio_quality,
+    run_prosody,
+    run_separation,
+    run_speaker_embedding,
+)
 
 Task = Callable[[Path, dict[str, Any]], dict[str, Any]]
-IMPLEMENTED_TASKS: dict[str, Task] = {"audio_quality": run_audio_quality, "prosody_extract": run_prosody}
+IMPLEMENTED_TASKS: dict[str, Task] = {
+    "audio_quality": run_audio_quality,
+    "prosody_extract": run_prosody,
+    "source_separation": run_separation,
+    "asr_transcribe": run_asr,
+    "forced_alignment": run_alignment,
+    "speaker_embedding": run_speaker_embedding,
+}
+MODEL_TASKS = frozenset({
+    "source_separation", "asr_transcribe", "forced_alignment", "speaker_embedding",
+})
 STATES = ("inbox", "running", "completed", "failed", "cancelled")
 
 
@@ -128,6 +146,30 @@ class Worker:
             if temporary.exists():
                 temporary.unlink()
 
+    def _model_context(self, task: str, binding: dict[str, Any] | None) -> tuple[dict[str, Any], Path]:
+        if binding is None:
+            raise WorkerError("MODEL_HASH_MISMATCH", f"{task} requires a model binding")
+        entry = validate_binding(task, binding)
+        lock = REPOSITORY_ROOT / "experiments/v0.2.0-gpu-worker/environments/audio/uv.lock"
+        if sha256_file(lock) != binding["environment_lock_sha256"]:
+            raise WorkerError("ENVIRONMENT_MISMATCH", "audio environment lock hash differs")
+        if task == "source_separation":
+            model_path = self.root / "models" / "torch"
+            weight = model_path / "hub" / "checkpoints" / entry["weight_file"]
+        else:
+            model_path = (
+                self.root / "models" / "huggingface" / "hub"
+                / f"models--{entry['model_id'].replace('/', '--')}"
+                / "snapshots" / entry["revision"]
+            )
+            weight = model_path / entry["weight_file"]
+        if not model_path.is_dir() or not weight.is_file() or sha256_file(weight) != binding["weight_sha256"]:
+            raise WorkerError("MODEL_HASH_MISMATCH", "pinned model bytes are missing or changed")
+        config = next((model_path / name for name in ("config.json", "hyperparams.yaml") if (model_path / name).is_file()), None)
+        if config is not None and sha256_file(config) != binding["config_sha256"]:
+            raise WorkerError("MODEL_HASH_MISMATCH", "pinned model config changed")
+        return dict(binding), model_path
+
     def _verify_package(self, package: Path, expected_fingerprint: str | None = None) -> bool:
         try:
             result = json.loads((package / "result.json").read_text(encoding="utf-8"))
@@ -199,27 +241,52 @@ class Worker:
                 task = IMPLEMENTED_TASKS.get(job["task_type"])
                 if task is None:
                     raise WorkerError("MODEL_ACCESS_FAILED", f"no pinned backend is installed for {job['task_type']}")
-                if worker_spec.get("model_binding") is not None:
+                if job["task_type"] not in MODEL_TASKS and worker_spec.get("model_binding") is not None:
                     raise WorkerError("MODEL_HASH_MISMATCH", f"{job['task_type']} reference backend cannot honor a model binding")
                 input_path = self._snapshot_input(running, job["inputs"][0])
+                outputs = running / "outputs"
+                outputs.mkdir(exist_ok=True)
+                parameters = dict(job["transform"].get("parameters", {}))
+                if job["task_type"] in MODEL_TASKS:
+                    binding, model_path = self._model_context(
+                        job["task_type"], worker_spec.get("model_binding")
+                    )
+                    parameters.update({
+                        "_model_binding": binding,
+                        "_model_path": str(model_path),
+                        "_output_dir": str(outputs),
+                    })
                 sampler = GpuSampler(recorder) if job["resource_request"]["gpu_count"] else None
                 with GpuLock(self.root / "gpu0.lock"):
                     if sampler is None:
-                        output = task(input_path, job["transform"].get("parameters", {}))
+                        output = task(input_path, parameters)
                     else:
                         with sampler:
-                            output = task(input_path, job["transform"].get("parameters", {}))
+                            output = task(input_path, parameters)
+                artifacts = output.pop("_artifacts", [])
                 assert_noncanonical_output(output)
-                outputs = running / "outputs"
-                outputs.mkdir(exist_ok=True)
                 atomic_json(outputs / "features.json", output)
                 recorder.input_duration_seconds = output.get("duration_seconds")
-                manifest = {"protocol_version": 1, "job_id": job_id, "outputs": [{
+                manifest_outputs = [{
                     "path": "outputs/features.json", "sha256": sha256_file(outputs / "features.json"),
                     "size_bytes": (outputs / "features.json").stat().st_size,
                     "media_type": "application/json", "logical_role": "technical_scores",
                     "sample_rate": None, "duration_seconds": recorder.input_duration_seconds,
-                }]}
+                }]
+                for artifact in artifacts:
+                    artifact_path = Path(artifact["path"])
+                    if artifact_path.parent != outputs or not artifact_path.is_file():
+                        raise WorkerError("MODEL_OUTPUT_INVALID", "task artifact escaped output directory")
+                    manifest_outputs.append({
+                        "path": f"outputs/{artifact_path.name}",
+                        "sha256": sha256_file(artifact_path),
+                        "size_bytes": artifact_path.stat().st_size,
+                        "media_type": artifact["media_type"],
+                        "logical_role": artifact["logical_role"],
+                        "sample_rate": artifact.get("sample_rate"),
+                        "duration_seconds": recorder.input_duration_seconds,
+                    })
+                manifest = {"protocol_version": 1, "job_id": job_id, "outputs": manifest_outputs}
             validate_schema("output-manifest", manifest)
             atomic_json(running / "output-manifest.json", manifest)
             recorder.output_count = len(manifest["outputs"])
@@ -227,6 +294,7 @@ class Worker:
             validate_schema("metrics", metrics)
             atomic_json(running / "metrics.json", metrics)
             environment = environment_snapshot(worker_spec["code_commit"])
+            validate_schema("environment", environment)
             atomic_json(running / "environment.json", environment)
             result = {
                 "protocol_version": 1, "job_id": job_id, "status": "completed",

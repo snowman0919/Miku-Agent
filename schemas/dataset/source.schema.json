@@ -1,1 +1,113 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://miku-agent.invalid/schemas/dataset/source.schema.json","title":"Foundry Source","type":"object","additionalProperties":false,"required":["source_id","source_type","title","origin","acquisition_method","language","character_id","derivative_family","intake_status","quality_status","review_status","training_status"],"properties":{"source_id":{"type":"string","format":"uuid"},"source_type":{"enum":["speech","singing","text","interaction"]},"title":{"type":"string","minLength":1},"origin":{"type":"string","minLength":1},"acquisition_method":{"type":"string","minLength":1},"language":{"type":"string","minLength":2},"character_id":{"const":"miku"},"derivative_family":{"type":"string","minLength":1},"intake_status":{"enum":["registered","acquired","processed","rejected"]},"quality_status":{"enum":["unscored","generated","passed","needs_review","rejected"]},"review_status":{"enum":["unreviewed","reviewed","conflicted"]},"training_status":{"enum":["quarantine","holdout","accepted","rejected"]}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset/source.schema.json",
+  "title": "Foundry Source",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "source_type",
+    "title",
+    "origin",
+    "acquisition_method",
+    "language",
+    "character_id",
+    "derivative_family",
+    "intake_status",
+    "quality_status",
+    "review_status",
+    "training_status",
+    "corpus_class",
+    "evaluation_status"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_type": {
+      "enum": [
+        "speech",
+        "singing",
+        "text",
+        "interaction"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "origin": {
+      "type": "string",
+      "minLength": 1
+    },
+    "acquisition_method": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "type": "string",
+      "minLength": 2
+    },
+    "character_id": {
+      "const": "miku"
+    },
+    "derivative_family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intake_status": {
+      "enum": [
+        "registered",
+        "acquired",
+        "processed",
+        "rejected"
+      ]
+    },
+    "quality_status": {
+      "enum": [
+        "unscored",
+        "generated",
+        "passed",
+        "needs_review",
+        "rejected"
+      ]
+    },
+    "review_status": {
+      "enum": [
+        "unreviewed",
+        "reviewed",
+        "conflicted"
+      ]
+    },
+    "training_status": {
+      "enum": [
+        "quarantine",
+        "holdout",
+        "accepted",
+        "rejected"
+      ]
+    },
+    "corpus_class": {
+      "enum": [
+        "infrastructure_fixture",
+        "candidate_corpus",
+        "quarantine_real_corpus",
+        "accepted_corpus",
+        "evaluation_corpus"
+      ]
+    },
+    "evaluation_status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "reserved_group",
+        "populated_holdout",
+        "frozen_holdout",
+        null
+      ]
+    }
+  }
+}

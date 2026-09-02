@@ -39,7 +39,8 @@ def _tone(path: Path, frequency: float, seconds: float = 1.0, sample_rate: int =
 
 
 def _ensure_source(registry: Registry, kind: str, index: int, *, source_type: str,
-                   title: str, family: str) -> str:
+                   title: str, family: str, corpus_class: str = "infrastructure_fixture",
+                   evaluation_status: str | None = None) -> str:
     source_id = stable_id(kind, index)
     with registry.connect() as connection:
         if connection.execute("SELECT 1 FROM sources WHERE source_id=?", (source_id,)).fetchone():
@@ -47,7 +48,8 @@ def _ensure_source(registry: Registry, kind: str, index: int, *, source_type: st
     register_source(registry, source_id=source_id, source_type=source_type, title=title,
                     origin="locally-generated-foundry-pilot", creator="Miku-Agent Dataset Foundry",
                     acquisition_method="deterministic local generation", language="ko-KR", character_id="miku",
-                    derivative_family=family, notes="Synthetic infrastructure pilot; not target-voice evidence")
+                    derivative_family=family, notes="Synthetic infrastructure pilot; not target-voice evidence",
+                    corpus_class=corpus_class, evaluation_status=evaluation_status)
     register_rights(registry, source_id, "owned", "generation-record",
                     "local deterministic generator in repository", "private research and pipeline validation",
                     reviewer="dataset-operator", actor_type="user-delegated")
@@ -71,10 +73,17 @@ def build(paths: FoundryPaths, registry: Registry) -> dict[str, int]:
         with registry.transaction() as connection:
             for segment_index in range(10):
                 sample_id = stable_id(f"audio-sample-{source_index}", segment_index)
+                fingerprint = registry.segment_fingerprint(digest, 0, 1000, "")
                 connection.execute(
-                    "INSERT OR IGNORE INTO audio_samples VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    """INSERT OR IGNORE INTO audio_samples(
+                         sample_id,source_id,object_sha256,duration_ms,language,raw_text,spoken_text,
+                         normalized_text,modality,quality_ppm,alignment_ppm,review_weight_ppm,
+                         source_tier_weight_ppm,quality_tier,training_status,parent_object_sha256,
+                         segment_start_ms,segment_end_ms,clip_object_sha256,segment_fingerprint
+                       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (sample_id, source_id, digest, 1000, "ko-KR", "", "", "", "speech",
-                     500000, 0, 0, 500000, "quarantine", "quarantine"),
+                     500000, 0, 0, 500000, "quarantine", "quarantine",
+                     digest, 0, 1000, None, fingerprint),
                 )
 
     text_source = _ensure_source(registry, "text-source", 0, source_type="text",
@@ -95,8 +104,18 @@ def build(paths: FoundryPaths, registry: Registry) -> dict[str, int]:
                                     title="Miku persona deterministic pilot", family="pilot-persona-template-v1")
     with registry.transaction() as connection:
         for index in range(1000):
-            dimensions = json.dumps({name: 600000 + ((index * 7919 + position * 997) % 300001)
-                                     for position, name in enumerate(DIMENSIONS)}, sort_keys=True)
+            dimensions = json.dumps({
+                name: {
+                    "score": 600000 + ((index * 7919 + position * 997) % 300001),
+                    "evidence_span": None,
+                    "reason_code": "synthetic_fixture_index",
+                    "evaluator_id": "deterministic-template-v1",
+                    "evaluator_revision": "1",
+                    "confidence_ppm": 0,
+                    "human_override": None,
+                }
+                for position, name in enumerate(DIMENSIONS)
+            }, sort_keys=True)
             prompt = f"작업 {index}의 진행 상황을 알려줘."
             response = f"작업 {index}은 아직 검증 중이야. 확인된 결과만 정리하고, 다음 안전한 단계를 같이 진행할게."
             connection.execute("INSERT OR IGNORE INTO persona_samples VALUES (?,?,?,?,?,?,?,?,?,?)",
@@ -115,10 +134,17 @@ def build(paths: FoundryPaths, registry: Registry) -> dict[str, int]:
                       {"type": "tool.result", "status": "failed" if failed else "ok"},
                       {"type": "result.verify", "verified": not failed},
                       {"type": "assistant.report", "honest_failure": failed}]
-            connection.execute("INSERT OR IGNORE INTO agentic_trajectories VALUES (?,?,?,?,?,?,?,?,?)",
+            connection.execute(
+                """INSERT OR IGNORE INTO agentic_trajectories(
+                     trajectory_id,source_id,task_type,events_json,execution_backed,
+                     failure_recovery,verified,provenance_json,training_status,
+                     verification_status,execution_receipt_sha256,environment_binding_json,
+                     test_receipt_json,side_effect_class
+                   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                                (stable_id("agentic", index), agentic_source, task_type,
                                 json.dumps(events, sort_keys=True), 0, int(failed), int(not failed),
-                                json.dumps({"generator": "deterministic-template-v1", "index": index}), "quarantine"))
+                                json.dumps({"generator": "deterministic-template-v1", "index": index}), "quarantine",
+                                "failed" if failed else "synthetic_expected", None, None, None, "none"))
 
     duplex_source = _ensure_source(registry, "duplex-source", 0, source_type="interaction",
                                    title="Duplex timeline deterministic pilot", family="pilot-duplex-template-v1")
@@ -129,11 +155,17 @@ def build(paths: FoundryPaths, registry: Registry) -> dict[str, int]:
             events = [{"time_ms": 0, "actor": "user", "type": "speech.started"},
                       {"time_ms": 700 + index % 200, "actor": "agent", "type": scenario},
                       {"time_ms": 1800 + index % 400, "actor": "user", "type": "speech.ended"}]
-            connection.execute("INSERT OR IGNORE INTO duplex_timelines VALUES (?,?,?,?,?,?,?,?,?,?)",
+            connection.execute(
+                """INSERT OR IGNORE INTO duplex_timelines(
+                     timeline_id,source_id,scenario,events_json,language,relationship_mode,
+                     expected_behavior,forbidden_behavior,provenance_json,training_status,
+                     timeline_source,audio_input_sha256,audio_output_sha256,event_alignment_ppm,
+                     human_adjudication,evidence_kind
+                   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                                (stable_id("duplex", index), duplex_source, scenario, json.dumps(events, sort_keys=True),
                                 "ko-KR", "best_friend_collaborator", "acknowledge and preserve user control",
                                 "do not fabricate completion", json.dumps({"generator": "deterministic-template-v1", "index": index}),
-                                "quarantine"))
+                                "quarantine", "locally-generated-foundry-pilot", None, None, 0, None, "synthetic"))
 
     holdout_ids = []
     for index, corpus in enumerate(("persona", "tts", "stt", "agentic", "duplex", "normalization")):
@@ -146,7 +178,8 @@ def build(paths: FoundryPaths, registry: Registry) -> dict[str, int]:
                             title=f"Reserved {corpus} evaluation source group", origin="locally-generated-foundry-pilot",
                             creator="Miku-Agent Dataset Foundry", acquisition_method="deterministic local generation",
                             language="ko-KR", character_id="miku", derivative_family=family,
-                            notes="Frozen empty holdout reservation; no training use", training_status="holdout")
+                            notes="Frozen empty holdout reservation; no training use", training_status="holdout",
+                            corpus_class="evaluation_corpus", evaluation_status="reserved_group")
             register_rights(registry, source_id, "owned", "generation-record",
                             "local deterministic generator in repository", "private evaluation only",
                             reviewer="dataset-operator", actor_type="user-delegated")

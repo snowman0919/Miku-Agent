@@ -1,1 +1,190 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://miku-agent.invalid/schemas/dataset/persona-sample.schema.json","title":"Persona Sample","type":"object","additionalProperties":false,"required":["sample_id","source_id","prompt","response","dimensions","hard_violation","cosine_ppm","quality_tier","provenance","training_status"],"properties":{"sample_id":{"type":"string","format":"uuid"},"source_id":{"type":"string","format":"uuid"},"prompt":{"type":"string"},"response":{"type":"string"},"dimensions":{"type":"object","minProperties":12,"maxProperties":12,"additionalProperties":{"type":"integer","minimum":-1000000,"maximum":1000000}},"hard_violation":{"type":"boolean"},"cosine_ppm":{"type":"integer","minimum":-1000000,"maximum":1000000},"quality_tier":{"enum":["gold","silver","quarantine","rejected"]},"provenance":{"type":"object","minProperties":1},"training_status":{"enum":["quarantine","holdout","accepted","rejected"]}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset/persona-sample.schema.json",
+  "title": "Persona Sample",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sample_id",
+    "source_id",
+    "prompt",
+    "response",
+    "dimensions",
+    "hard_violation",
+    "cosine_ppm",
+    "quality_tier",
+    "provenance",
+    "training_status"
+  ],
+  "$defs": {
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score",
+        "evaluator_id",
+        "evaluator_revision",
+        "confidence_ppm",
+        "human_override"
+      ],
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": -1000000,
+          "maximum": 1000000
+        },
+        "evidence_span": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evaluator_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evaluator_revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence_ppm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "human_override": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": -1000000,
+          "maximum": 1000000
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "evidence_span": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "reason_code": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "sample_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "response": {
+      "type": "string"
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "purity",
+        "liveliness",
+        "warmth",
+        "optimism",
+        "curiosity",
+        "creativity",
+        "playfulness",
+        "supportiveness",
+        "independence",
+        "digital_identity",
+        "friendship",
+        "helpfulness"
+      ],
+      "properties": {
+        "purity": {
+          "$ref": "#/$defs/annotation"
+        },
+        "liveliness": {
+          "$ref": "#/$defs/annotation"
+        },
+        "warmth": {
+          "$ref": "#/$defs/annotation"
+        },
+        "optimism": {
+          "$ref": "#/$defs/annotation"
+        },
+        "curiosity": {
+          "$ref": "#/$defs/annotation"
+        },
+        "creativity": {
+          "$ref": "#/$defs/annotation"
+        },
+        "playfulness": {
+          "$ref": "#/$defs/annotation"
+        },
+        "supportiveness": {
+          "$ref": "#/$defs/annotation"
+        },
+        "independence": {
+          "$ref": "#/$defs/annotation"
+        },
+        "digital_identity": {
+          "$ref": "#/$defs/annotation"
+        },
+        "friendship": {
+          "$ref": "#/$defs/annotation"
+        },
+        "helpfulness": {
+          "$ref": "#/$defs/annotation"
+        }
+      }
+    },
+    "hard_violation": {
+      "type": "boolean"
+    },
+    "cosine_ppm": {
+      "type": "integer",
+      "minimum": -1000000,
+      "maximum": 1000000
+    },
+    "quality_tier": {
+      "enum": [
+        "gold",
+        "silver",
+        "quarantine",
+        "rejected"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "training_status": {
+      "enum": [
+        "quarantine",
+        "holdout",
+        "accepted",
+        "rejected"
+      ]
+    }
+  }
+}

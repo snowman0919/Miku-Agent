@@ -1,1 +1,126 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://miku-agent.invalid/schemas/dataset/duplex-timeline.schema.json","title":"Duplex Timeline","type":"object","additionalProperties":false,"required":["timeline_id","source_id","scenario","events","language","relationship_mode","expected_behavior","forbidden_behavior","provenance","training_status"],"properties":{"timeline_id":{"type":"string","format":"uuid"},"source_id":{"type":"string","format":"uuid"},"scenario":{"type":"string"},"events":{"type":"array","minItems":2,"items":{"type":"object","required":["time_ms","actor","type"],"properties":{"time_ms":{"type":"integer","minimum":0},"actor":{"enum":["user","agent","tool"]},"type":{"type":"string"}}}},"language":{"type":"string"},"relationship_mode":{"type":"string"},"expected_behavior":{"type":"string"},"forbidden_behavior":{"type":"string"},"provenance":{"type":"object","minProperties":1},"training_status":{"enum":["quarantine","holdout","accepted","rejected"]}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset/duplex-timeline.schema.json",
+  "title": "Duplex Timeline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "timeline_id",
+    "source_id",
+    "scenario",
+    "events",
+    "language",
+    "relationship_mode",
+    "expected_behavior",
+    "forbidden_behavior",
+    "timeline_source",
+    "audio_input_sha256",
+    "audio_output_sha256",
+    "event_alignment_ppm",
+    "human_adjudication",
+    "evidence_kind",
+    "provenance",
+    "training_status"
+  ],
+  "properties": {
+    "timeline_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "scenario": {
+      "type": "string"
+    },
+    "events": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "time_ms",
+          "actor",
+          "type"
+        ],
+        "properties": {
+          "time_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "actor": {
+            "enum": [
+              "user",
+              "agent",
+              "tool"
+            ]
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "language": {
+      "type": "string"
+    },
+    "relationship_mode": {
+      "type": "string"
+    },
+    "expected_behavior": {
+      "type": "string"
+    },
+    "forbidden_behavior": {
+      "type": "string"
+    },
+    "timeline_source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audio_input_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "audio_output_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "event_alignment_ppm": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "human_adjudication": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evidence_kind": {
+      "enum": [
+        "synthetic",
+        "recorded",
+        "rendered"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "training_status": {
+      "enum": [
+        "quarantine",
+        "holdout",
+        "accepted",
+        "rejected"
+      ]
+    }
+  }
+}

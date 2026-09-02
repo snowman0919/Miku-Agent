@@ -1,1 +1,113 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://miku-agent.invalid/schemas/dataset/audio-sample.schema.json","title":"Audio Sample","type":"object","additionalProperties":false,"required":["sample_id","source_id","object_sha256","duration_ms","language","raw_text","spoken_text","normalized_text","modality","quality_ppm","alignment_ppm","quality_tier","training_status"],"properties":{"sample_id":{"type":"string","format":"uuid"},"source_id":{"type":"string","format":"uuid"},"object_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"duration_ms":{"type":"integer","exclusiveMinimum":0},"language":{"type":"string"},"raw_text":{"type":"string"},"spoken_text":{"type":"string"},"normalized_text":{"type":"string"},"modality":{"enum":["speech","singing_aux"]},"quality_ppm":{"type":"integer","minimum":0,"maximum":1000000},"alignment_ppm":{"type":"integer","minimum":0,"maximum":1000000},"quality_tier":{"enum":["gold","silver","auxiliary","quarantine","rejected"]},"training_status":{"enum":["quarantine","holdout","accepted","rejected"]}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset/audio-sample.schema.json",
+  "title": "Audio Sample",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sample_id",
+    "source_id",
+    "object_sha256",
+    "duration_ms",
+    "language",
+    "raw_text",
+    "spoken_text",
+    "normalized_text",
+    "modality",
+    "quality_ppm",
+    "alignment_ppm",
+    "quality_tier",
+    "training_status",
+    "parent_object_sha256",
+    "segment_start_ms",
+    "segment_end_ms",
+    "clip_object_sha256",
+    "segment_fingerprint"
+  ],
+  "properties": {
+    "sample_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "object_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "parent_object_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "segment_start_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "segment_end_ms": {
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+    "clip_object_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "segment_fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+    "language": {
+      "type": "string"
+    },
+    "raw_text": {
+      "type": "string"
+    },
+    "spoken_text": {
+      "type": "string"
+    },
+    "normalized_text": {
+      "type": "string"
+    },
+    "modality": {
+      "enum": [
+        "speech",
+        "singing_aux"
+      ]
+    },
+    "quality_ppm": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "alignment_ppm": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "quality_tier": {
+      "enum": [
+        "gold",
+        "silver",
+        "auxiliary",
+        "quarantine",
+        "rejected"
+      ]
+    },
+    "training_status": {
+      "enum": [
+        "quarantine",
+        "holdout",
+        "accepted",
+        "rejected"
+      ]
+    }
+  }
+}

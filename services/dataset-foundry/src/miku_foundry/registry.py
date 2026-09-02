@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import json
 import sqlite3
 import time
@@ -9,7 +10,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 RIGHTS_CLEARED = {"owned", "licensed", "permitted"}
 
 DDL = """
@@ -25,7 +26,9 @@ CREATE TABLE IF NOT EXISTS sources(
   acquired_at INTEGER, language TEXT NOT NULL, character_id TEXT NOT NULL,
   parent_work TEXT, derivative_family TEXT NOT NULL, intake_status TEXT NOT NULL,
   quality_status TEXT NOT NULL, review_status TEXT NOT NULL, training_status TEXT NOT NULL,
-  notes TEXT NOT NULL DEFAULT ''
+  notes TEXT NOT NULL DEFAULT '',
+  corpus_class TEXT NOT NULL DEFAULT 'quarantine_real_corpus',
+  evaluation_status TEXT
 );
 CREATE TABLE IF NOT EXISTS source_objects(
   source_id TEXT NOT NULL REFERENCES sources(source_id), sha256 TEXT NOT NULL REFERENCES objects(sha256),
@@ -57,7 +60,12 @@ CREATE TABLE IF NOT EXISTS audio_samples(
   alignment_ppm INTEGER NOT NULL CHECK(alignment_ppm BETWEEN 0 AND 1000000),
   review_weight_ppm INTEGER NOT NULL CHECK(review_weight_ppm BETWEEN 0 AND 1000000),
   source_tier_weight_ppm INTEGER NOT NULL CHECK(source_tier_weight_ppm BETWEEN 0 AND 1000000),
-  quality_tier TEXT NOT NULL, training_status TEXT NOT NULL
+  quality_tier TEXT NOT NULL, training_status TEXT NOT NULL,
+  parent_object_sha256 TEXT NOT NULL REFERENCES objects(sha256),
+  segment_start_ms INTEGER NOT NULL CHECK(segment_start_ms>=0),
+  segment_end_ms INTEGER NOT NULL CHECK(segment_end_ms>segment_start_ms),
+  clip_object_sha256 TEXT REFERENCES objects(sha256),
+  segment_fingerprint TEXT NOT NULL CHECK(length(segment_fingerprint)=64)
 );
 CREATE TABLE IF NOT EXISTS audio_metrics(
   object_sha256 TEXT PRIMARY KEY REFERENCES objects(sha256), sample_rate_hz INTEGER NOT NULL,
@@ -81,13 +89,19 @@ CREATE TABLE IF NOT EXISTS agentic_trajectories(
   trajectory_id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES sources(source_id), task_type TEXT NOT NULL,
   events_json TEXT NOT NULL, execution_backed INTEGER NOT NULL CHECK(execution_backed IN (0,1)),
   failure_recovery INTEGER NOT NULL CHECK(failure_recovery IN (0,1)), verified INTEGER NOT NULL CHECK(verified IN (0,1)),
-  provenance_json TEXT NOT NULL, training_status TEXT NOT NULL
+  provenance_json TEXT NOT NULL, training_status TEXT NOT NULL,
+  verification_status TEXT NOT NULL DEFAULT 'unverified',
+  execution_receipt_sha256 TEXT, environment_binding_json TEXT,
+  test_receipt_json TEXT, side_effect_class TEXT NOT NULL DEFAULT 'none'
 );
 CREATE TABLE IF NOT EXISTS duplex_timelines(
   timeline_id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES sources(source_id), scenario TEXT NOT NULL,
   events_json TEXT NOT NULL, language TEXT NOT NULL, relationship_mode TEXT NOT NULL,
   expected_behavior TEXT NOT NULL, forbidden_behavior TEXT NOT NULL, provenance_json TEXT NOT NULL,
-  training_status TEXT NOT NULL
+  training_status TEXT NOT NULL, timeline_source TEXT NOT NULL,
+  audio_input_sha256 TEXT, audio_output_sha256 TEXT,
+  event_alignment_ppm INTEGER NOT NULL DEFAULT 0,
+  human_adjudication TEXT, evidence_kind TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS reviews(
   review_id TEXT PRIMARY KEY, entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, revision INTEGER NOT NULL,
@@ -104,6 +118,12 @@ CREATE TABLE IF NOT EXISTS jobs(
   input_manifest_json TEXT NOT NULL, output_manifest_json TEXT, error_json TEXT,
   created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS worker_result_imports(
+  job_id TEXT PRIMARY KEY REFERENCES jobs(job_id),
+  result_sha256 TEXT UNIQUE NOT NULL, output_manifest_sha256 TEXT NOT NULL,
+  transform_fingerprint TEXT NOT NULL, environment_sha256 TEXT NOT NULL,
+  model_binding_json TEXT, imported_outputs_json TEXT NOT NULL, imported_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS dataset_versions(
   dataset_id TEXT NOT NULL, version TEXT NOT NULL, schema_version TEXT NOT NULL,
   manifest_sha256 TEXT, state TEXT NOT NULL, created_at INTEGER NOT NULL,
@@ -119,6 +139,97 @@ CREATE TABLE IF NOT EXISTS audit_events(
   created_at INTEGER NOT NULL
 );
 """
+
+TRIGGERS_V2 = """
+CREATE TRIGGER IF NOT EXISTS audio_segment_insert_guard
+BEFORE INSERT ON audio_samples
+BEGIN
+  SELECT CASE WHEN NEW.segment_start_ms < 0 OR NEW.segment_end_ms <= NEW.segment_start_ms
+    OR NEW.duration_ms != NEW.segment_end_ms - NEW.segment_start_ms
+    THEN RAISE(ABORT, 'invalid audio segment interval') END;
+  SELECT CASE WHEN NEW.training_status = 'accepted'
+    AND NEW.clip_object_sha256 IS NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM audio_metrics
+      WHERE object_sha256 = NEW.parent_object_sha256
+        AND NEW.segment_end_ms <= duration_ms
+    )
+    THEN RAISE(ABORT, 'accepted audio requires immutable clip or verified interval') END;
+  SELECT CASE WHEN NEW.training_status = 'accepted'
+    AND EXISTS (
+      SELECT 1 FROM audio_samples
+      WHERE segment_fingerprint = NEW.segment_fingerprint
+        AND training_status = 'accepted'
+    )
+    THEN RAISE(ABORT, 'duplicate accepted audio segment') END;
+END;
+CREATE TRIGGER IF NOT EXISTS audio_segment_update_guard
+BEFORE UPDATE ON audio_samples
+BEGIN
+  SELECT CASE WHEN NEW.segment_start_ms < 0 OR NEW.segment_end_ms <= NEW.segment_start_ms
+    OR NEW.duration_ms != NEW.segment_end_ms - NEW.segment_start_ms
+    THEN RAISE(ABORT, 'invalid audio segment interval') END;
+  SELECT CASE WHEN NEW.training_status = 'accepted'
+    AND NEW.clip_object_sha256 IS NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM audio_metrics
+      WHERE object_sha256 = NEW.parent_object_sha256
+        AND NEW.segment_end_ms <= duration_ms
+    )
+    THEN RAISE(ABORT, 'accepted audio requires immutable clip or verified interval') END;
+  SELECT CASE WHEN NEW.training_status = 'accepted'
+    AND EXISTS (
+      SELECT 1 FROM audio_samples
+      WHERE segment_fingerprint = NEW.segment_fingerprint
+        AND training_status = 'accepted'
+        AND sample_id != NEW.sample_id
+    )
+    THEN RAISE(ABORT, 'duplicate accepted audio segment') END;
+END;
+CREATE TRIGGER IF NOT EXISTS agentic_execution_insert_guard
+BEFORE INSERT ON agentic_trajectories
+WHEN NEW.execution_backed = 1
+BEGIN
+  SELECT CASE WHEN NEW.verification_status != 'execution_backed'
+    OR NEW.execution_receipt_sha256 IS NULL
+    OR length(NEW.execution_receipt_sha256) != 64
+    OR NEW.environment_binding_json IS NULL
+    OR NEW.test_receipt_json IS NULL
+    THEN RAISE(ABORT, 'execution-backed trajectory requires receipts') END;
+END;
+CREATE TRIGGER IF NOT EXISTS agentic_execution_update_guard
+BEFORE UPDATE ON agentic_trajectories
+WHEN NEW.execution_backed = 1
+BEGIN
+  SELECT CASE WHEN NEW.verification_status != 'execution_backed'
+    OR NEW.execution_receipt_sha256 IS NULL
+    OR length(NEW.execution_receipt_sha256) != 64
+    OR NEW.environment_binding_json IS NULL
+    OR NEW.test_receipt_json IS NULL
+    THEN RAISE(ABORT, 'execution-backed trajectory requires receipts') END;
+END;
+"""
+
+MIGRATION_V2 = (
+    "ALTER TABLE sources ADD COLUMN corpus_class TEXT NOT NULL DEFAULT 'quarantine_real_corpus'",
+    "ALTER TABLE sources ADD COLUMN evaluation_status TEXT",
+    "ALTER TABLE audio_samples ADD COLUMN parent_object_sha256 TEXT REFERENCES objects(sha256)",
+    "ALTER TABLE audio_samples ADD COLUMN segment_start_ms INTEGER",
+    "ALTER TABLE audio_samples ADD COLUMN segment_end_ms INTEGER",
+    "ALTER TABLE audio_samples ADD COLUMN clip_object_sha256 TEXT REFERENCES objects(sha256)",
+    "ALTER TABLE audio_samples ADD COLUMN segment_fingerprint TEXT",
+    "ALTER TABLE agentic_trajectories ADD COLUMN verification_status TEXT NOT NULL DEFAULT 'unverified'",
+    "ALTER TABLE agentic_trajectories ADD COLUMN execution_receipt_sha256 TEXT",
+    "ALTER TABLE agentic_trajectories ADD COLUMN environment_binding_json TEXT",
+    "ALTER TABLE agentic_trajectories ADD COLUMN test_receipt_json TEXT",
+    "ALTER TABLE agentic_trajectories ADD COLUMN side_effect_class TEXT NOT NULL DEFAULT 'none'",
+    "ALTER TABLE duplex_timelines ADD COLUMN timeline_source TEXT",
+    "ALTER TABLE duplex_timelines ADD COLUMN audio_input_sha256 TEXT",
+    "ALTER TABLE duplex_timelines ADD COLUMN audio_output_sha256 TEXT",
+    "ALTER TABLE duplex_timelines ADD COLUMN event_alignment_ppm INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE duplex_timelines ADD COLUMN human_adjudication TEXT",
+    "ALTER TABLE duplex_timelines ADD COLUMN evidence_kind TEXT",
+)
 
 
 class Registry:
@@ -140,9 +251,76 @@ class Registry:
             count = connection.execute("SELECT count(*) FROM schema_meta").fetchone()[0]
             if count == 0:
                 connection.execute("INSERT INTO schema_meta(version) VALUES (?)", (SCHEMA_VERSION,))
-            elif connection.execute("SELECT version FROM schema_meta").fetchone()[0] != SCHEMA_VERSION:
-                raise RuntimeError("unsupported registry schema version")
+            else:
+                version = connection.execute("SELECT version FROM schema_meta").fetchone()[0]
+                if version == 1:
+                    self._migrate_v2(connection)
+                elif version != SCHEMA_VERSION:
+                    raise RuntimeError("unsupported registry schema version")
+            connection.executescript(TRIGGERS_V2)
         self.path.chmod(0o600)
+
+    def _migrate_v2(self, connection: sqlite3.Connection) -> None:
+        backup_dir = self.path.parent / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        backup_path = backup_dir / f"registry-v1-{self.now()}.sqlite3"
+        with sqlite3.connect(backup_path) as backup:
+            connection.backup(backup)
+        backup_path.chmod(0o600)
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            for statement in MIGRATION_V2:
+                connection.execute(statement)
+            connection.execute(
+                """UPDATE sources
+                   SET corpus_class=CASE
+                     WHEN training_status='holdout' THEN 'evaluation_corpus'
+                     WHEN origin='locally-generated-foundry-pilot' THEN 'infrastructure_fixture'
+                     WHEN training_status='accepted' THEN 'accepted_corpus'
+                     ELSE 'quarantine_real_corpus' END,
+                       evaluation_status=CASE
+                         WHEN training_status='holdout' THEN 'reserved_group'
+                         ELSE NULL END"""
+            )
+            rows = connection.execute(
+                "SELECT sample_id,object_sha256,duration_ms,normalized_text FROM audio_samples"
+            )
+            for row in rows:
+                fingerprint = self.segment_fingerprint(
+                    row["object_sha256"], 0, row["duration_ms"], row["normalized_text"]
+                )
+                connection.execute(
+                    """UPDATE audio_samples
+                       SET parent_object_sha256=?,segment_start_ms=0,segment_end_ms=?,
+                           segment_fingerprint=?
+                       WHERE sample_id=?""",
+                    (row["object_sha256"], row["duration_ms"], fingerprint, row["sample_id"]),
+                )
+            connection.execute(
+                """UPDATE agentic_trajectories
+                   SET verification_status=CASE
+                     WHEN execution_backed=1 THEN 'unverified'
+                     WHEN verified=1 THEN 'synthetic_expected'
+                     WHEN failure_recovery=1 THEN 'failed'
+                     ELSE 'unverified' END"""
+            )
+            connection.execute(
+                """UPDATE duplex_timelines
+                   SET timeline_source='locally-generated-foundry-pilot',
+                       evidence_kind='synthetic'"""
+            )
+            connection.execute("UPDATE schema_meta SET version=2")
+            connection.commit()
+        except BaseException:
+            connection.rollback()
+            raise
+
+    @staticmethod
+    def segment_fingerprint(
+        parent_object_sha256: str, start_ms: int, end_ms: int, normalized_text: str
+    ) -> str:
+        body = f"{parent_object_sha256}\0{start_ms}\0{end_ms}\0{normalized_text}".encode()
+        return hashlib.sha256(body).hexdigest()
 
     @contextlib.contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:

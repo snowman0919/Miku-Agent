@@ -13,7 +13,7 @@ import pytest
 
 from miku_gpu_worker import metrics
 from miku_gpu_worker.errors import WorkerError
-from miku_gpu_worker.executor import Worker, run_with_oom_backoff
+from miku_gpu_worker.executor import IMPLEMENTED_TASKS, Worker, run_with_oom_backoff
 from miku_gpu_worker.hashing import transform_fingerprint
 from miku_gpu_worker.locking import GpuLock
 from miku_gpu_worker.protocol import assert_noncanonical_output, validate_job_package, validate_schema
@@ -46,7 +46,7 @@ def make_package(root: Path, job_id: str = "job-1", task: str = "audio_quality")
     write_json(package / "job.json", {"protocol_version": 1, "job_id": job_id, "task_type": task, "created_at": "2026-09-03T00:00:00Z", "priority": 50, "inputs": [item], "transform": {"name": task, "version": "reference-1", "parameters": {}}, "resource_request": {"gpu_count": 0, "min_vram_bytes": 0, "cpu_threads": None, "ram_bytes": None}})
     write_json(package / "input-manifest.json", {"protocol_version": 1, "job_id": job_id, "inputs": [{key: item[key] for key in ("id", "sha256", "size_bytes")} ]})
     write_json(package / "worker-spec.json", {"protocol_version": 1, "code_commit": CODE_COMMIT, "software_environment": {"python": "3.11"}, "determinism": "deterministic", "seed": 0, "model_binding": None})
-    write_json(package / "source-binding.json", {"protocol_version": 1, "job_id": job_id, "source_ids": ["synthetic-fixture"], "rights_status": "owned"})
+    write_json(package / "source-binding.json", {"protocol_version": 1, "job_id": job_id, "foundry_code_commit": CODE_COMMIT, "source_ids": ["synthetic-fixture"], "rights_status": "owned"})
     return package
 
 
@@ -124,7 +124,7 @@ def test_failed_job_never_promotes_partial_output(tmp_path: Path) -> None:
     result = json.loads((target / "result.json").read_text())
     assert target.parent.name == "failed"
     assert result["status"] == "failed"
-    assert result["errors"][0]["code"] == "MODEL_ACCESS_FAILED"
+    assert result["errors"][0]["code"] == "MODEL_HASH_MISMATCH"
 
 
 def _hold_lock(path: str, ready: multiprocessing.Event) -> None:
@@ -211,13 +211,27 @@ def test_reference_backend_rejects_false_model_binding(tmp_path: Path) -> None:
     worker = Worker(tmp_path / "worker")
     package = make_package(tmp_path / "source")
     spec = json.loads((package / "worker-spec.json").read_text())
-    spec["model_binding"] = {"model_id": "unrelated/model", "revision": "1" * 40, "weight_sha256": "2" * 64, "config_sha256": "3" * 64, "license": "test"}
+    spec["model_binding"] = {
+        "model_id": "unrelated/model",
+        "revision": "1" * 40,
+        "weight_sha256": "2" * 64,
+        "config_sha256": "3" * 64,
+        "environment_lock_sha256": "4" * 64,
+        "dtype": "float16",
+        "license": "test",
+    }
     write_json(package / "worker-spec.json", spec)
     worker.submit(package)
     target = worker.run("job-1")
     result = json.loads((target / "result.json").read_text())
     assert target.parent.name == "failed"
     assert result["errors"][0]["code"] == "MODEL_HASH_MISMATCH"
+
+
+def test_required_model_tasks_are_connected() -> None:
+    assert {
+        "source_separation", "asr_transcribe", "forced_alignment", "speaker_embedding"
+    } <= IMPLEMENTED_TASKS.keys()
 
 
 def test_wsl_nvidia_smi_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
