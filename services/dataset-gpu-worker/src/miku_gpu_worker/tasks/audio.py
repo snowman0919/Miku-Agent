@@ -71,6 +71,18 @@ def run_audio_quality(path: Path, _: dict[str, Any]) -> dict[str, Any]:
     return basic
 
 
+def _f0(frame: list[float], rate: int, minimum: float = 80, maximum: float = 500) -> float | None:
+    mean = sum(frame) / len(frame)
+    centered = [value - mean for value in frame]
+    minimum_lag = max(1, int(rate / maximum))
+    maximum_lag = min(len(frame) - 2, int(rate / minimum))
+    if maximum_lag <= minimum_lag:
+        return None
+    correlations = [sum(centered[index] * centered[index + lag] for index in range(len(centered) - lag)) for lag in range(minimum_lag, maximum_lag + 1)]
+    best = max(range(len(correlations)), key=correlations.__getitem__)
+    return rate / (minimum_lag + best) if correlations[best] > 0 else None
+
+
 def run_prosody(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
     basic, samples, rate = _basic(path)
     frame_ms = int(parameters.get("frame_ms", 20))
@@ -79,8 +91,9 @@ def run_prosody(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
     for start in range(0, len(samples), frame_size):
         frame = samples[start:start + frame_size]
         energy.append(math.sqrt(sum(value * value for value in frame) / len(frame)))
-    threshold = max(0.005, sorted(energy)[max(0, len(energy) // 5 - 1)] * 2)
+    threshold = min(max(0.005, sorted(energy)[max(0, len(energy) // 5 - 1)] * 2), max(energy) * 0.5)
     voiced = [value >= threshold for value in energy]
+    f0 = [_f0(samples[start:start + frame_size], rate) if active else None for start, active in zip(range(0, len(samples), frame_size), voiced)]
     pauses = []
     pause_start = None
     for index, active in enumerate(voiced + [True]):
@@ -89,15 +102,16 @@ def run_prosody(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
         elif active and pause_start is not None:
             pauses.append({"start_seconds": pause_start * frame_ms / 1000, "end_seconds": index * frame_ms / 1000})
             pause_start = None
+    voiced_f0 = [value for value in f0 if value is not None]
+    voiced_starts = sum(active and (index == 0 or not voiced[index - 1]) for index, active in enumerate(voiced))
     return {
         "duration_seconds": basic["duration_seconds"],
         "frame_ms": frame_ms,
         "energy_rms": energy,
-        "voiced_proxy": voiced,
+        "voiced": voiced,
         "pause_intervals": pauses,
-        "speaking_rate_estimate": None,
-        "f0_hz": None,
-        "pitch_range_hz": None,
-        "limitations": ["F0 requires a pinned model backend", "voicing is an energy proxy"],
+        "speaking_rate_estimate": voiced_starts / basic["duration_seconds"],
+        "f0_hz": f0,
+        "pitch_range_hz": None if not voiced_f0 else max(voiced_f0) - min(voiced_f0),
+        "limitations": ["F0 uses reference autocorrelation", "voicing and speaking rate are energy proxies", "NOT CALIBRATED"],
     }
-

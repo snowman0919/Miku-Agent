@@ -10,5 +10,5 @@
     "worker": {"type": "object"}, "outputs": {"type": "array"}, "warnings": {"type": "array", "items": {"type": "string"}},
     "errors": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["code", "message", "retryable"], "properties": {"code": {"enum": ["INPUT_HASH_MISMATCH", "INPUT_DECODE_FAILED", "MODEL_ACCESS_FAILED", "MODEL_HASH_MISMATCH", "UNSUPPORTED_FORMAT", "CUDA_OOM", "CUDA_KERNEL_ERROR", "OUT_OF_DISK", "TIMEOUT", "CANCELLED", "MODEL_OUTPUT_INVALID", "OUTPUT_HASH_FAILED", "ENVIRONMENT_MISMATCH", "UNKNOWN"]}, "message": {"type": "string"}, "retryable": {"type": "boolean"}}}}
   },
-  "allOf": [{"if": {"properties": {"status": {"const": "completed"}}}, "then": {"properties": {"errors": {"maxItems": 0}}}}, {"if": {"properties": {"status": {"const": "failed"}}}, "then": {"properties": {"errors": {"minItems": 1}}}}]
+  "allOf": [{"if": {"properties": {"status": {"const": "completed"}}}, "then": {"properties": {"errors": {"maxItems": 0}, "outputs": {"minItems": 1}}}}, {"if": {"properties": {"status": {"const": "failed"}}}, "then": {"properties": {"errors": {"minItems": 1}}}}]
 }

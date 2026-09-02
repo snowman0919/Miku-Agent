@@ -34,8 +34,7 @@ class WorkerError(Exception):
     def __post_init__(self) -> None:
         if self.code not in ERROR_CODES:
             raise ValueError(f"unknown worker error code: {self.code}")
-        super().__init__(self.message)
+        Exception.__init__(self, self.message)
 
     def as_dict(self) -> dict[str, object]:
         return {"code": self.code, "message": self.message, "retryable": self.retryable}
-

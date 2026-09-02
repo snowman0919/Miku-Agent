@@ -26,12 +26,12 @@ inbox snapshot을 한 번 drain하므로 user session scheduler가 반복 호출
 
 - protocol/core: schema, input hash, fingerprint, atomic rename, output manifest,
   structured error, OS GPU lock, stale recovery, cache verification 구현
-- reference transform: PCM16 WAV `audio_quality`, `prosody_extract` 구현
-- model transform: allowlist와 failure boundary만 구현; pinned backend 미설치 시
-  `MODEL_ACCESS_FAILED`
+- reference transform: PCM16 WAV `audio_quality`, frame별 F0/energy/voicing을 보존하는
+  `prosody_extract` 구현
+- model transform: 재현 가능한 benchmark runner와 pinned registry까지 구현했다. Job
+  protocol adapter는 아직 연결하지 않았으며 미설치 task는 `MODEL_ACCESS_FAILED`다.
 - canonical decision: 출력에서 `accepted_for_training`, `training_status`,
   `rights_status`, `eval_split`을 재귀적으로 거부
 
 Reference transform의 quality와 voicing 값은 `NOT CALIBRATED` proxy이며 canonical
 accept/reject 근거가 아니다.
-

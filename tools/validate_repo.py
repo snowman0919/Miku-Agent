@@ -296,11 +296,14 @@ def check_manifest_integrity() -> Check:
     if manifest["accepted_adrs"] != expected_adrs:
         raise AssertionError("manifest accepted ADR inventory is incomplete or out of order")
     definition = manifest["release_identity"]["definition_commit"]
-    binding_mode = validate_definition_binding(definition, allow_preparation=True)
+    tag = manifest["release_identity"].get("tag")
+    tag_exists = bool(tag) and git("rev-parse", "--verify", f"refs/tags/{tag}", check=False).returncode == 0
+    release_ref = tag if tag_exists else "HEAD"
+    binding_mode = validate_definition_binding(definition, release_ref=release_ref, allow_preparation=True)
     validate_document_hashes(definition, manifest["document_hashes"])
     return Check(
         "release manifest integrity", "PASS",
-        f"format 2 {binding_mode}; {len(manifest['document_hashes'])} hashes bound to {definition}",
+        f"format 2 {binding_mode} at {release_ref}; {len(manifest['document_hashes'])} hashes bound to {definition}",
     )
 
 

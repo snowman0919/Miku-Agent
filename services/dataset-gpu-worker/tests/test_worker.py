@@ -11,12 +11,14 @@ from pathlib import Path
 
 import pytest
 
+from miku_gpu_worker import metrics
 from miku_gpu_worker.errors import WorkerError
 from miku_gpu_worker.executor import Worker, run_with_oom_backoff
 from miku_gpu_worker.hashing import transform_fingerprint
 from miku_gpu_worker.locking import GpuLock
 from miku_gpu_worker.protocol import assert_noncanonical_output, validate_job_package, validate_schema
 from miku_gpu_worker.registry import load_registry
+from miku_gpu_worker.tasks.audio import run_prosody
 
 CODE_COMMIT = "1" * 40
 
@@ -61,6 +63,32 @@ def test_integrity_atomic_completion_output_hash_and_cache(tmp_path: Path) -> No
     worker.submit(second)
     cached = worker.run("job-2")
     assert json.loads((cached / "metrics.json").read_text())["cache_hit"] is True
+    assert (cached / "outputs" / "features.json").read_bytes() == (completed / "outputs" / "features.json").read_bytes()
+
+
+def test_corrupted_cache_is_not_used(tmp_path: Path) -> None:
+    worker = Worker(tmp_path / "worker")
+    package = make_package(tmp_path / "source", "job-1")
+    worker.submit(package); completed = worker.run("job-1")
+    (completed / "outputs" / "features.json").write_text("corrupt", encoding="utf-8")
+    second = make_package(tmp_path / "source", "job-2")
+    worker.submit(second); rerun = worker.run("job-2")
+    assert rerun.parent.name == "completed"
+    assert json.loads((rerun / "metrics.json").read_text())["cache_hit"] is False
+
+
+def test_cache_copy_revalidates_bytes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    worker = Worker(tmp_path / "worker")
+    package = make_package(tmp_path / "source", "job-1")
+    worker.submit(package); completed = worker.run("job-1")
+    original = __import__("shutil").copy2
+    def corrupt(source: Path, destination: Path, **kwargs: object) -> None:
+        original(source, destination, **kwargs); Path(destination).write_bytes(b"changed")
+    monkeypatch.setattr("miku_gpu_worker.executor.shutil.copy2", corrupt)
+    second = make_package(tmp_path / "source", "job-2")
+    worker.submit(second); failed = worker.run("job-2")
+    assert failed.parent.name == "failed"
+    assert json.loads((failed / "result.json").read_text())["errors"][0]["code"] == "OUTPUT_HASH_FAILED"
 
 
 def test_corrupt_or_wrong_hash_is_rejected(tmp_path: Path) -> None:
@@ -129,6 +157,35 @@ def test_stale_recovery_and_bounded_oom_retry(tmp_path: Path) -> None:
     assert seen == [64, 32]
 
 
+def test_stale_recovery_skips_job_with_live_owner_lock(tmp_path: Path) -> None:
+    worker = Worker(tmp_path / "worker")
+    stale = worker.state_path("running", "active-job"); stale.mkdir()
+    os.utime(stale, (0, 0))
+    with worker.job_lock("active-job"):
+        assert worker.recover_stale(1) == []
+        assert stale.exists()
+
+
+def test_stale_recovery_does_not_promote_forged_completion(tmp_path: Path) -> None:
+    worker = Worker(tmp_path / "worker")
+    stale = worker.state_path("running", "forged"); stale.mkdir()
+    write_json(stale / "result.json", {"protocol_version": 1, "job_id": "forged", "status": "completed", "task_type": "audio_quality", "transform_fingerprint": "1" * 64, "started_at": "2026-09-03T00:00:00Z", "completed_at": "2026-09-03T00:00:01Z", "worker": {}, "outputs": [{"path": "outputs/x", "sha256": "2" * 64, "size_bytes": 1, "media_type": "application/octet-stream", "logical_role": "x", "sample_rate": None, "duration_seconds": None}], "warnings": [], "errors": []})
+    os.utime(stale, (0, 0))
+    assert worker.recover_stale(1) == ["forged"]
+    assert worker.state_path("failed", "forged").exists()
+
+
+def test_input_snapshot_prevents_post_validation_mutation(tmp_path: Path) -> None:
+    worker = Worker(tmp_path / "worker")
+    package = make_package(tmp_path / "source")
+    job, _ = validate_job_package(package)
+    snapshot = worker._snapshot_input(package, job["inputs"][0])
+    original = snapshot.read_bytes()
+    (package / "inputs" / "input-0.wav").write_bytes(b"replaced")
+    assert snapshot.read_bytes() == original
+    assert snapshot.stat().st_mode & 0o222 == 0
+
+
 def test_fingerprint_model_binding_and_canonical_boundary(tmp_path: Path) -> None:
     package = make_package(tmp_path)
     job, spec = validate_job_package(package)
@@ -145,4 +202,33 @@ def test_result_schema_rejects_false_completion() -> None:
     value = {"protocol_version": 1, "job_id": "x", "status": "completed", "task_type": "audio_quality", "transform_fingerprint": "1" * 64, "started_at": "2026-09-03T00:00:00Z", "completed_at": "2026-09-03T00:00:01Z", "worker": {}, "outputs": [], "warnings": [], "errors": [{"code": "UNKNOWN", "message": "bad", "retryable": False}]}
     with pytest.raises(WorkerError):
         validate_schema("result", value)
+    value["errors"] = []
+    with pytest.raises(WorkerError):
+        validate_schema("result", value)
 
+
+def test_reference_backend_rejects_false_model_binding(tmp_path: Path) -> None:
+    worker = Worker(tmp_path / "worker")
+    package = make_package(tmp_path / "source")
+    spec = json.loads((package / "worker-spec.json").read_text())
+    spec["model_binding"] = {"model_id": "unrelated/model", "revision": "1" * 40, "weight_sha256": "2" * 64, "config_sha256": "3" * 64, "license": "test"}
+    write_json(package / "worker-spec.json", spec)
+    worker.submit(package)
+    target = worker.run("job-1")
+    result = json.loads((target / "result.json").read_text())
+    assert target.parent.name == "failed"
+    assert result["errors"][0]["code"] == "MODEL_HASH_MISMATCH"
+
+
+def test_wsl_nvidia_smi_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(metrics.shutil, "which", lambda _: None)
+    monkeypatch.setattr(metrics.Path, "is_file", lambda _: True)
+    monkeypatch.setattr(metrics.os, "access", lambda *_: True)
+    assert metrics.nvidia_smi_command() == "/usr/lib/wsl/lib/nvidia-smi"
+
+
+def test_prosody_preserves_temporal_f0_features(tmp_path: Path) -> None:
+    path = tmp_path / "tone.wav"; make_wav(path)
+    result = run_prosody(path, {"frame_ms": 40})
+    assert len(result["f0_hz"]) == len(result["energy_rms"]) == len(result["voiced"])
+    assert any(value is not None for value in result["f0_hz"])

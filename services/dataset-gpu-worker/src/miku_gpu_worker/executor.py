@@ -14,15 +14,12 @@ from typing import Any, Callable
 from .errors import WorkerError
 from .hashing import canonical_json_bytes, sha256_file, transform_fingerprint
 from .locking import GpuLock
-from .metrics import MetricsRecorder, environment_snapshot
+from .metrics import GpuSampler, MetricsRecorder, environment_snapshot, nvidia_smi_command
 from .protocol import assert_noncanonical_output, resolve_package_path, validate_job_package, validate_schema
 from .tasks import run_audio_quality, run_prosody
 
 Task = Callable[[Path, dict[str, Any]], dict[str, Any]]
-IMPLEMENTED_TASKS: dict[str, Task] = {
-    "audio_quality": run_audio_quality,
-    "prosody_extract": run_prosody,
-}
+IMPLEMENTED_TASKS: dict[str, Task] = {"audio_quality": run_audio_quality, "prosody_extract": run_prosody}
 STATES = ("inbox", "running", "completed", "failed", "cancelled")
 
 
@@ -59,7 +56,7 @@ class Worker:
         self.root = root.resolve()
         for state in STATES:
             (self.root / "jobs" / state).mkdir(parents=True, exist_ok=True)
-        for relative in ("objects/input-cache", "objects/output-cache", "models", "environments", "metrics", "logs", "tmp"):
+        for relative in ("jobs/.locks", "objects/input-cache", "objects/output-cache", "models", "environments", "metrics", "logs", "tmp"):
             (self.root / relative).mkdir(parents=True, exist_ok=True)
 
     def state_path(self, state: str, job_id: str) -> Path:
@@ -67,41 +64,119 @@ class Worker:
             raise ValueError("unsafe state or job ID")
         return self.root / "jobs" / state / job_id
 
+    def job_lock(self, job_id: str) -> GpuLock:
+        self.state_path("inbox", job_id)
+        return GpuLock(self.root / "jobs" / ".locks" / f"{job_id}.lock")
+
     def submit(self, source: Path) -> Path:
         job, _ = validate_job_package(source)
-        target = self.state_path("inbox", job["job_id"])
-        if any(self.state_path(state, job["job_id"]).exists() for state in STATES):
-            raise FileExistsError(f"job already exists: {job['job_id']}")
-        staging = self.root / "tmp" / f"submit-{job['job_id']}-{os.getpid()}"
-        shutil.copytree(source, staging, symlinks=False)
-        validate_job_package(staging)
-        staging.replace(target)
-        return target
+        with self.job_lock(job["job_id"]):
+            target = self.state_path("inbox", job["job_id"])
+            if any(self.state_path(state, job["job_id"]).exists() for state in STATES):
+                raise FileExistsError(f"job already exists: {job['job_id']}")
+            staging = self.root / "tmp" / f"submit-{job['job_id']}-{os.getpid()}"
+            try:
+                shutil.copytree(source, staging, symlinks=False)
+                validate_job_package(staging)
+                staging.replace(target)
+            except Exception:
+                if staging.exists():
+                    shutil.rmtree(staging)
+                raise
+            return target
 
     def _gpu_preflight(self, job: dict[str, Any]) -> None:
         request = job["resource_request"]
         if request["gpu_count"] == 0:
             return
+        command = nvidia_smi_command()
+        if command is None:
+            raise WorkerError("ENVIRONMENT_MISMATCH", "requested GPU is unavailable")
         try:
-            output = subprocess.run(
-                ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            lines = subprocess.run(
+                [command, "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
                 check=True, capture_output=True, text=True, timeout=5,
             ).stdout.splitlines()
-            free_bytes = int(output[0].strip()) * 1024 * 1024
+            free_bytes = int(lines[0].strip()) * 1024 * 1024
         except (FileNotFoundError, subprocess.SubprocessError, ValueError, IndexError) as exc:
             raise WorkerError("ENVIRONMENT_MISMATCH", "requested GPU is unavailable") from exc
         if free_bytes < request["min_vram_bytes"]:
             raise WorkerError("ENVIRONMENT_MISMATCH", "available VRAM is below resource request")
 
+    def _snapshot_input(self, package: Path, item: dict[str, Any]) -> Path:
+        source = resolve_package_path(package, item["path"])
+        suffix = Path(item["path"]).suffix.lower()
+        target = self.root / "objects" / "input-cache" / f"{item['sha256']}{suffix}"
+        if target.is_file() and target.stat().st_size == item["size_bytes"] and sha256_file(target) == item["sha256"]:
+            return target
+        temporary = self.root / "tmp" / f"input-{item['sha256']}-{os.getpid()}"
+        try:
+            with source.open("rb") as reader, temporary.open("xb") as writer:
+                shutil.copyfileobj(reader, writer, length=1024 * 1024)
+                writer.flush()
+                os.fsync(writer.fileno())
+            if temporary.stat().st_size != item["size_bytes"] or sha256_file(temporary) != item["sha256"]:
+                raise WorkerError("INPUT_HASH_MISMATCH", f"input changed during snapshot: {item['id']}")
+            os.chmod(temporary, 0o444)
+            try:
+                os.link(temporary, target)
+            except FileExistsError:
+                if target.stat().st_size != item["size_bytes"] or sha256_file(target) != item["sha256"]:
+                    raise WorkerError("INPUT_HASH_MISMATCH", "content-addressed input cache conflict")
+            return target
+        finally:
+            if temporary.exists():
+                temporary.unlink()
+
+    def _verify_package(self, package: Path, expected_fingerprint: str | None = None) -> bool:
+        try:
+            result = json.loads((package / "result.json").read_text(encoding="utf-8"))
+            validate_schema("result", result)
+            if result["status"] != "completed" or result["job_id"] != package.name or not isinstance(result["transform_fingerprint"], str) or (expected_fingerprint and result["transform_fingerprint"] != expected_fingerprint):
+                return False
+            manifest = json.loads((package / "output-manifest.json").read_text(encoding="utf-8"))
+            validate_schema("output-manifest", manifest)
+            if manifest["job_id"] != result["job_id"] or manifest["outputs"] != result["outputs"]:
+                return False
+            for item in manifest["outputs"]:
+                path = resolve_package_path(package, item["path"])
+                if path.stat().st_size != item["size_bytes"] or sha256_file(path) != item["sha256"]:
+                    return False
+                if item["media_type"] == "application/json":
+                    assert_noncanonical_output(json.loads(path.read_text(encoding="utf-8")))
+            return True
+        except (OSError, ValueError, json.JSONDecodeError, WorkerError):
+            return False
+
     def find_cache(self, fingerprint: str) -> Path | None:
         pointer = self.root / "objects" / "output-cache" / fingerprint
         if not pointer.is_file():
             return None
-        job_id = pointer.read_text(encoding="utf-8").strip()
-        result = self.state_path("completed", job_id)
-        return result if (result / "result.json").is_file() else None
+        try:
+            result = self.state_path("completed", pointer.read_text(encoding="utf-8").strip())
+        except (OSError, ValueError):
+            return None
+        return result if self._verify_package(result, fingerprint) else None
+
+    def _materialize_cache(self, cached: Path, running: Path, job_id: str) -> dict[str, Any]:
+        source_manifest = json.loads((cached / "output-manifest.json").read_text(encoding="utf-8"))
+        outputs = []
+        for item in source_manifest["outputs"]:
+            source = resolve_package_path(cached, item["path"])
+            destination = running / item["path"]
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination, follow_symlinks=False)
+            if destination.stat().st_size != item["size_bytes"] or sha256_file(destination) != item["sha256"]:
+                raise WorkerError("OUTPUT_HASH_FAILED", f"cache output changed during copy: {item['path']}")
+            copied = dict(item)
+            outputs.append(copied)
+        return {"protocol_version": 1, "job_id": job_id, "outputs": outputs}
 
     def run(self, job_id: str, *, force: bool = False) -> Path:
+        with self.job_lock(job_id):
+            return self._run_owned(job_id, force=force)
+
+    def _run_owned(self, job_id: str, *, force: bool) -> Path:
         inbox = self.state_path("inbox", job_id)
         running = self.state_path("running", job_id)
         if not inbox.is_dir():
@@ -117,33 +192,37 @@ class Worker:
             cached = None if force else self.find_cache(fingerprint)
             if cached is not None:
                 recorder.cache_hit = True
-                output = {"cache_source_job_id": cached.name, "technical_quality_candidate": None}
+                manifest = self._materialize_cache(cached, running, job_id)
+                recorder.input_duration_seconds = manifest["outputs"][0].get("duration_seconds")
             else:
                 self._gpu_preflight(job)
                 task = IMPLEMENTED_TASKS.get(job["task_type"])
                 if task is None:
                     raise WorkerError("MODEL_ACCESS_FAILED", f"no pinned backend is installed for {job['task_type']}")
-                input_path = resolve_package_path(running, job["inputs"][0]["path"])
+                if worker_spec.get("model_binding") is not None:
+                    raise WorkerError("MODEL_HASH_MISMATCH", f"{job['task_type']} reference backend cannot honor a model binding")
+                input_path = self._snapshot_input(running, job["inputs"][0])
+                sampler = GpuSampler(recorder) if job["resource_request"]["gpu_count"] else None
                 with GpuLock(self.root / "gpu0.lock"):
-                    output = task(input_path, job["transform"].get("parameters", {}))
+                    if sampler is None:
+                        output = task(input_path, job["transform"].get("parameters", {}))
+                    else:
+                        with sampler:
+                            output = task(input_path, job["transform"].get("parameters", {}))
+                assert_noncanonical_output(output)
+                outputs = running / "outputs"
+                outputs.mkdir(exist_ok=True)
+                atomic_json(outputs / "features.json", output)
                 recorder.input_duration_seconds = output.get("duration_seconds")
-            assert_noncanonical_output(output)
-            outputs = running / "outputs"
-            outputs.mkdir(exist_ok=True)
-            atomic_json(outputs / "features.json", output)
-            manifest = {
-                "protocol_version": 1,
-                "job_id": job_id,
-                "outputs": [{
+                manifest = {"protocol_version": 1, "job_id": job_id, "outputs": [{
                     "path": "outputs/features.json", "sha256": sha256_file(outputs / "features.json"),
                     "size_bytes": (outputs / "features.json").stat().st_size,
                     "media_type": "application/json", "logical_role": "technical_scores",
                     "sample_rate": None, "duration_seconds": recorder.input_duration_seconds,
-                }],
-            }
+                }]}
             validate_schema("output-manifest", manifest)
             atomic_json(running / "output-manifest.json", manifest)
-            recorder.output_count = 1
+            recorder.output_count = len(manifest["outputs"])
             metrics = recorder.finish()
             validate_schema("metrics", metrics)
             atomic_json(running / "metrics.json", metrics)
@@ -160,11 +239,12 @@ class Worker:
             target = self.state_path("completed", job_id)
             running.replace(target)
             if not recorder.cache_hit and fingerprint is not None:
-                pointer = self.root / "objects" / "output-cache" / fingerprint
-                pointer.write_text(job_id + "\n", encoding="utf-8")
+                (self.root / "objects" / "output-cache" / fingerprint).write_text(job_id + "\n", encoding="utf-8")
             return target
         except Exception as exc:
+            recorder.error_count = 1
             error = exc if isinstance(exc, WorkerError) else WorkerError("UNKNOWN", str(exc))
+            atomic_json(running / "metrics.json", recorder.finish())
             failure = {
                 "protocol_version": 1, "job_id": job_id, "status": "failed",
                 "task_type": None if job is None else job["task_type"],
@@ -172,6 +252,7 @@ class Worker:
                 "completed_at": utc_now(), "worker": {}, "outputs": [], "warnings": [],
                 "errors": [error.as_dict()],
             }
+            validate_schema("result", failure)
             atomic_json(running / "result.json", failure)
             target = self.state_path("failed", job_id)
             running.replace(target)
@@ -183,25 +264,33 @@ class Worker:
         for path in sorted((self.root / "jobs" / "running").iterdir()):
             if not path.is_dir() or now - path.stat().st_mtime < stale_after_seconds:
                 continue
-            result = path / "result.json"
-            target_state = "completed" if result.is_file() and json.loads(result.read_text(encoding="utf-8")).get("status") == "completed" else "failed"
-            if target_state == "failed" and not result.exists():
-                atomic_json(result, {
-                    "protocol_version": 1, "job_id": path.name, "status": "failed", "task_type": None,
-                    "transform_fingerprint": None, "started_at": None, "completed_at": utc_now(),
-                    "worker": {}, "outputs": [], "warnings": [],
-                    "errors": [WorkerError("UNKNOWN", "stale running job recovered").as_dict()],
-                })
-            path.replace(self.state_path(target_state, path.name))
-            recovered.append(path.name)
+            lock = self.job_lock(path.name)
+            try:
+                lock.acquire()
+            except BlockingIOError:
+                continue
+            try:
+                if not path.exists() or now - path.stat().st_mtime < stale_after_seconds:
+                    continue
+                result = path / "result.json"
+                try:
+                    job, worker_spec = validate_job_package(path)
+                    expected_fingerprint = transform_fingerprint(job, worker_spec)
+                except (OSError, ValueError, json.JSONDecodeError, WorkerError):
+                    expected_fingerprint = None
+                target_state = "completed" if expected_fingerprint and self._verify_package(path, expected_fingerprint) else "failed"
+                if target_state == "failed" and not result.exists():
+                    atomic_json(result, {
+                        "protocol_version": 1, "job_id": path.name, "status": "failed", "task_type": None,
+                        "transform_fingerprint": None, "started_at": None, "completed_at": utc_now(),
+                        "worker": {}, "outputs": [], "warnings": [],
+                        "errors": [WorkerError("UNKNOWN", "stale running job recovered").as_dict()],
+                    })
+                path.replace(self.state_path(target_state, path.name))
+                recovered.append(path.name)
+            finally:
+                lock.release()
         return recovered
 
     def verify(self, job_id: str) -> bool:
-        package = self.state_path("completed", job_id)
-        manifest = json.loads((package / "output-manifest.json").read_text(encoding="utf-8"))
-        validate_schema("output-manifest", manifest)
-        for item in manifest["outputs"]:
-            path = resolve_package_path(package, item["path"])
-            if path.stat().st_size != item["size_bytes"] or sha256_file(path) != item["sha256"]:
-                return False
-        return True
+        return self._verify_package(self.state_path("completed", job_id))
