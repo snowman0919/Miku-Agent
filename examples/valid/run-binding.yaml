@@ -1,0 +1,27 @@
+run_id: null
+source:
+  repository: snowman0919/Miku-Agent
+  release_tag: v0.0.1
+  release_commit: null
+  definition_commit: null
+  product_lock_sha256: null
+model:
+  repository: null
+  revision: null
+  checkpoint_hashes: {}
+software:
+  container_digest: null
+  nemo_commit: null
+  python_version: null
+  pytorch_version: null
+  cuda_runtime: null
+  driver_version: null
+hardware:
+  gpu: null
+  vram_bytes: null
+  cpu: null
+  ram_bytes: null
+  disk: null
+configuration:
+  dtype: null
+  quantization: none

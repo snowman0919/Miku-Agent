@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://miku-agent.invalid/schemas/project-state.schema.json",
-  "title": "Project State",
+  "title": "Project State V0.0.1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["product_version", "phase", "status", "execution_environment", "server_use_allowed_from", "initial_character", "authentication", "repository_visibility", "public_distribution", "model_training_started", "dataset_collection_started", "server_validation_started"],
+  "required": ["product_version", "phase", "status", "execution_environment", "server_use_allowed_from", "initial_character", "authentication", "repository_visibility", "public_distribution", "model_training_started", "dataset_collection_started", "server_validation_started", "previous_release", "release_evidence_format"],
   "properties": {
-    "product_version": {"const": "0.0.0"},
-    "phase": {"const": "product-definition-lock"},
+    "product_version": {"const": "0.0.1"},
+    "phase": {"const": "release-evidence-correction"},
     "status": {"const": "locked"},
     "execution_environment": {"const": "local-only"},
     "server_use_allowed_from": {"const": "0.1.0"},
@@ -17,6 +17,8 @@
     "public_distribution": {"const": false},
     "model_training_started": {"const": false},
     "dataset_collection_started": {"const": false},
-    "server_validation_started": {"const": false}
+    "server_validation_started": {"const": false},
+    "previous_release": {"const": "v0.0.0"},
+    "release_evidence_format": {"const": 2}
   }
 }

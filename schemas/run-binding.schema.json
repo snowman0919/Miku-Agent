@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/run-binding.schema.json",
+  "title": "V0.1.0 Run Binding Template",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "source", "model", "software", "hardware", "configuration"],
+  "properties": {
+    "run_id": {"type": ["string", "null"], "format": "uuid"},
+    "source": {"type": "object", "additionalProperties": false, "required": ["repository", "release_tag", "release_commit", "definition_commit", "product_lock_sha256"], "properties": {"repository": {"const": "snowman0919/Miku-Agent"}, "release_tag": {"const": "v0.0.1"}, "release_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}, "definition_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}, "product_lock_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}}},
+    "model": {"type": "object", "additionalProperties": false, "required": ["repository", "revision", "checkpoint_hashes"], "properties": {"repository": {"type": ["string", "null"]}, "revision": {"type": ["string", "null"]}, "checkpoint_hashes": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}},
+    "software": {"type": "object", "additionalProperties": false, "required": ["container_digest", "nemo_commit", "python_version", "pytorch_version", "cuda_runtime", "driver_version"], "properties": {"container_digest": {"type": ["string", "null"]}, "nemo_commit": {"type": ["string", "null"]}, "python_version": {"type": ["string", "null"]}, "pytorch_version": {"type": ["string", "null"]}, "cuda_runtime": {"type": ["string", "null"]}, "driver_version": {"type": ["string", "null"]}}},
+    "hardware": {"type": "object", "additionalProperties": false, "required": ["gpu", "vram_bytes", "cpu", "ram_bytes", "disk"], "properties": {"gpu": {"type": ["string", "null"]}, "vram_bytes": {"type": ["integer", "null"], "minimum": 1}, "cpu": {"type": ["string", "null"]}, "ram_bytes": {"type": ["integer", "null"], "minimum": 1}, "disk": {"type": ["string", "null"]}}},
+    "configuration": {"type": "object", "additionalProperties": false, "required": ["dtype", "quantization"], "properties": {"dtype": {"type": ["string", "null"]}, "quantization": {"const": "none"}}}
+  }
+}

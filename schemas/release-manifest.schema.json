@@ -1,21 +1,47 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://miku-agent.invalid/schemas/release-manifest.schema.json",
-  "title": "Release Manifest",
+  "title": "Release Manifest Format 2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["product_version", "repository_commit", "release_date", "phase", "component_versions", "schema_version", "accepted_adrs", "document_hashes", "validation_report", "known_risks", "next_version"],
+  "required": ["product_version", "phase", "previous_release", "release_identity", "component_versions", "schema_version", "accepted_adrs", "document_hashes", "validation_report", "known_risks", "corrections", "next_version"],
   "properties": {
-    "product_version": {"const": "0.0.0"},
-    "repository_commit": {"anyOf": [{"const": "pending-finalization"}, {"type": "string", "pattern": "^[0-9a-f]{40}$"}]},
-    "release_date": {"type": "string", "format": "date"},
-    "phase": {"const": "product-definition-lock"},
-    "component_versions": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}},
-    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
-    "accepted_adrs": {"type": "array", "minItems": 10, "uniqueItems": true, "items": {"type": "string", "pattern": "^ADR-[0-9]{4}$"}},
-    "document_hashes": {"type": "object", "minProperties": 5, "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
-    "validation_report": {"const": "reports/v0.0.0-validation.md"},
+    "product_version": {"const": "0.0.1"},
+    "phase": {"const": "release-evidence-correction"},
+    "previous_release": {"const": "v0.0.0"},
+    "release_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_format", "tag", "definition_commit"],
+      "properties": {
+        "manifest_format": {"const": 2},
+        "tag": {"const": "v0.0.1"},
+        "definition_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "component_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product_contract", "release_evidence_contract", "protocol_contract", "client_runtime", "server_runtime"],
+      "properties": {
+        "product_contract": {"const": "0.0.0"},
+        "release_evidence_contract": {"const": "0.0.1"},
+        "protocol_contract": {"const": "0.0.0"},
+        "client_runtime": {"const": "not-started"},
+        "server_runtime": {"const": "not-started"}
+      }
+    },
+    "schema_version": {"const": "2.0.0"},
+    "accepted_adrs": {"type": "array", "const": ["ADR-0001", "ADR-0002", "ADR-0003", "ADR-0004", "ADR-0005", "ADR-0006", "ADR-0007", "ADR-0008", "ADR-0009", "ADR-0010", "ADR-0011"]},
+    "document_hashes": {"type": "object", "minProperties": 9, "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "validation_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {"path": {"const": "reports/v0.0.1-validation.md"}}
+    },
     "known_risks": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "corrections": {"type": "array", "const": ["non_self_referential_release_identity", "offline_remote_validation_separation"]},
     "next_version": {"const": "0.1.0"}
   }
 }

@@ -14,5 +14,6 @@
 | D-010 | Animation은 procedural/FSM/BT/reaction hybrid이고 per-frame LLM bone 출력을 금지 | animation-and-embodiment.md | ADR-0010 | product-lock.animation | reaction-command | EVAL-CHAR-CONSIST | V0.9.x | accepted |
 | D-011 | Scheduler는 server-side이며 external write는 explicit approval 필요 | scheduler-and-notifications.md | ADR-0007 | product-lock.scheduler | scheduler-task | EVAL-SAFETY | V0.7.x | accepted |
 | D-012 | Dataset acceptance는 rights와 quality/alignment를 모두 요구 | data-governance.md | ADR-0009 | product-lock.data | dataset-source/dataset-sample | EVAL-ASR-CLEAN/EVAL-TTS-CER | V0.2.0 | accepted |
+| D-013 | Release source는 definition commit, release identity는 annotated tag이며 offline validation과 remote audit을 분리 | versioning-and-release.md | ADR-0011 | release-history | release-manifest/release-history | offline validation + release audit | V0.0.1 | accepted |
 
 Schema 표기의 짧은 이름은 `schemas/<name>.schema.json`, machine-readable 경로는 `spec/product-lock.yaml`을 뜻한다.

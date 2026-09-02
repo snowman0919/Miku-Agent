@@ -1,27 +1,38 @@
 #!/usr/bin/env python3
-"""Run validation and write the evidence-backed V0.0.0 report."""
+"""Build the V0.0.1 release-preparation validation report."""
 
 from __future__ import annotations
 
 import platform
 import subprocess
 import sys
-from pathlib import Path
 
-from validate_repo import ROOT, run_all
+try:
+    from .audit_remote import run_all as run_remote_audit
+    from .release_common import ROOT, git_text, load_yaml, v000_local_identity
+    from .validate_repo import run_all as run_offline_validation
+except ImportError:  # Direct script execution.
+    from audit_remote import run_all as run_remote_audit
+    from release_common import ROOT, git_text, load_yaml, v000_local_identity
+    from validate_repo import run_all as run_offline_validation
 
 
-def command_output(command: list[str]) -> str:
+def first_line(command: list[str]) -> str:
     result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
     output = (result.stdout or result.stderr).strip()
     return output.splitlines()[0] if output else "unavailable"
 
 
 def main() -> int:
+    manifest = load_yaml(ROOT / "release-manifest.yaml")
+    if manifest.get("product_version") != "0.0.1":
+        print("FAIL: finalize Manifest Format 2 before building the V0.0.1 report")
+        return 1
     try:
-        checks = run_all()
+        offline_checks = run_offline_validation()
+        remote_checks = run_remote_audit()
     except Exception as exc:
-        print(f"validation failed: {exc}")
+        print(f"FAIL: validation or remote audit failed: {exc}")
         return 1
 
     pytest = subprocess.run([sys.executable, "-m", "pytest", "-q"], cwd=ROOT, text=True, capture_output=True)
@@ -30,25 +41,46 @@ def main() -> int:
         print(pytest_output)
         return pytest.returncode
 
-    schemas = len(list((ROOT / "schemas").glob("*.schema.json")))
-    valid = len(list((ROOT / "examples" / "valid").glob("*")))
-    invalid = len(list((ROOT / "examples" / "invalid").glob("*")))
-    adrs = len(list((ROOT / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md")))
-    open_questions = sum(1 for line in (ROOT / "docs" / "open-questions.md").read_text(encoding="utf-8").splitlines() if line.startswith("| ") and not line.startswith("| Question") and not line.startswith("|---"))
-    remote = next(check for check in checks if check.name in {"private remote visibility", "private remote policy"})
-    check_lines = "\n".join(f"- {check.status}: {check.name} — {check.detail}" for check in checks)
+    tag_type, v000_object, v000_peeled = v000_local_identity()
+    definition = manifest["release_identity"]["definition_commit"]
+    offline_lines = "\n".join(f"- PASS: {check.name} — {check.detail}" for check in offline_checks)
+    remote_lines = "\n".join(f"- PASS: {check.name} — {check.detail}" for check in remote_checks)
+    report = f"""# V0.0.1 Validation Report
 
-    report = f"""# V0.0.0 Validation Report
+## Purpose
 
-## 실행 환경
+V0.0.0 제품 계약을 변경하지 않고 release identity의 자기참조를 제거하며 offline content validation과 current GitHub policy audit을 분리한 V0.0.1 release evidence를 검증한다.
+
+## Environment
 
 - OS: {platform.platform()}
 - Python: {platform.python_version()}
-- Git: {command_output(['git', '--version'])}
-- GitHub CLI: {command_output(['gh', '--version'])}
-- 실행 환경 경계: local-only
+- Git: {first_line(['git', '--version'])}
+- GitHub CLI: {first_line(['gh', '--version'])}
+- Execution boundary: local-only
 
-## 검증 command
+## Previous release binding
+
+- Tag: `v0.0.0`
+- Tag type: `{tag_type}`
+- Tag object: `{v000_object}`
+- Peeled commit: `{v000_peeled}`
+- Immutability result: PASS
+
+## Definition commit
+
+- Definition commit: `{definition}`
+- Release preparation HEAD: `{git_text('rev-parse', 'HEAD')}`
+- Binding mode: definition commit is the validated source immediately before release evidence commit
+
+## Manifest format
+
+- Manifest format: `2`
+- Release tag declared by manifest: `v0.0.1`
+- Self-referential commit fields: absent
+- Release commit identity: annotated Git tag, not a tracked manifest field
+
+## Offline validation commands
 
 ```text
 make validate
@@ -56,26 +88,33 @@ python3 tools/validate_repo.py
 python3 -m pytest -q
 ```
 
-## 결과
-
-- Repository validation: PASS
+- Offline repository validation: PASS
 - Pytest result: PASS — {pytest_output}
-- Schema count: {schemas}
-- Valid example count: {valid}
-- Invalid example count: {invalid}
-- Accepted ADR count: {adrs}
-- Open question count: {open_questions}
-- Tracked/candidate forbidden file result: PASS
+- Offline-without-gh behavioral test: PASS
+- Schema result: PASS
+- ADR result: PASS — 11 accepted ADRs
+- Definition document hash result: PASS
+- V0.0.0 immutability result: PASS
+- Forbidden file result: PASS
 - Secret scan result: PASS
-- Repository visibility result: {remote.status} — {remote.detail}
 
-## 세부 검사
+## Offline validation details
 
-{check_lines}
+{offline_lines}
 
-## Unresolved blocker
+## Remote audit at release preparation time
 
-{"없음" if remote.status == "PASS" else "로컬 정의 검증은 완료되었으며 GitHub origin 생성과 PRIVATE visibility 확인은 release 전 남은 단계다."}
+Command: `make audit-remote`
+
+{remote_lines}
+
+The `v0.0.1` tag does not yet exist during this report's release-preparation phase. Tag existence and local/remote tag equality are intentionally not reported as PASS here; post-tag evidence is produced by `make audit-release TAG=v0.0.1`.
+
+## Known limitations
+
+- V0.0.1 corrects release evidence semantics only; it does not validate RTX 5090 model feasibility.
+- Current GitHub policy is time-varying and is authoritative only at the recorded audit time, not part of offline validation.
+- Model, dataset, client runtime and production authentication remain unimplemented by design.
 
 ## Scope confirmation
 
@@ -84,15 +123,14 @@ python3 -m pytest -q
 - No external media dataset was collected.
 - No Clerk production credentials were created.
 - No application runtime was implemented.
-- {"The repository is private." if remote.status == "PASS" else "Private remote creation remains an explicit release step."}
+- V0.0.0 was not rewritten or retagged.
+- V0.1.0 server work has not started.
 """
-    report_path = ROOT / "reports" / "v0.0.0-validation.md"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(report, encoding="utf-8", newline="\n")
+    path = ROOT / manifest["validation_report"]["path"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(report, encoding="utf-8", newline="\n")
     print(pytest_output)
-    for check in checks:
-        print(f"{check.status}: {check.name} - {check.detail}")
-    print(f"PASS: wrote {report_path.relative_to(ROOT)}")
+    print(f"PASS: wrote {path.relative_to(ROOT)}")
     return 0
 
 

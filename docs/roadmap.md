@@ -3,6 +3,7 @@
 | Stage | Input | Output | Entry gate | Exit gate |
 |---|---|---|---|---|
 | V0.0.0 Product Definition Lock | fixed product decisions | docs, ADR, schema, tests, private tag | local workspace isolated | `make validate`, private visibility, clean tagged commit |
+| V0.0.1 Release Evidence Correction | V0.0.0 immutable tag and audit findings | manifest format 2, split validators, definition binding, annotated patch tag | V0.0.0 local/remote tag match | offline validation, remote/release audits, clean tagged Commit B |
 | V0.1.0 RTX 5090 Reference Feasibility | V0.0.0 tag, model access terms | environment inventory, baseline inference/VRAM/latency/soak report | handoff checklist and authorized server | reproducible baseline or evidence-backed infeasibility |
 | V0.2.0 Dataset Foundry | feasibility findings, rights policy | provenance registry, speech/singing pipeline, effective-hour report | storage/access controls | accepted corpus meets rights/quality/split rules |
 | V0.2.1 Evaluation Harness | locked gates, frozen splits | reproducible component and regression evaluation | datasets versioned | baseline metrics reproducible with confidence reporting |
@@ -14,4 +15,3 @@
 | V0.8.x Flutter Mobile | stable server contracts | character-first mobile client/local reflex | API compatibility frozen | target-device UX, auth, memory, push gates |
 | V0.9.x Unity Desktop and Embodiment | character runtime contract | desktop character and hybrid animation | assets/interaction policy ready | multi-monitor/interaction/voice-body stability |
 | V1.0.0 Personal Miku Agent | all promoted components | private personal release | all stage evidence linked | full V1 acceptance matrix and zero unauthorized effects |
-

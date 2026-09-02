@@ -4,12 +4,12 @@ Miku Agent는 실시간 한국어 음성 대화, 미쿠형 페르소나와 고�
 
 ## 현재 상태
 
-- 버전: `0.0.0`
-- 단계: Product Definition Lock
+- 버전: `0.0.1`
+- 단계: Release Evidence Correction
 - 실행 환경: local-only
 - 초기 캐릭터: `miku`
 
-V0.0.0은 애플리케이션·모델 구현 단계가 아니다. 제품 의미, 컴포넌트 경계, 보안 정책, 데이터 계약, 평가 기준을 문서와 기계 검증 가능한 schema로 잠그는 단계다. 서버 접속, 모델 다운로드·학습, 데이터 수집, Flutter/Unity scaffold, production 인증 구성은 수행하지 않는다.
+V0.0.1은 애플리케이션·모델 구현 단계가 아니다. V0.0.0 제품 계약을 유지하면서 non-self-referential release identity와 offline/remote validation 분리를 교정한다. 서버 접속, 모델 다운로드·학습, 데이터 수집, Flutter/Unity scaffold, production 인증 구성은 수행하지 않는다.
 
 ## V1.0 목표
 
@@ -27,6 +27,8 @@ Python 3.11 이상에서 개발 의존성을 설치한 뒤 실행한다.
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 make validate
+make audit-remote
+make audit-release TAG=v0.0.1
 ```
 
 ## Source of truth
@@ -42,4 +44,4 @@ make validate
 
 ## V0.1.0 진입 조건
 
-모든 V0.0.0 schema와 invariant가 검증되고, validation report가 생성되며, 비공개 원격 가시성이 확인되고, clean한 release commit에 `v0.0.0` annotated tag가 있어야 한다. 그 뒤에만 `docs/handoff/v0.1.0-server-readiness.md`에 따라 RTX 5090 reference feasibility를 시작한다.
+모든 V0.0.1 offline invariant, remote policy, release tag binding이 검증되고 clean한 release commit에 `v0.0.1` annotated tag가 있어야 한다. 그 뒤에만 `docs/handoff/v0.1.0-server-readiness.md`에 따라 RTX 5090 reference feasibility를 시작한다.

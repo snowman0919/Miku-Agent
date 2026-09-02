@@ -1,6 +1,7 @@
 product_version: 0.0.1
 phase: release-evidence-correction
 previous_release: v0.0.0
+repository_commit: 0123456789abcdef0123456789abcdef01234567
 release_identity:
   manifest_format: 2
   tag: v0.0.1
@@ -15,16 +16,15 @@ schema_version: 2.0.0
 accepted_adrs: [ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011]
 document_hashes:
   README.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-  docs/product-charter.md: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-  docs/persona-constitution.md: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-  spec/product-lock.yaml: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  docs/security-and-threat-model.md: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-  docs/data-governance.md: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  docs/product-charter.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  docs/persona-constitution.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  docs/security-and-threat-model.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  docs/data-governance.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   docs/memory-architecture.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-  docs/evaluation-policy.md: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-  docs/versioning-and-release.md: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-validation_report:
-  path: reports/v0.0.1-validation.md
+  docs/evaluation-policy.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  docs/versioning-and-release.md: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  spec/product-lock.yaml: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+validation_report: {path: reports/v0.0.1-validation.md}
 known_risks: [voicechat_11b_rtx5090_feasibility]
 corrections: [non_self_referential_release_identity, offline_remote_validation_separation]
 next_version: 0.1.0

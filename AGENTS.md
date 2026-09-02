@@ -22,4 +22,7 @@
 - 실제 실행하지 않은 검증을 성공으로 보고하지 않는다.
 - schema와 identifier는 en-US, 설명 문서는 ko-KR, 파일은 UTF-8/LF를 사용한다.
 - 모든 외부 side effect는 단계 경계와 permission policy를 먼저 확인한다.
-
+- Release manifest에 같은 commit의 SHA를 기록하지 않는다. Manifest Format 2의 `definition_commit`과 annotated tag를 각각 source/release identity로 사용한다.
+- `make validate`는 network-independent해야 하며 `gh`, HTTP 또는 GitHub API를 호출하지 않는다.
+- 현재 GitHub policy는 `make audit-remote`, 특정 tag integrity는 `make audit-release TAG=<tag>`로만 검사한다.
+- Published tag와 commit은 삭제, 이동, amend, rebase, force update하지 않는다. V0.0.0은 immutable historical release다.

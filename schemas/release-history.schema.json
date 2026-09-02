@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/release-history.schema.json",
+  "title": "Release History Ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["releases"],
+  "properties": {
+    "releases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["version", "tag", "tag_type", "immutable", "status"],
+        "properties": {
+          "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+          "tag": {"type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"},
+          "tag_type": {"const": "annotated"},
+          "tag_object": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "peeled_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "definition_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "manifest_format": {"type": "integer", "minimum": 1},
+          "immutable": {"const": true},
+          "status": {"enum": ["historical", "preparing", "released"]},
+          "notes": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        },
+        "allOf": [
+          {"if": {"properties": {"status": {"const": "historical"}}, "required": ["status"]}, "then": {"required": ["tag_object", "peeled_commit"]}},
+          {"if": {"properties": {"status": {"const": "released"}}, "required": ["status"]}, "then": {"required": ["definition_commit", "manifest_format"]}}
+        ]
+      }
+    }
+  }
+}

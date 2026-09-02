@@ -1,0 +1,19 @@
+releases:
+  - version: 0.0.0
+    tag: v0.0.0
+    tag_type: annotated
+    tag_object: d1e97d732498f67b848264819e6316954a6ec52b
+    peeled_commit: 08ea6c6dc06e0a1a3a2a71fc8daa704b35e368d4
+    manifest_format: 1
+    immutable: true
+    status: historical
+    notes:
+      - original release manifest used legacy self-referential commit semantics
+  - version: 0.0.1
+    tag: v0.0.1
+    tag_type: annotated
+    manifest_format: 2
+    immutable: true
+    status: preparing
+    notes:
+      - definition_commit is finalized only after Commit A exists
