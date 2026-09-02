@@ -232,6 +232,7 @@ def test_required_model_tasks_are_connected() -> None:
     assert {
         "source_separation", "asr_transcribe", "forced_alignment", "speaker_embedding"
     } <= IMPLEMENTED_TASKS.keys()
+    assert all("config_file" in item for item in load_registry(MODEL_REGISTRY))
 
 
 def test_rejected_model_cannot_be_bound() -> None:

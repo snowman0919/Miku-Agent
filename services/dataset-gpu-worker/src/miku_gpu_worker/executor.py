@@ -171,9 +171,11 @@ class Worker:
             weight = model_path / entry["weight_file"]
         if not model_path.is_dir() or not weight.is_file() or sha256_file(weight) != binding["weight_sha256"]:
             raise WorkerError("MODEL_HASH_MISMATCH", "pinned model bytes are missing or changed")
-        config = next((model_path / name for name in ("config.json", "hyperparams.yaml") if (model_path / name).is_file()), None)
-        if config is not None and sha256_file(config) != binding["config_sha256"]:
-            raise WorkerError("MODEL_HASH_MISMATCH", "pinned model config changed")
+        config_file = entry.get("config_file")
+        if config_file:
+            config = model_path / config_file
+            if not config.is_file() or sha256_file(config) != binding["config_sha256"]:
+                raise WorkerError("MODEL_HASH_MISMATCH", "pinned model config changed")
         return dict(binding), model_path
 
     def _verify_package(self, package: Path, expected_fingerprint: str | None = None) -> bool:
