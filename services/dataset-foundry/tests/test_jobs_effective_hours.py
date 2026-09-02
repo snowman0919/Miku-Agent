@@ -6,7 +6,7 @@ import pytest
 
 from conftest import source
 from miku_foundry.effective_hours import summarize
-from miku_foundry.jobs import authorize_remote_5090, ensure_job
+from miku_foundry.jobs import authorize_remote_5090, ensure_job, prepare_remote_package
 from miku_foundry.rights import register_rights
 
 
@@ -22,6 +22,20 @@ def test_remote_job_never_stages_without_job_bound_grant(foundry):
                                                  "input_digest": "a" * 64, "code_commit": "b" * 40})
     with registry.connect() as connection:
         assert connection.execute("SELECT state FROM jobs WHERE job_id=?", (job_id,)).fetchone()[0] == "prepared"
+
+
+def test_remote_package_is_waiting_and_contains_no_database_binding(foundry):
+    paths, registry = foundry
+    manifest = {"input_object_hashes": ["a" * 64], "code_commit": "b" * 40,
+                "worker_spec": {"kind": "asr-score", "environment_digest": "c" * 64},
+                "source_binding": {"release_tag": "v0.1.0", "code_commit": "b" * 40}}
+    job_id, state = prepare_remote_package(paths, registry, manifest)
+    assert state == "waiting_for_lease"
+    package = paths.root / "jobs" / "remote-5090" / job_id
+    assert {path.name for path in package.iterdir()} == {
+        "input-manifest.json", "worker-spec.json", "source-binding.json", "expected-output.schema.json"
+    }
+    assert "sqlite" not in "".join(path.read_text(encoding="utf-8").lower() for path in package.iterdir())
 
 
 def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry):

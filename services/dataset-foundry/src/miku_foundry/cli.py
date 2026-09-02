@@ -11,7 +11,7 @@ from pathlib import Path
 from .config import initialize_layout, paths_from_env
 from .export import export_training, snapshot
 from .ingest import register_source
-from .jobs import authorize_remote_5090, ensure_job
+from .jobs import authorize_remote_5090, ensure_job, prepare_remote_package
 from .lineage import plan_transform
 from .pilot import build as build_pilot
 from .registry import Registry
@@ -195,11 +195,12 @@ def main(argv: list[str] | None = None) -> int:
         if dry_run:
             _json({"would_queue_remote": manifest})
         else:
-            job_id = ensure_job(registry, "remote-5090", manifest)
+            job_id, state = prepare_remote_package(paths, registry, manifest)
             grant = _load_json(args.grant) if args.grant else None
             if grant:
                 authorize_remote_5090(registry, job_id, grant)
-            _json({"job_id": job_id, "state": "staged" if grant else "waiting_for_lease"})
+                state = "staged"
+            _json({"job_id": job_id, "state": state})
     elif args.command == "pilot":
         if dry_run:
             _json({"would_build": {"audio_sources": 10, "audio_samples": 100, "persona": 1000,
