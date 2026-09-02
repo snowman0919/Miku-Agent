@@ -21,3 +21,5 @@
 | Remote 5090 lease | Remote work requires a job-bound source grant and never writes canonical state | GPU availability alone triggers an unauthorized remote side effect | Protects canonical ownership and external permission boundaries |
 | Effective hours accounting | Physical speech, weighted speech and singing auxiliary totals remain separate | Singing or unresolved-rights audio inflates effective speech hours | Prevents misleading training-readiness claims |
 | Audio decode probe | Quality metrics come from decoded immutable bytes with explicit decoder constraints | Header-only metadata or destructive normalization hides corrupt/changed audio | Grounds intake quality evidence without replacing the source object |
+| Snapshot and export identity | Same registry state has stable canonical bytes and current rights are rechecked | Compression/order drift changes identity or revoked data remains exportable | Makes dataset releases reproducible and fail-closed |
+| Transitive lineage leakage | Ancestor/descendant groups must remain in one split | A derived eval object is connected to a train parent through lineage | Blocks contaminated holdouts before export |
