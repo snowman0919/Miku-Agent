@@ -1,5 +1,5 @@
 product_version: 0.0.0
-repository_commit: pending-finalization
+repository_commit: e5b01d5fd0a48ad200a3324b63b651e605bd1f26
 release_date: '2026-09-02'
 phase: product-definition-lock
 component_versions:
