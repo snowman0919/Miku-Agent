@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/gpu-worker/result.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol_version", "job_id", "status", "task_type", "transform_fingerprint", "started_at", "completed_at", "worker", "outputs", "warnings", "errors"],
+  "properties": {
+    "protocol_version": {"const": 1}, "job_id": {"type": "string", "minLength": 1}, "status": {"enum": ["queued", "validating", "running", "completed", "failed", "cancelled"]},
+    "task_type": {"type": ["string", "null"]}, "transform_fingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "started_at": {"type": ["string", "null"], "format": "date-time"}, "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "worker": {"type": "object"}, "outputs": {"type": "array"}, "warnings": {"type": "array", "items": {"type": "string"}},
+    "errors": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["code", "message", "retryable"], "properties": {"code": {"enum": ["INPUT_HASH_MISMATCH", "INPUT_DECODE_FAILED", "MODEL_ACCESS_FAILED", "MODEL_HASH_MISMATCH", "UNSUPPORTED_FORMAT", "CUDA_OOM", "CUDA_KERNEL_ERROR", "OUT_OF_DISK", "TIMEOUT", "CANCELLED", "MODEL_OUTPUT_INVALID", "OUTPUT_HASH_FAILED", "ENVIRONMENT_MISMATCH", "UNKNOWN"]}, "message": {"type": "string"}, "retryable": {"type": "boolean"}}}}
+  },
+  "allOf": [{"if": {"properties": {"status": {"const": "completed"}}}, "then": {"properties": {"errors": {"maxItems": 0}}}}, {"if": {"properties": {"status": {"const": "failed"}}}, "then": {"properties": {"errors": {"minItems": 1}}}}]
+}

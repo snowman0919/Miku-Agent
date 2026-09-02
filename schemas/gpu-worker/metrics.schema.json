@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/gpu-worker/metrics.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["wall_seconds", "input_duration_seconds", "processed_audio_seconds_per_wall_second", "output_count", "host_peak_rss_kib", "gpu_peak_vram_mib", "gpu_average_utilization_percent", "gpu_energy_joules", "error_count", "retry_count", "cache_hit"],
+  "properties": {"wall_seconds": {"type": "number", "minimum": 0}, "input_duration_seconds": {"type": ["number", "null"], "minimum": 0}, "processed_audio_seconds_per_wall_second": {"type": ["number", "null"], "minimum": 0}, "output_count": {"type": "integer", "minimum": 0}, "host_peak_rss_kib": {"type": "integer", "minimum": 0}, "gpu_peak_vram_mib": {"type": ["number", "null"], "minimum": 0}, "gpu_average_utilization_percent": {"type": ["number", "null"], "minimum": 0, "maximum": 100}, "gpu_energy_joules": {"type": ["number", "null"], "minimum": 0}, "error_count": {"type": "integer", "minimum": 0}, "retry_count": {"type": "integer", "minimum": 0}, "cache_hit": {"type": "boolean"}}
+}

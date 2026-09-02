@@ -13,3 +13,8 @@
 | Historical document hash | Hashes are computed from definition commit Git blobs | Validator accidentally binds mutable working-tree content | Keeps old release evidence reproducible after later edits |
 | V0.0.0 immutability | Historical ledger equals the actual local annotated tag | Published baseline is silently moved or ledger is falsified | Prevents correction work from rewriting V0.0.0 |
 | Offline independence | Validator passes with a PATH that contains Git but no gh executable | Offline validation regains a hidden GitHub dependency | Keeps past releases verifiable without network or provider state |
+| GPU worker package integrity | Job/input manifests bind exact bytes and package-local paths | Corruption, traversal or symlink escape reaches a transform | Prevents untrusted package data from escaping the staged worker boundary |
+| GPU worker atomic state and recovery | Only complete, hash-manifested outputs enter completed; stale work is recoverable | Partial output is mistaken for a completed dataset result | Gives the canonical foundry an auditable transfer boundary |
+| GPU exclusivity and OOM bound | OS file locking serializes work and OOM retry has an explicit cap | Concurrent jobs contend for VRAM or retry forever | Protects the single-GPU node and makes failure deterministic |
+| GPU worker canonical-write prohibition | Worker output cannot contain rights/training/split decisions | A technical score silently becomes canonical acceptance | Preserves RTX 3080 control-plane ownership |
+| GPU model immutability | Worker model profiles use immutable revisions and hashes | A floating model changes transform meaning under the same task name | Keeps fingerprints and benchmark evidence reproducible |

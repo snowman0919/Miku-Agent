@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/gpu-worker/source-binding.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol_version", "job_id", "source_ids", "rights_status"],
+  "properties": {"protocol_version": {"const": 1}, "job_id": {"type": "string", "minLength": 1}, "source_ids": {"type": "array", "items": {"type": "string", "minLength": 1}}, "rights_status": {"enum": ["owned", "licensed", "permitted", "restricted", "unknown"]}}
+}
