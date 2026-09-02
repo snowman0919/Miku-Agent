@@ -17,4 +17,5 @@
 | 실제 Clerk production plan은 무엇인가 | Allowlist 기능·비용 | eligible Clerk plans | exact allowlist, cost, limits | current plan review | V0.7.0 |
 | Push provider 세부 구현은 무엇인가 | 모바일 delivery | FCM/APNs adapter options | reliability, privacy, Flutter support | minimal delivery spike | V0.8.0 |
 | Cloudflare 경유 방식은 무엇인가 | edge/auth/WS topology | direct origin, proxy, tunnel/product mix | WS behavior, trust boundary, cost | reconnect/auth benchmark | V0.7.0 |
-
+| VoiceChat의 최종 training/streaming audio representation은 무엇인가 | V0.1.0은 offline input 16 kHz/output 22.05 kHz만 관측했고 interactive contract는 미검증 | native preservation 후 explicit transforms | official supported runtime, tokenizer/codec/sample-rate evidence | supported 80 GB+ interactive benchmark | V0.2.1/V0.3.x |
+| Miku voice/SVS render output의 허용 학습 범위는 무엇인가 | owned script라도 proprietary engine output 권리는 별도다 | engine별 license/permission evidence | training, derivative, redistribution scope | user-provided license review and pilot render | V0.2.0 |
