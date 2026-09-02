@@ -17,4 +17,7 @@
 | 실제 Clerk production plan은 무엇인가 | Allowlist 기능·비용 | eligible Clerk plans | exact allowlist, cost, limits | current plan review | V0.7.0 |
 | Push provider 세부 구현은 무엇인가 | 모바일 delivery | FCM/APNs adapter options | reliability, privacy, Flutter support | minimal delivery spike | V0.8.0 |
 | Cloudflare 경유 방식은 무엇인가 | edge/auth/WS topology | direct origin, proxy, tunnel/product mix | WS behavior, trust boundary, cost | reconnect/auth benchmark | V0.7.0 |
-
+| GPU worker task별 default model은 무엇인가 | 품질, license와 transform 재현성 | task별 복수 candidate family | Korean/synthetic quality, VRAM, throughput, immutable revision, license | idle RTX 5090에서 cold/warm/batch pilot | V0.2.0 |
+| GPU worker 환경을 몇 개로 분리할 것인가 | dependency 충돌과 유지보수 | core 단일 환경, task family별 환경 | lock 재현성, disk, import conflict, 운영 복잡성 | pinned candidate 확정 후 environment resolution | V0.2.0 |
+| Worker cache 상한과 eviction은 무엇인가 | 현재 storage 압박과 job 재실행 비용 | fixed size LRU, task quota, manual prune | 실제 RTX 5090 local NVMe inventory와 workload size | target node disk inventory와 pilot output 측정 | V0.2.0 |
+| 3080 result importer의 정확한 interface는 무엇인가 | staged result의 canonical 승격 | filesystem scanner, explicit import CLI, future RPC | atomic validation, audit trail, idempotency | canonical Foundry schema 확정 뒤 package import pilot | V0.2.0 |
