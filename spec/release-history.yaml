@@ -12,8 +12,9 @@ releases:
   - version: 0.0.1
     tag: v0.0.1
     tag_type: annotated
+    definition_commit: 6a7249c14539521a2b2d614b081134e6d40dd989
     manifest_format: 2
     immutable: true
-    status: preparing
+    status: released
     notes:
-      - definition_commit is finalized only after Commit A exists
+      - release commit identity is supplied by the annotated v0.0.1 tag

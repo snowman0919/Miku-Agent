@@ -1,5 +1,5 @@
-product_version: 0.0.0
-phase: product-definition-lock
+product_version: 0.0.1
+phase: release-evidence-correction
 status: locked
 execution_environment: local-only
 server_use_allowed_from: 0.1.0
@@ -10,4 +10,5 @@ public_distribution: false
 model_training_started: false
 dataset_collection_started: false
 server_validation_started: false
-
+previous_release: v0.0.0
+release_evidence_format: 2
