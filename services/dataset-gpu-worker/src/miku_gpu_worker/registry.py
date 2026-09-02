@@ -36,6 +36,8 @@ def validate_binding(task: str, binding: dict[str, Any]) -> dict[str, Any]:
     if len(matches) != 1:
         raise WorkerError("MODEL_HASH_MISMATCH", f"model is not registered for {task}")
     item = matches[0]
+    if item.get("status") == "rejected":
+        raise WorkerError("MODEL_ACCESS_FAILED", f"model is rejected for {task}")
     expected = {
         "revision": item["revision"],
         "weight_sha256": item["weight_sha256"],

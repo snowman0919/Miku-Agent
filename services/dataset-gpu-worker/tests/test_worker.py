@@ -17,7 +17,7 @@ from miku_gpu_worker.executor import IMPLEMENTED_TASKS, Worker, run_with_oom_bac
 from miku_gpu_worker.hashing import transform_fingerprint
 from miku_gpu_worker.locking import GpuLock
 from miku_gpu_worker.protocol import assert_noncanonical_output, validate_job_package, validate_schema
-from miku_gpu_worker.registry import load_registry
+from miku_gpu_worker.registry import MODEL_REGISTRY, load_registry, validate_binding
 from miku_gpu_worker.tasks.audio import run_prosody
 
 CODE_COMMIT = "1" * 40
@@ -232,6 +232,18 @@ def test_required_model_tasks_are_connected() -> None:
     assert {
         "source_separation", "asr_transcribe", "forced_alignment", "speaker_embedding"
     } <= IMPLEMENTED_TASKS.keys()
+
+
+def test_rejected_model_cannot_be_bound() -> None:
+    item = next(value for value in load_registry(MODEL_REGISTRY) if value["status"] == "rejected")
+    binding = {
+        "model_id": item["model_id"], "revision": item["revision"],
+        "weight_sha256": item["weight_sha256"], "config_sha256": item["config_sha256"],
+        "environment_lock_sha256": item["environment"].rsplit("@", 1)[-1],
+        "dtype": item["required_dtype"], "license": item["license"],
+    }
+    with pytest.raises(WorkerError, match="rejected"):
+        validate_binding("asr_transcribe", binding)
 
 
 def test_wsl_nvidia_smi_fallback(monkeypatch: pytest.MonkeyPatch) -> None:

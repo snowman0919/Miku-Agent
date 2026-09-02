@@ -157,9 +157,15 @@ class Worker:
             model_path = self.root / "models" / "torch"
             weight = model_path / "hub" / "checkpoints" / entry["weight_file"]
         else:
+            repository = entry.get("repository", "")
+            model_id = (
+                repository.removeprefix("https://huggingface.co/").rstrip("/")
+                if repository.startswith("https://huggingface.co/")
+                else entry["model_id"]
+            )
             model_path = (
                 self.root / "models" / "huggingface" / "hub"
-                / f"models--{entry['model_id'].replace('/', '--')}"
+                / f"models--{model_id.replace('/', '--')}"
                 / "snapshots" / entry["revision"]
             )
             weight = model_path / entry["weight_file"]
