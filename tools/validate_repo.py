@@ -304,13 +304,38 @@ def check_remote_visibility() -> Check:
     remote = subprocess.run(["git", "remote", "get-url", "origin"], cwd=ROOT, text=True, capture_output=True)
     if remote.returncode != 0:
         return Check("private remote visibility", "SKIP", "origin is not configured; allowed before remote creation")
-    view = subprocess.run(["gh", "repo", "view", "--json", "visibility", "--jq", ".visibility"], cwd=ROOT, text=True, capture_output=True)
+    view = subprocess.run(
+        ["gh", "repo", "view", "--json", "visibility,hasWikiEnabled"],
+        cwd=ROOT, text=True, capture_output=True,
+    )
     if view.returncode != 0:
         raise AssertionError(f"cannot verify origin visibility: {view.stderr.strip()}")
-    visibility = view.stdout.strip().upper()
+    remote_policy = json.loads(view.stdout)
+    visibility = str(remote_policy.get("visibility", "")).upper()
     if visibility != "PRIVATE":
         raise AssertionError(f"origin visibility is {visibility}, expected PRIVATE")
-    return Check("private remote visibility", "PASS", "GitHub reports PRIVATE")
+    if remote_policy.get("hasWikiEnabled") is not False:
+        raise AssertionError("GitHub Wiki is enabled, expected disabled")
+    runs = subprocess.run(
+        ["gh", "run", "list", "--limit", "1", "--json", "databaseId"],
+        cwd=ROOT, text=True, capture_output=True,
+    )
+    if runs.returncode != 0:
+        raise AssertionError(f"cannot inspect GitHub Actions history: {runs.stderr.strip()}")
+    if json.loads(runs.stdout):
+        raise AssertionError("GitHub Actions has a run, prohibited in V0.0.0")
+    pages = subprocess.run(
+        ["gh", "api", "repos/{owner}/{repo}/pages"],
+        cwd=ROOT, text=True, capture_output=True,
+    )
+    if pages.returncode == 0:
+        raise AssertionError("GitHub Pages is enabled, prohibited in V0.0.0")
+    if "HTTP 404" not in pages.stderr:
+        raise AssertionError(f"cannot verify GitHub Pages is disabled: {pages.stderr.strip()}")
+    return Check(
+        "private remote policy", "PASS",
+        "GitHub reports PRIVATE, Wiki disabled, Pages absent, and no Actions runs",
+    )
 
 
 def run_all() -> list[Check]:

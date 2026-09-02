@@ -35,7 +35,7 @@ def main() -> int:
     invalid = len(list((ROOT / "examples" / "invalid").glob("*")))
     adrs = len(list((ROOT / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md")))
     open_questions = sum(1 for line in (ROOT / "docs" / "open-questions.md").read_text(encoding="utf-8").splitlines() if line.startswith("| ") and not line.startswith("| Question") and not line.startswith("|---"))
-    remote = next(check for check in checks if check.name == "private remote visibility")
+    remote = next(check for check in checks if check.name in {"private remote visibility", "private remote policy"})
     check_lines = "\n".join(f"- {check.status}: {check.name} — {check.detail}" for check in checks)
 
     report = f"""# V0.0.0 Validation Report
