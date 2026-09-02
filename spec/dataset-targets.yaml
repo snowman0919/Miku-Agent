@@ -1,0 +1,16 @@
+version: 0.2.0
+foundry_proof:
+  audio_sources: 10
+  audio_samples: 100
+  persona_samples: 1000
+  agentic_trajectories: 500
+  duplex_timelines: 500
+future_training_promotion:
+  tts_effective_speech_hours_minimum: 30
+  tts_effective_speech_hours_recommended: [50, 80]
+  persona_gold_turns: [5000, 20000]
+  persona_silver_turns: [50000, 300000]
+  agentic_accepted: 10000
+  agentic_execution_backed: 2000
+  duplex_timelines: 10000
+quality_over_volume: true

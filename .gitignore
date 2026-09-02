@@ -3,6 +3,13 @@
 !.env.example
 config/whitelist.local.yaml
 config/auth.local.yaml
+config/dataset-foundry.local.toml
+services/dataset-foundry/configs/*.local.toml
+*.sqlite
+*.sqlite3
+*.db
+*.parquet
+*.arrow
 secrets/
 credentials/
 data/raw/
@@ -25,6 +32,7 @@ artifacts/
 *.onnx
 *.engine
 *.plan
+*.bin
 .DS_Store
 .idea/
 .vscode/
@@ -32,4 +40,3 @@ artifacts/
 __pycache__/
 .pytest_cache/
 *.egg-info/
-

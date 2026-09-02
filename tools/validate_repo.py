@@ -68,6 +68,13 @@ SCHEMA_TARGETS = {
     "scheduler-task": "scheduler-task.schema.json",
     "reaction-command": "reaction-command.schema.json",
 }
+DATASET_SCHEMA_NAMES = {
+    "agentic-trajectory.schema.json", "audio-sample.schema.json", "dataset-release.schema.json",
+    "duplex-timeline.schema.json", "object.schema.json", "persona-sample.schema.json",
+    "remote-job.schema.json", "review.schema.json", "rights-record.schema.json",
+    "source.schema.json", "split-assignment.schema.json", "text-sample.schema.json",
+    "transform.schema.json",
+}
 
 INVALID_EXPECTATIONS = {
     "auth-access-grant.revoked-without-revoked-at.json": "revoked_at",
@@ -86,6 +93,7 @@ FORBIDDEN_SUFFIXES = {
     ".key", ".pem", ".p12", ".wav", ".mp3", ".flac", ".ogg", ".mp4",
     ".mkv", ".vrm", ".pt", ".pth", ".ckpt", ".safetensors", ".onnx",
     ".engine", ".plan",
+    ".sqlite", ".sqlite3", ".db", ".parquet", ".arrow", ".bin",
 }
 FORBIDDEN_PREFIXES = (
     ".env", "checkpoints/", "data/raw/", "data/processed/", "artifacts/",
@@ -95,6 +103,11 @@ SECRET_PATTERNS = {
     "private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     "GitHub token": re.compile(r"\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}"),
     "generic live secret": re.compile(r"\b(?:sk_" r"live|sk-[A-Za-z0-9]{20,})"),
+}
+FORBIDDEN_MAGIC = {
+    b"SQLite format 3\x00": "SQLite database",
+    b"PAR1": "Parquet data",
+    b"RIFF": "RIFF media",
 }
 
 DECISION_EVIDENCE = {
@@ -109,6 +122,9 @@ DECISION_EVIDENCE = {
     "0009": ("docs/data-governance.md", ("private repository", "Git", "rights")),
     "0010": ("docs/animation-and-embodiment.md", ("procedural", "FSM", "per-frame bone")),
     "0011": ("docs/versioning-and-release.md", ("definition_commit", "annotated", "offline")),
+    "0012": ("docs/dataset/architecture.md", ("sha-256", "sqlite", "canonical")),
+    "0013": ("docs/dataset/gpu-worker-topology.md", ("rtx 3080", "rtx 5090", "manifest")),
+    "0014": ("docs/dataset/rights-promotion.md", ("rights", "quality", "training")),
 }
 
 
@@ -139,9 +155,13 @@ def candidate_files() -> list[str]:
 
 
 def check_schemas() -> Check:
-    schemas = sorted((ROOT / "schemas").glob("*.schema.json"))
-    if {path.name for path in schemas} != set(SCHEMA_TARGETS.values()):
+    root_schemas = sorted((ROOT / "schemas").glob("*.schema.json"))
+    if {path.name for path in root_schemas} != set(SCHEMA_TARGETS.values()):
         raise AssertionError("schema inventory does not match the required contract set")
+    dataset_schemas = sorted((ROOT / "schemas" / "dataset").glob("*.schema.json"))
+    if {path.name for path in dataset_schemas} != DATASET_SCHEMA_NAMES:
+        raise AssertionError("V0.2 dataset schema inventory does not match the required contract set")
+    schemas = root_schemas + dataset_schemas
     for path in schemas:
         schema = load_data(path)
         if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
@@ -225,8 +245,8 @@ def check_product_invariants() -> Check:
 
 def check_adrs_and_traceability() -> Check:
     adr_paths = sorted((ROOT / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
-    if len(adr_paths) != 11:
-        raise AssertionError(f"expected 11 ADRs, found {len(adr_paths)}")
+    if len(adr_paths) != 14:
+        raise AssertionError(f"expected 14 ADRs in the V0.2 workspace, found {len(adr_paths)}")
     headings = ["Status", "Date", "Context", "Decision", "Alternatives Considered", "Consequences", "Security Impact", "Data Impact", "Validation", "Supersedes", "Superseded By"]
     trace = (ROOT / "docs" / "traceability-matrix.md").read_text(encoding="utf-8")
     for path in adr_paths:
@@ -245,7 +265,7 @@ def check_adrs_and_traceability() -> Check:
         cells = [cell.strip() for cell in row.strip("|").split("|")]
         if len(cells) != 9 or not all(cells[index] for index in (3, 4, 5, 6)) or cells[8] != "accepted":
             raise AssertionError(f"incomplete traceability row: {row}")
-    return Check("ADR and traceability", "PASS", f"11 accepted ADRs, {len(rows)} decision links")
+    return Check("ADR and traceability", "PASS", f"14 accepted ADRs, {len(rows)} decision links")
 
 
 def check_decision_consistency() -> Check:
@@ -258,7 +278,7 @@ def check_decision_consistency() -> Check:
         for anchor in anchors:
             if anchor.lower() not in adr_text or anchor.lower() not in document_text:
                 raise AssertionError(f"ADR-{adr_number} and {document} lost shared anchor {anchor!r}")
-    return Check("ADR/document consistency", "PASS", "11 accepted decisions share semantic anchors")
+    return Check("ADR/document consistency", "PASS", "14 accepted decisions share semantic anchors")
 
 
 def check_release_history() -> Check:
@@ -338,6 +358,18 @@ def check_repository_safety() -> list[Check]:
     forbidden = [path for path in files if Path(path).suffix.lower() in FORBIDDEN_SUFFIXES or any(path == prefix or path.startswith(prefix) for prefix in FORBIDDEN_PREFIXES)]
     if forbidden:
         raise AssertionError(f"forbidden tracked/candidate paths: {forbidden}")
+    disguised: list[str] = []
+    for relative in files:
+        path = ROOT / relative
+        if not path.is_file():
+            continue
+        with path.open("rb") as stream:
+            prefix = stream.read(16)
+        for magic, label in FORBIDDEN_MAGIC.items():
+            if prefix.startswith(magic):
+                disguised.append(f"{relative}: {label}")
+    if disguised:
+        raise AssertionError(f"forbidden artifact content: {disguised}")
     secret_hits: list[str] = []
     for relative in files:
         path = ROOT / relative

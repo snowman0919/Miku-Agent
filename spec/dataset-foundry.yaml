@@ -1,0 +1,20 @@
+version: 0.2.0
+source_parent: v0.1.0
+release_state: PILOT
+canonical_node: rtx-3080-local
+storage:
+  object_identity: sha256
+  registry: sqlite-wal
+  analytics: parquet-duckdb
+  dataset_identity: canonical-jsonl-sha256
+  minimum_free_bytes: 5368709120
+promotion_states: [intake_status, rights_status, quality_status, review_status, training_status]
+remote_worker:
+  node: rtx-5090
+  canonical_write: false
+  grant_required: true
+  input_output_hash_verification: true
+v0_1_conditional_boundaries:
+  final_training_representation_frozen: false
+  production_voicechat_assumed: false
+  model_finetuning_allowed: false

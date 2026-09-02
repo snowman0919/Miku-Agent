@@ -15,5 +15,8 @@
 | D-011 | Scheduler는 server-side이며 external write는 explicit approval 필요 | scheduler-and-notifications.md | ADR-0007 | product-lock.scheduler | scheduler-task | EVAL-SAFETY | V0.7.x | accepted |
 | D-012 | Dataset acceptance는 rights와 quality/alignment를 모두 요구 | data-governance.md | ADR-0009 | product-lock.data | dataset-source/dataset-sample | EVAL-ASR-CLEAN/EVAL-TTS-CER | V0.2.0 | accepted |
 | D-013 | Release source는 definition commit, release identity는 annotated tag이며 offline validation과 remote audit을 분리 | versioning-and-release.md | ADR-0011 | release-history | release-manifest/release-history | offline validation + release audit | V0.0.1 | accepted |
+| D-014 | Dataset object는 SHA-256 identity와 recoverable ingest intent를 사용하고 SQLite만 canonical mutable metadata를 보유 | dataset/architecture.md | ADR-0012 | dataset-foundry | dataset/object, dataset/transform | object integrity + recovery | V0.2.0 | accepted |
+| D-015 | RTX 3080만 canonical data를 쓰며 RTX 5090은 manifest와 grant에 결속된 disposable worker | dataset/gpu-worker-topology.md | ADR-0013 | dataset-foundry.remote_worker | dataset/remote-job | remote lease + hash import | V0.2.0 | accepted |
+| D-016 | Rights, quality, review, training 상태는 독립이며 모든 gate가 통과해야 training accepted | dataset/rights-promotion.md | ADR-0014 | dataset-quality-gates | dataset/rights-record, dataset/review | rights promotion + export gate | V0.2.0 | accepted |
 
 Schema 표기의 짧은 이름은 `schemas/<name>.schema.json`, machine-readable 경로는 `spec/product-lock.yaml`을 뜻한다.

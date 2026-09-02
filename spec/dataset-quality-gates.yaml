@@ -1,0 +1,21 @@
+version: data-quality-v1
+score_unit: ppm
+duration_unit: millisecond
+training_gate:
+  rights_status: [owned, licensed, permitted]
+  rights_evidence_required: true
+  object_integrity_required: true
+  quality_status: passed
+  review_status: reviewed
+  split_required: true
+  frozen_eval_excluded: true
+effective_speech:
+  formula: duration_ms * quality_ppm * alignment_ppm * review_weight_ppm * source_tier_weight_ppm / 1000000^4
+  rights_gate_zero: [unknown, restricted, rejected]
+  excluded_modalities: [singing_aux]
+tiers:
+  gold: [rights_cleared, exact_transcript, human_reviewed, high_alignment, clean_audio, split_assigned]
+  silver: [rights_cleared, high_confidence_automatic, sampled_human_audit]
+  auxiliary: [singing, timbre_support]
+  quarantine: [rights_unresolved, quality_unresolved, alignment_unresolved, speaker_unresolved]
+  rejected: [corrupt, wrong_speaker, hard_persona_violation, forbidden_rights]
