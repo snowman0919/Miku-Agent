@@ -1,0 +1,18 @@
+{
+  "checkpoint_artifact_id": "voicechat-11b-checkpoint-359ada7b",
+  "gated": false,
+  "immutable_revision": "359ada7b1c60851e40ff08065f9b0340244f27e0",
+  "license": "NVIDIA Open Model Development Agreement 1.1",
+  "nested_remote_code": {
+    "note": "Resolved from the Hugging Face cache after the official loader fetched floating remote code.",
+    "repository": "nvidia/NVIDIA-Nemotron-Nano-9B-v2",
+    "resolved_snapshot": "6533e8de2c68e4536bf7c411d7a3ce5734111476"
+  },
+  "nvidia_speech": {
+    "nvidia_speech_branch": "nemotron-labs-voicechat",
+    "nvidia_speech_commit": "097dfe9e2f55baf653b83035868bdc89849f1b47",
+    "nvidia_speech_repository": "https://github.com/NVIDIA-NeMo/Speech.git"
+  },
+  "repository": "nvidia/NVIDIA-NemotronLabs-VoiceChat-11B",
+  "schema_version": 1
+}

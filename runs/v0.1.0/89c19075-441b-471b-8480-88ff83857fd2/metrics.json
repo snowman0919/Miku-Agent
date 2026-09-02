@@ -1,0 +1,80 @@
+{
+  "cuda_max_memory_allocated_bytes": 22239166464,
+  "cuda_max_memory_reserved_bytes": 22450012160,
+  "duration_seconds": 129.73994790100005,
+  "exception": null,
+  "exception_type": null,
+  "function_calling": {
+    "arguments": {
+      "max": 50,
+      "min": 1
+    },
+    "call_step": 95,
+    "cuda_max_memory_allocated_bytes": 23739659264,
+    "cuda_max_memory_reserved_bytes": 25247612928,
+    "duration_seconds": 300.18010192900147,
+    "generated_text": " <$0.72$>  <|1.52|> Hi there! How can I help you today? <$4.32$>  <|11.76|> Your random number is twenty.",
+    "inference_seconds": 206.41325099200003,
+    "load_seconds": 84.35624132300109,
+    "minimum_system_available_kib": 17508068,
+    "mock_response_used": true,
+    "output_audio": {
+      "artifact_id": "sample_fc_output.wav",
+      "channels": 1,
+      "duration_seconds": 11.2,
+      "sample_rate_hz": 22050,
+      "sha256": "412548236fbbb59b900121c71c589b36bdbb8e70bd13746678237fdb519b5f9b",
+      "size_bytes": 493998
+    },
+    "peak_gpu_memory_used_mib": 25158.0,
+    "raw_artifact_ids": [
+      "r3-fc-receipt.json",
+      "fc-telemetry.jsonl"
+    ],
+    "response": {
+      "result": 20
+    },
+    "response_step": 133,
+    "result": "success",
+    "spoken_continuation": true,
+    "tool_name": "generate_random_number",
+    "tool_side_effects_executed": false,
+    "toolcall_envelope_parsed": true
+  },
+  "inference": {
+    "cuda_max_memory_allocated_bytes": 23561273856,
+    "cuda_max_memory_reserved_bytes": 24536678400,
+    "input_audio_seconds": 15.608375,
+    "output_audio": {
+      "artifact_id": "sample_general_output.wav",
+      "channels": 1,
+      "duration_seconds": 15.68,
+      "sample_rate_hz": 22050,
+      "sha256": "5ef85848f78be8e344bda39bed4832be14b49b1a48170fd6bd1dc52905c80f9f",
+      "size_bytes": 691566
+    },
+    "output_audio_seconds": 15.68,
+    "rtf_vs_input": 2.4024590334997065,
+    "rtf_vs_output": 2.391484790625063,
+    "text": " <$0.72$>  <|0.96|> Hi there! How can you? How can I help you today? <$8.64$>  <|12.16|> The sky is blue. That blue color is because of something called Rayleigh scattering.",
+    "wall_seconds": 37.49848151700098
+  },
+  "load_seconds": 82.72705959499945,
+  "minimum_system_available_kib": 17406116,
+  "mode": "bf16-cast",
+  "peak_nvidia_smi_memory_used_mib": 23465.0,
+  "peak_process_rss_kib": 61615752,
+  "raw_artifact_id": "r3-general-receipt.json",
+  "result": "loaded",
+  "schema_version": 1,
+  "torch": {
+    "bf16_supported": true,
+    "compute_capability": [
+      12,
+      0
+    ],
+    "cuda_runtime": "12.8",
+    "device_name": "NVIDIA GeForce RTX 5090",
+    "version": "2.10.0+cu128"
+  }
+}

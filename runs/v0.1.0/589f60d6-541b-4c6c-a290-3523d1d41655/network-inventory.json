@@ -1,0 +1,24 @@
+{
+  "addresses": {
+    "argv": [
+      "ip",
+      "-brief",
+      "address"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "lo               UNKNOWN        127.0.0.1/8 10.255.255.254/32 ::1/128 \neth0             UP             172.20.155.135/20 fe80::215:5dff:fe73:dd28/64 \ntailscale0       UNKNOWN        100.84.202.99/32 fd7a:115c:a1e0::6339:ca64/128 fe80::12b3:4d9b:8998:fba/64 \n"
+  },
+  "hostname": "DESKTOP-J3CSFG5",
+  "resolvers_present": true,
+  "routes": {
+    "argv": [
+      "ip",
+      "route"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "default via 172.20.144.1 dev eth0 proto kernel \n172.20.144.0/20 dev eth0 proto kernel scope link src 172.20.155.135 \n"
+  },
+  "schema_version": 1
+}

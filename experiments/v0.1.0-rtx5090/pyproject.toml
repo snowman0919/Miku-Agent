@@ -1,0 +1,34 @@
+[project]
+name = "miku-agent-voicechat-feasibility"
+version = "0.1.0"
+requires-python = "==3.12.*"
+dependencies = [
+  "causal-conv1d @ https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.6.2.post1/causal_conv1d-1.6.2.post1%2Bcu12torch2.10cxx11abiTRUE-cp312-cp312-linux_x86_64.whl#sha256=c16c1c48d4fa63415cc797e02d69f97248c57c04627d99e394d5bb0ef266e288",
+  "einops",
+  "hf-xet==1.1.9",
+  "huggingface-hub==0.34.4",
+  "jinja2",
+  "lhotse==1.32.2",
+  "mamba-ssm @ https://github.com/state-spaces/mamba/releases/download/v2.3.2.post1/mamba_ssm-2.3.2.post1%2Bcu12torch2.10cxx11abiTRUE-cp312-cp312-linux_x86_64.whl#sha256=7a67070c1e7e99c95abd1319623f044e8a1b3fb46f774bfdea949f0a4fc79638",
+  "nemo-toolkit[all] @ git+https://github.com/NVIDIA-NeMo/Speech.git@097dfe9e2f55baf653b83035868bdc89849f1b47",
+  "ninja",
+  "packaging",
+  "tokenizers==0.22.0",
+  "torch==2.10.0",
+  "torch-audiomentations",
+  "torchaudio==2.10.0",
+  "torchcodec==0.10.0",
+  "torchvision==0.25.0",
+  "transformers==4.56.0",
+  "wheel",
+]
+
+[tool.uv]
+package = false
+override-dependencies = [
+  "hf-xet==1.1.9",
+  "huggingface-hub==0.34.4",
+  "lhotse==1.32.2",
+  "tokenizers==0.22.0",
+  "transformers==4.56.0",
+]

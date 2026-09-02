@@ -1,0 +1,51 @@
+{
+  "list": {
+    "argv": [
+      "/usr/lib/wsl/lib/nvidia-smi",
+      "-L"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "GPU 0: NVIDIA GeForce RTX 5090 (UUID: GPU-4a6579ee-2c43-5eca-0326-03273bc5b5e0)\n"
+  },
+  "processes": {
+    "argv": [
+      "/usr/lib/wsl/lib/nvidia-smi",
+      "--query-compute-apps=pid,process_name,used_memory",
+      "--format=csv,noheader,nounits"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "query": {
+    "argv": [
+      "/usr/lib/wsl/lib/nvidia-smi",
+      "--query-gpu=name,uuid,pci.bus_id,driver_version,memory.total,memory.free,power.limit,power.max_limit,temperature.gpu,clocks.sm,clocks.mem,compute_mode,persistence_mode",
+      "--format=csv,noheader,nounits"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "NVIDIA GeForce RTX 5090, GPU-4a6579ee-2c43-5eca-0326-03273bc5b5e0, 00000000:01:00.0, 591.86, 32607, 30258, 575.00, 600.00, 41, 180, 405, Default, Enabled\n"
+  },
+  "schema_version": 1,
+  "source_of_truth": "/usr/lib/wsl/lib/nvidia-smi",
+  "summary": {
+    "argv": [
+      "/usr/lib/wsl/lib/nvidia-smi"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "Wed Sep  2 21:56:40 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 590.57                 Driver Version: 591.86         CUDA Version: 13.1     |\n+-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  NVIDIA GeForce RTX 5090        On  |   00000000:01:00.0  On |                  N/A |\n| 30%   41C    P8             35W /  575W |    1930MiB /  32607MiB |      2%      Default |\n|                                         |                        |                  N/A |\n+-----------------------------------------+------------------------+----------------------+\n\n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|  No running processes found                                                             |\n+-----------------------------------------------------------------------------------------+\n"
+  },
+  "topology": {
+    "argv": [
+      "/usr/lib/wsl/lib/nvidia-smi",
+      "topo",
+      "-m"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "\t\u001b[4mGPU0\tCPU Affinity\tNUMA Affinity\tGPU NUMA ID\u001b[0m\nGPU0\t X \t\t\t\tN/A\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks\n"
+  }
+}

@@ -1,0 +1,17 @@
+result: CONDITIONAL
+run_outcome: reference_load_and_general_pass_function_calling_oom
+experiment: R0
+evidence:
+  reference_load: PASS
+  actual_reference_dtype: float32
+  offline_general: PASS
+  function_channel: BLOCKED_CUDA_OOM
+  rtf_required_max: 1.0
+  measured_generation_rtf_estimate: 49.7441753372449
+  interactive: BLOCKED_PREREQUISITES
+  soak: NOT_RUN_INTERACTIVE_BLOCKED
+reason: >-
+  The pinned vendor path loads and produces offline speech, but it constructs
+  FP32 parameters, saturates 32 GB VRAM, misses the real-time gate, and OOMs
+  during the longer official function-calling sample.
+next_mitigation: Evaluate an explicitly non-reference BF16 cast and the official 80 GB interactive container on supported hardware.

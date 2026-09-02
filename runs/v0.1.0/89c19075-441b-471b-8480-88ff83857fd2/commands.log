@@ -1,0 +1,6 @@
+# Sanitized reproducibility commands; no credentials.
+nix flake check --no-build
+nix develop --command ./sync-env.sh
+nix develop --command .venv/bin/python ../../tools/v0_1_0/blackwell_smoke.py
+nix develop --command .venv/bin/python load_probe.py --speech-source <speech-artifact> --checkpoint <checkpoint-artifact> --mode bf16-cast --wav <speech>/examples/speechlm2/sample_audio/sample_general.wav --inference-output-dir <raw-artifact>/general-output --output <raw-artifact>/r3-general-receipt.json
+nix develop --command .venv/bin/python fc_probe.py --speech-source <speech-artifact> --checkpoint <checkpoint-artifact> --wav <speech>/examples/speechlm2/sample_audio/sample_fc.wav --api-response-json <speech>/examples/speechlm2/function_calling/random_number_response.json --output-dir <raw-artifact>/fc-output --receipt <raw-artifact>/r3-fc-receipt.json

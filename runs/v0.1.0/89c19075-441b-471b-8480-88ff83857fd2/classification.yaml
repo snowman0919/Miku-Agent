@@ -1,0 +1,17 @@
+result: CONDITIONAL
+run_outcome: experimental_bf16_offline_and_function_channel_pass
+experiment: R3
+evidence:
+  load: PASS_EXPERIMENTAL_BF16
+  offline_general: PASS
+  function_channel: PASS
+  rtf_required_max: 1.0
+  measured_generation_rtf: 2.391484790625063
+  interactive: BLOCKED_PREREQUISITES
+  soak: NOT_RUN_INTERACTIVE_BLOCKED
+reason: >-
+  A full BF16 cast with autocast fits and preserves the general and function
+  channels, but it is not the unmodified vendor path and RTF remains above 1.
+  The official interactive container requires hardware and runtime prerequisites
+  absent from this server.
+next_mitigation: Use the official optimized container on a supported 80 GB GPU, or obtain an upstream-supported low-memory path before deployment.

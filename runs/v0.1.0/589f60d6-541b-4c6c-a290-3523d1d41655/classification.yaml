@@ -1,0 +1,13 @@
+result: CONDITIONAL
+run_outcome: failed_experimental_mitigation
+experiment: R2
+evidence:
+  load: PASS_MIXED_DTYPE
+  offline_general: FAIL_DTYPE_MISMATCH
+  function_channel: NOT_RUN
+  interactive: NOT_RUN
+reason: >-
+  Changing only PyTorch's construction default produced a mixed model with
+  explicit FP32 modules and BF16 modules. Inference failed at the perception
+  convolution because the float input and BF16 bias did not match.
+next_mitigation: Cast every floating parameter to BF16 and use CUDA BF16 autocast in a separate run.

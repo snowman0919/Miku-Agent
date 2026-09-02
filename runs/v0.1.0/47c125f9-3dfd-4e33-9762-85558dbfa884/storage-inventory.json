@@ -1,0 +1,32 @@
+{
+  "block_devices": {
+    "argv": [
+      "lsblk",
+      "-b",
+      "-o",
+      "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS,ROTA"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "NAME          SIZE TYPE FSTYPE MOUNTPOINTS      ROTA\nsda      374251520 disk ext4                       1\nsdb      167149568 disk ext4                       1\nsdc    17179873280 disk swap   [SWAP]              1\nsdd  1099511627776 disk ext4   /mnt/wslg/distro    1\n                               /                \n"
+  },
+  "df_bytes": {
+    "argv": [
+      "df",
+      "-BT"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "Filesystem     1T-blocks  Used Available Use% Mounted on\nnone                  1T    0T        1T   0% /usr/lib/modules/6.18.33.2-microsoft-standard-WSL2\nnone                  1T    1T        1T   1% /mnt/wsl\ndrivers               2T    1T        2T  14% /usr/lib/wsl/drivers\n/dev/sdd              1T    1T        1T  10% /\nnone                  1T    1T        1T   1% /mnt/wslg\nnone                  1T    0T        1T   0% /usr/lib/wsl/lib\nrootfs                1T    1T        1T   1% /init\nnone                  1T    0T        1T   0% /dev\nnone                  1T    1T        1T   1% /run\nnone                  1T    0T        1T   0% /run/lock\nnone                  1T    0T        1T   0% /run/shm\nnone                  1T    1T        1T   1% /mnt/wslg/versions.txt\nnone                  1T    1T        1T   1% /mnt/wslg/doc\nC:\\                   2T    1T        2T  14% /mnt/c\ntmpfs                 1T    0T        1T   0% /tmp\nnone                  1T    0T        1T   0% /run/credentials/getty@tty1.service\ntmpfs                 1T    1T        1T   1% /run/user/1000\nnone                  1T    0T        1T   0% /run/credentials/systemd-journald.service\nnone                  1T    0T        1T   0% /run/credentials/systemd-resolved.service\n"
+  },
+  "df_inodes": {
+    "argv": [
+      "df",
+      "-i"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "Filesystem       Inodes   IUsed    IFree IUse% Mounted on\nnone            8076500       5  8076495    1% /usr/lib/modules/6.18.33.2-microsoft-standard-WSL2\nnone            8076500       2  8076498    1% /mnt/wsl\ndrivers             999 -999001  1000000     - /usr/lib/wsl/drivers\n/dev/sdd       67108864  609531 66499333    1% /\nnone            8076500      23  8076477    1% /mnt/wslg\nnone            8076500       7  8076493    1% /usr/lib/wsl/lib\nrootfs          8075061      12  8075049    1% /init\nnone            8075061     401  8074660    1% /dev\nnone            8076500     609  8075891    1% /run\nnone            8076500       2  8076498    1% /run/lock\nnone            8076500       1  8076499    1% /run/shm\nnone            8076500      58  8076442    1% /mnt/wslg/versions.txt\nnone            8076500      58  8076442    1% /mnt/wslg/doc\nC:\\                 999 -999001  1000000     - /mnt/c\ntmpfs           1048576      44  1048532    1% /tmp\nnone               1024       1     1023    1% /run/credentials/getty@tty1.service\ntmpfs           1615300      49  1615251    1% /run/user/1000\nnone               1024       1     1023    1% /run/credentials/systemd-journald.service\nnone               1024       1     1023    1% /run/credentials/systemd-resolved.service\n"
+  },
+  "schema_version": 1
+}

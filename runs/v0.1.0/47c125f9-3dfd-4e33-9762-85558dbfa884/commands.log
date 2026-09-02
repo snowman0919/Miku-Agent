@@ -1,0 +1,7 @@
+# Sanitized reproducibility commands; no credentials.
+nix flake check --no-build
+nix develop --command ./sync-env.sh
+nix develop --command .venv/bin/python ../../tools/v0_1_0/blackwell_smoke.py
+nix develop --command .venv/bin/python load_probe.py --speech-source <speech-artifact> --checkpoint <checkpoint-artifact> --mode vendor-fp32 --output <raw-artifact>/r0-load-receipt.json
+nix develop --command .venv/bin/python <speech>/examples/speechlm2/offline_voicechat_infer.py --checkpoint <checkpoint> --wav <speech>/examples/speechlm2/sample_audio/sample_general.wav --output-dir <raw-artifact>/general-output
+nix develop --command .venv/bin/python <speech>/examples/speechlm2/offline_voicechat_fc_infer.py --checkpoint <checkpoint> --wav <speech>/examples/speechlm2/sample_audio/sample_fc.wav --output-dir <raw-artifact>/fc-output --api-response-json <speech>/examples/speechlm2/function_calling/random_number_response.json

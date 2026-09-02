@@ -1,0 +1,59 @@
+{
+  "exit_code": 0,
+  "function_calling": {
+    "exception": "CUDA error: out of memory (cudaErrorMemoryAllocation)",
+    "exception_type": "torch.AcceleratorError",
+    "exit_code": 1,
+    "failure_stage": "pass-1 autoregressive inference near step 550 of 859",
+    "minimum_system_available_kib": 17583624,
+    "mock_response_used": true,
+    "peak_gpu_memory_used_mib": 32137.0,
+    "raw_artifact_ids": [
+      "fc-stderr.log",
+      "fc-telemetry.jsonl"
+    ],
+    "result": "failed",
+    "spoken_continuation": false,
+    "tool_side_effects_executed": false,
+    "toolcall_envelope_parsed": false,
+    "wall_seconds": 1171.14
+  },
+  "generated_text": " <$0.72$>  <|0.96|> Hi there! How can you? How can I help you today? <$8.64$>  <|12.16|> The sky is blue. That blue color is because of something called Rayleigh scattering.",
+  "generation_seconds_estimate": 779.988669288,
+  "input_audio": {
+    "artifact_id": "sample_general.wav",
+    "channels": 1,
+    "duration_seconds": 15.608375,
+    "sample_rate_hz": 16000,
+    "sha256": "481f422a961fb160ddeba9824d55cb7c190c57acb7dc1730a2d595fd078dcb04",
+    "size_bytes": 503564
+  },
+  "load_seconds_from_separate_exact_probe": 80.091330712,
+  "output_audio": {
+    "artifact_id": "sample_general_output.wav",
+    "channels": 1,
+    "duration_seconds": 15.68,
+    "sample_rate_hz": 22050,
+    "sha256": "d926c31abeaaf5177466e09c6f7d7e1bd417de7de9aae666851320ea67b6bba4",
+    "size_bytes": 691566
+  },
+  "repetitions": {
+    "cold_completed": 1,
+    "reason_reduced": "single official run required 14m20s and RTF was already far above the real-time gate",
+    "warm_completed": 0
+  },
+  "result": "offline-general-success",
+  "rtf_generation_only_estimate": 49.7441753372449,
+  "rtf_load_inclusive": 54.852040816326536,
+  "schema_version": 1,
+  "telemetry": {
+    "minimum_system_available_kib": 17517788,
+    "peak_gpu_memory_used_mib": 32132.0,
+    "peak_gpu_power_w": 184.0,
+    "peak_gpu_utilization_percent": 100.0,
+    "raw_artifact_id": "general-telemetry.jsonl",
+    "sample_count": 3036,
+    "sample_interval_seconds": 0.25
+  },
+  "wall_seconds_load_inclusive": 860.08
+}

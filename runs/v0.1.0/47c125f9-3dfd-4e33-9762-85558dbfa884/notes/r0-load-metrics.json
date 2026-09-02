@@ -1,0 +1,26 @@
+{
+  "cuda_max_memory_allocated_bytes": 44471373312,
+  "cuda_max_memory_reserved_bytes": 44746932224,
+  "duration_seconds": 97.20824225100114,
+  "exception": null,
+  "exception_type": null,
+  "inference": null,
+  "load_seconds": 80.09133071199903,
+  "minimum_system_available_kib": 17278204,
+  "mode": "vendor-fp32",
+  "peak_nvidia_smi_memory_used_mib": 31988.0,
+  "peak_process_rss_kib": 61566792,
+  "raw_artifact_id": "r0-load-receipt.json",
+  "result": "loaded",
+  "schema_version": 1,
+  "torch": {
+    "bf16_supported": true,
+    "compute_capability": [
+      12,
+      0
+    ],
+    "cuda_runtime": "12.8",
+    "device_name": "NVIDIA GeForce RTX 5090",
+    "version": "2.10.0+cu128"
+  }
+}

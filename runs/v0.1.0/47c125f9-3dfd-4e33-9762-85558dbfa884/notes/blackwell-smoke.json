@@ -1,0 +1,57 @@
+VoiceChat feasibility shell: Python 3.12 + uv + FFmpeg + GCC
+Run ./sync-env.sh once, then use .venv/bin/python.
+{
+  "capability": [
+    12,
+    0
+  ],
+  "causal_conv1d_import": {
+    "status": "PASS",
+    "value": "1.6.2.post1"
+  },
+  "cuda_allocation": {
+    "status": "PASS",
+    "value": "1024.0"
+  },
+  "cuda_runtime": "12.8",
+  "device": "NVIDIA GeForce RTX 5090",
+  "flash_attn_import": {
+    "exception": "No module named 'flash_attn'",
+    "exception_type": "ModuleNotFoundError",
+    "status": "FAIL",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/../../tools/v0_1_0/blackwell_smoke.py\", line 12, in attempt\n    value = fn()\n            ^^^^\n  File \"/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/../../tools/v0_1_0/blackwell_smoke.py\", line 40, in <lambda>\n    attempt(f\"{package}_import\", lambda package=package: __import__(package).__version__, results)\n                                                         ^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'flash_attn'\n"
+  },
+  "mamba2_bf16_forward": {
+    "status": "PASS",
+    "value": "torch.Size([1, 64, 64])"
+  },
+  "matmul_torch.bfloat16": {
+    "status": "PASS",
+    "value": "0.04443359375"
+  },
+  "matmul_torch.float16": {
+    "status": "PASS",
+    "value": "0.03521728515625"
+  },
+  "sdpa_bf16": {
+    "status": "PASS",
+    "value": "torch.Size([1, 4, 128, 64])"
+  },
+  "torch": "2.10.0+cu128",
+  "transformer_engine_import": {
+    "exception": "No module named 'transformer_engine'",
+    "exception_type": "ModuleNotFoundError",
+    "status": "FAIL",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/../../tools/v0_1_0/blackwell_smoke.py\", line 12, in attempt\n    value = fn()\n            ^^^^\n  File \"/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/../../tools/v0_1_0/blackwell_smoke.py\", line 40, in <lambda>\n    attempt(f\"{package}_import\", lambda package=package: __import__(package).__version__, results)\n                                                         ^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'transformer_engine'\n"
+  },
+  "triton": {
+    "status": "PASS",
+    "value": "3.6.0"
+  },
+  "vllm_import": {
+    "exception": "No module named 'vllm'",
+    "exception_type": "ModuleNotFoundError",
+    "status": "FAIL",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/../../tools/v0_1_0/blackwell_smoke.py\", line 12, in attempt\n    value = fn()\n            ^^^^\n  File \"/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/../../tools/v0_1_0/blackwell_smoke.py\", line 40, in <lambda>\n    attempt(f\"{package}_import\", lambda package=package: __import__(package).__version__, results)\n                                                         ^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'vllm'\n"
+  }
+}

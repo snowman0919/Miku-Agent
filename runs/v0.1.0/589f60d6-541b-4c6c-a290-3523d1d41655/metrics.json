@@ -1,0 +1,26 @@
+{
+  "cuda_max_memory_allocated_bytes": 41627477504,
+  "cuda_max_memory_reserved_bytes": 41794142208,
+  "duration_seconds": 107.3950773359993,
+  "exception": "Input type (float) and bias type (c10::BFloat16) should be the same",
+  "exception_type": "RuntimeError",
+  "inference": null,
+  "load_seconds": 97.90555293299985,
+  "minimum_system_available_kib": 20193228,
+  "mode": "bf16-default",
+  "peak_nvidia_smi_memory_used_mib": 32139.0,
+  "peak_process_rss_kib": 61400792,
+  "raw_artifact_id": "r2-general-receipt.json",
+  "result": "failed",
+  "schema_version": 1,
+  "torch": {
+    "bf16_supported": true,
+    "compute_capability": [
+      12,
+      0
+    ],
+    "cuda_runtime": "12.8",
+    "device_name": "NVIDIA GeForce RTX 5090",
+    "version": "2.10.0+cu128"
+  }
+}

@@ -1,0 +1,26 @@
+run_id: 89c19075-441b-471b-8480-88ff83857fd2
+experiment: R3
+source:
+  repository: snowman0919/Miku-Agent
+  release_tag: v0.0.1
+  tag_object: 602f01eed26e0b343ae5028cbc42f5e8c265c67f
+  release_commit: a9d40ac385c8a9fe342558f0925c20d6d1711701
+  definition_commit: 6a7249c14539521a2b2d614b081134e6d40dd989
+  release_manifest_sha256: e2b361e1b18c96dcfbfe31637da0d54fb89a6fb18973eda9c5bf6bf6aed42418
+  validation_report_sha256: fd65847722cb4aac411c3e3f71ed44d7ca8f7bfe795c3ef6baa5f58f6df17096
+  product_lock_sha256: bfa41bd956b08296d3883317b5e579c9afb13b7579e7004e5bc43afa4678ee18
+branch: v0.1.0-reference-feasibility
+branch_start_commit: a9d40ac385c8a9fe342558f0925c20d6d1711701
+model:
+  repository: nvidia/NVIDIA-NemotronLabs-VoiceChat-11B
+  revision: 359ada7b1c60851e40ff08065f9b0340244f27e0
+software:
+  nvidia_speech_repository: https://github.com/NVIDIA-NeMo/Speech.git
+  nvidia_speech_branch: nemotron-labs-voicechat
+  nvidia_speech_commit: 097dfe9e2f55baf653b83035868bdc89849f1b47
+configuration:
+  dtype: bfloat16
+  quantization: none
+  offload: none
+  model_modification: experimental-full-floating-parameter-cast-with-autocast
+  checkpoint_modification: none

@@ -1,0 +1,61 @@
+waiting for another Nix process to finish fetching input 'git+file:///home/kilexep/miku-agent-server/Miku-Agent'...
+warning: Git tree '/home/kilexep/miku-agent-server/Miku-Agent' is dirty
+error (ignored): SQLite database '/home/kilexep/.cache/nix/eval-cache-v6/b5df22826654fb14a707dc35572d815b2510c21991249c8dfc7ef587a537d2e9.sqlite' is busy
+/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+`torch_dtype` is deprecated! Use `dtype` instead!
+[NeMo W 2026-09-02 22:19:05 nemo_logging:406] Keys in checkpoint but not in model: 15 keys
+Traceback (most recent call last):
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/examples/speechlm2/offline_voicechat_fc_infer.py", line 175, in <module>
+    main()
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/examples/speechlm2/offline_voicechat_fc_infer.py", line 144, in main
+    result, fc_output, call_step, response_step, resp_token_ids = run_fc_offline_inference(
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/nemo/collections/speechlm2/inference/utils/offline_voicechat.py", line 188, in run_fc_offline_inference
+    result1 = run_offline_inference(
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/nemo/collections/speechlm2/inference/utils/offline_voicechat.py", line 111, in run_offline_inference
+    return model.offline_inference(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/nemo/collections/speechlm2/models/nemotron_voicechat.py", line 691, in offline_inference
+    ans = self.stt_model._step_inference(t, inference_state, ans, force_bos_positions)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/nemo/collections/speechlm2/models/duplex_stt_model.py", line 4014, in _step_inference
+    if not is_prompt_position.all():
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: out of memory
+Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Command exited with non-zero status 1
+	Command being timed: ".venv/bin/python /home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/examples/speechlm2/offline_voicechat_fc_infer.py --checkpoint /home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/checkpoint/NVIDIA-NemotronLabs-VoiceChat-11B --wav /home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/examples/speechlm2/sample_audio/sample_fc.wav --output-dir /home/kilexep/miku/v0.1.0-rtx5090/raw-runs/47c125f9-3dfd-4e33-9762-85558dbfa884/fc-output --api-response-json /home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/examples/speechlm2/function_calling/random_number_response.json"
+	User time (seconds): 1174.88
+	System time (seconds): 186.32
+	Percent of CPU this job got: 116%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 19:31.14
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 61769132
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 4604
+	Minor (reclaiming a frame) page faults: 17155882
+	Voluntary context switches: 42093
+	Involuntary context switches: 74949
+	Swaps: 0
+	File system inputs: 80706059
+	File system outputs: 2648
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1

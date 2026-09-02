@@ -20,3 +20,13 @@
 | Docker secret exfiltration | Medium | Critical | Low | broker/proxy, scoped TTL, egress audit, hostile repo tests | Security | V0.7.x entry | 0.7.x |
 | Codex와 voice workload 자원 충돌 | High | High | High | reserved VRAM/RAM/disk, watchdog, GPU admission | Platform | V0.7.x exit | 0.7.x |
 
+## V0.1.0 measured updates
+
+| Risk ID | Before likelihood | After likelihood | Evidence | Remaining uncertainty | Next mitigation | Owner | Target version |
+|---|---|---|---|---|---|---|---|
+| `voicechat_11b_rtx5090_feasibility` | Medium | High | R0 FP32 general RTF 49.74; official function sample CUDA OOM; R3 BF16 RTF 2.39 | upstream-supported low-memory path | validate official optimized path on 80 GB+ GPU | Voice runtime | 0.1.1 |
+| `geforce_kernel_runtime_compatibility` | Medium | Low | RTX 5090 sm_120 passed BF16/FP16 matmul, SDPA, Triton, Mamba2 and causal-conv1d | container-only fused kernels were not run | repeat kernel matrix inside immutable NVIDIA container | Platform | 0.1.1 |
+| `full_duplex_latency` | High | High | no interactive server; best offline generation RTF 2.39 | TTFA and interruption remain unmeasured | loopback benchmark on supported container host | Voice runtime | 0.1.1-0.6.x |
+| `voice_and_codex_resource_contention` | High | High | R0 used 32,137/32,607 MiB; R3 function peak used 25,158 MiB | co-resident model behavior untested | separate service/GPU or enforce admission and reserved memory | Platform | 0.7.x |
+| `server_disk_capacity` | Medium | Low | about 869 GiB remained after the 44.4 GB checkpoint and environment | dataset growth not yet sized | reserve 20% and size V0.2.0 sources before download | Platform/Data | 0.2.0 |
+| `interactive_container_access` | Medium | High | pinned docs require 80 GB, Docker and NVIDIA Container Toolkit; host has 32 GB and neither runtime | availability of a supported 80 GB+ host and immutable image digest | provision supported host and bind image digest | Platform | 0.1.1 |

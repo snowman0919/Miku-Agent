@@ -1,0 +1,269 @@
+{
+  "file_count": 52,
+  "files": [
+    {
+      "path": ".cache/huggingface/.gitignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+      "size_bytes": 1
+    },
+    {
+      "path": ".cache/huggingface/download/.gitattributes.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/.gitattributes.metadata",
+      "sha256": "81c9c5e5b416024f8c4ae29068f646933fb29cdcf6b438df9ce96711c19107e4",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/LICENSE.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/LICENSE.metadata",
+      "sha256": "1a9c5a325188f2a0cfbba105b04bbceeb77addcd48d59906ba787e7c388d24a7",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/README.md.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/README.md.metadata",
+      "sha256": "e9e783f4efb9f4179ee3b0b7160801202deba4dbfb0e18a51d274282b75c8f06",
+      "size_bytes": 100
+    },
+    {
+      "path": ".cache/huggingface/download/VoiceChat-v1-TC voicechatv1.png.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/VoiceChat-v1-TC voicechatv1.png.metadata",
+      "sha256": "50c1501f420deb56341e164a8c851653fa187e41fd4d5c17558bf463f8cbc6c9",
+      "size_bytes": 125
+    },
+    {
+      "path": ".cache/huggingface/download/bias.md.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/bias.md.metadata",
+      "sha256": "890a0a8f2edf6ff2e4f37c106a4262ddb482432d587a9e9175b34ad0027968c6",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/config.json.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/config.json.metadata",
+      "sha256": "a6669f6b8cfb0a4c5d251471fb92307837776f139e0fa1b6a10f7020c0c757b4",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/explainability.md.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/explainability.md.metadata",
+      "sha256": "c63df55b99ebccea84781f63f7c09c20e0e8c4c45b5abdafb721d37f16eeeab9",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/interruptions.wav.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/interruptions.wav.metadata",
+      "sha256": "ae44df23163cec4d99bdc15d736e09578f95e1813148eef2f68c9446dcb7402a",
+      "size_bytes": 125
+    },
+    {
+      "path": ".cache/huggingface/download/model.safetensors.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/model.safetensors.metadata",
+      "sha256": "e89145f0557e6d7d971e94bbf699a83a8652d479d18d57efd78ffc204e74c93f",
+      "size_bytes": 125
+    },
+    {
+      "path": ".cache/huggingface/download/overview.md.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/overview.md.metadata",
+      "sha256": "a5aba35928d1e2eaee19076e489370f78324d8714b143af471104bc64d4b66a7",
+      "size_bytes": 100
+    },
+    {
+      "path": ".cache/huggingface/download/privacy.md.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/privacy.md.metadata",
+      "sha256": "36646eb580ff188c6c046aaaa38eeb6ad4b780fd3b36195a5569584e5201df05",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/rnnt_tokenizer/tokenizer.model.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/rnnt_tokenizer/tokenizer.model.metadata",
+      "sha256": "d59baa1a33110b43e5b656c72ff155dab837e4dec623536472591881cef57ee7",
+      "size_bytes": 125
+    },
+    {
+      "path": ".cache/huggingface/download/rnnt_tokenizer/tokenizer_config.json.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/rnnt_tokenizer/tokenizer_config.json.metadata",
+      "sha256": "681d901031a2841ac509c461b7a75db6470feea2439e0cd2e50908894fce8af6",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/rnnt_tokenizer/vocab.json.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/rnnt_tokenizer/vocab.json.metadata",
+      "sha256": "a3d17294766e3fec64e2652ec3e6ac81b91f72906494803eedbaa06a34c301f3",
+      "size_bytes": 100
+    },
+    {
+      "path": ".cache/huggingface/download/safety.md.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/safety.md.metadata",
+      "sha256": "2b405cf29d4bcbbbe89a5bcacc06c8be73a9665d1f7da5d1a4b26f68933bf72e",
+      "size_bytes": 101
+    },
+    {
+      "path": ".cache/huggingface/download/tool_call.wav.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/tool_call.wav.metadata",
+      "sha256": "f8a5b99bc9fdab3fdcc595a771edeb76bb187344382f7ad5c681b3afa36787fb",
+      "size_bytes": 124
+    },
+    {
+      "path": ".cache/huggingface/download/turn_taking.wav.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": ".cache/huggingface/download/turn_taking.wav.metadata",
+      "sha256": "e16a2364d418207e9a348db11041e23015a1630915e7cdcbd48c554c623c53d4",
+      "size_bytes": 124
+    },
+    {
+      "path": ".gitattributes",
+      "sha256": "3dfdbf42d9fee7af581a7ec620920a66e69e52470c7b34f21be1d3ea66181e2b",
+      "size_bytes": 1753
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c55ed9a3dd7c5df14a2496d8ff0f6b1941f807af1769b09611012c4ec56960a0",
+      "size_bytes": 2704
+    },
+    {
+      "path": "README.md",
+      "sha256": "ab29d78baa5779df77db33649cafd1196645cdfba49d3bdf32e6ba60d2d23781",
+      "size_bytes": 20723
+    },
+    {
+      "path": "VoiceChat-v1-TC voicechatv1.png",
+      "sha256": "8f311faa358b6b8f8d8f39f0eecc24267ad0fd5e6cfbedde4b629bdc26b2090d",
+      "size_bytes": 371673
+    },
+    {
+      "path": "bias.md",
+      "sha256": "9ea214d43238513aef493e75a7d5035245e7e81f5948c4f707cc59adb5e620c5",
+      "size_bytes": 595
+    },
+    {
+      "path": "config.json",
+      "sha256": "2e0b67b56fefeb4815e436d66ad84f2f94be192b1d543054c810ed239a28cff5",
+      "size_bytes": 31984
+    },
+    {
+      "path": "explainability.md",
+      "sha256": "c24a69ad7cb3aa165b3dfa48dada17efed49f1529d60cb9c40eb177974d60c13",
+      "size_bytes": 4794
+    },
+    {
+      "path": "interruptions.wav",
+      "sha256": "b79e61f136bc1af92d788201c017a7f983ddc042c60be862e0f9fa5f81149f1c",
+      "size_bytes": 2883884
+    },
+    {
+      "path": "model.safetensors",
+      "sha256": "d553750c29434a6bb524377e17634c6cafdbf621892e643a77f406e51570354b",
+      "size_bytes": 44382749892
+    },
+    {
+      "path": "overview.md",
+      "sha256": "26afd89a3c20bfa83f1a8384972ed3c3fabac15add965d56ead230564bc79090",
+      "size_bytes": 13921
+    },
+    {
+      "path": "privacy.md",
+      "sha256": "aa55adbd6fb0bed4e4890aa7c206b8f3731056d9eddc6e7dca4ba7d3fd9545e1",
+      "size_bytes": 2140
+    },
+    {
+      "path": "rnnt_tokenizer/tokenizer.model",
+      "sha256": "07d4e5a63840a53ab2d4d106d2874768143fb3fbdd47938b3910d2da05bfb0a9",
+      "size_bytes": 251056
+    },
+    {
+      "path": "rnnt_tokenizer/tokenizer_config.json",
+      "sha256": "10e393422195708d9d131f66dda09430dc472d3f7d36c3e4fd0a5135bf4809b0",
+      "size_bytes": 268
+    },
+    {
+      "path": "rnnt_tokenizer/vocab.json",
+      "sha256": "35051f795cec22352180d3a3d2a1383ffbe0d968cd14049ad6da254492f3678e",
+      "size_bytes": 9242
+    },
+    {
+      "path": "safety.md",
+      "sha256": "0c16d3370560226615a0cc36db48245c29785331f11441dbbbb84d7228677dda",
+      "size_bytes": 757
+    },
+    {
+      "path": "tool_call.wav",
+      "sha256": "c85511aa0720107a19728b76a05b28e78a58f0af4ede70ec92ec3faf4cfac85b",
+      "size_bytes": 8108204
+    },
+    {
+      "path": "turn_taking.wav",
+      "sha256": "9602d5f78799644964b631e632c5740c325d518847cbb1ffb8917dee7abd17c1",
+      "size_bytes": 3943724
+    }
+  ],
+  "repository": "nvidia/NVIDIA-NemotronLabs-VoiceChat-11B",
+  "revision": "359ada7b1c60851e40ff08065f9b0340244f27e0",
+  "schema_version": 1,
+  "total_size_bytes": 44398399171
+}

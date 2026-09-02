@@ -1,0 +1,77 @@
+Traceback (most recent call last):
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/load_probe.py", line 179, in main
+    result = run_offline_inference(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/speechlm2/inference/utils/offline_voicechat.py", line 111, in run_offline_inference
+    return model.offline_inference(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/speechlm2/models/nemotron_voicechat.py", line 584, in offline_inference
+    inference_state = self.stt_model._init_inference(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/speechlm2/models/duplex_stt_model.py", line 3630, in _init_inference
+    source_encoded, lengths, asr_emb = self.perception(
+                                       ^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/9ka5lknbqqg6nzs3zp6qyncf1k3ayz97-python3-3.12.14/lib/python3.12/contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/speechlm2/modules/perception.py", line 121, in forward
+    encoder_emb, encoded_len = self.encoder(audio_signal=processed_signal, length=processed_signal_length)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/asr/modules/conformer_encoder.py", line 587, in forward
+    return self.forward_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/asr/modules/conformer_encoder.py", line 636, in forward_internal
+    audio_signal, length = self.pre_encode(x=audio_signal, lengths=length)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/asr/parts/submodules/subsampling.py", line 426, in forward
+    x = self.conv(x)
+        ^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/container.py", line 253, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku/v0.1.0-rtx5090/run-20260902T122935Z/software/Speech/nemo/collections/asr/parts/submodules/causal_convs.py", line 69, in forward
+    x = super().forward(x)
+        ^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/conv.py", line 553, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kilexep/miku-agent-server/Miku-Agent/experiments/v0.1.0-rtx5090/.venv/lib/python3.12/site-packages/torch/nn/modules/conv.py", line 548, in _conv_forward
+    return F.conv2d(
+           ^^^^^^^^^
+RuntimeError: Input type (float) and bias type (c10::BFloat16) should be the same
