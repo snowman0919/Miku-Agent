@@ -1,7 +1,7 @@
-product_version: 0.0.1
-phase: release-evidence-correction
-status: locked
-execution_environment: local-only
+product_version: 0.1.0
+phase: reference-feasibility
+status: conditional
+execution_environment: server-reference-feasibility
 server_use_allowed_from: 0.1.0
 initial_character: miku
 authentication: clerk-dual-whitelist
@@ -9,6 +9,6 @@ repository_visibility: private
 public_distribution: false
 model_training_started: false
 dataset_collection_started: false
-server_validation_started: false
-previous_release: v0.0.0
+server_validation_started: true
+previous_release: v0.0.1
 release_evidence_format: 2

@@ -18,3 +18,13 @@ releases:
     status: released
     notes:
       - release commit identity is supplied by the annotated v0.0.1 tag
+  - version: 0.1.0
+    tag: v0.1.0
+    tag_type: annotated
+    definition_commit: 7e9bf1b7b53eb5ccf369efe59a596840bae5eaac
+    manifest_format: 2
+    immutable: true
+    status: released
+    notes:
+      - RTX 5090 reference feasibility is conditional
+      - release commit identity is supplied by the annotated v0.1.0 tag

@@ -1,20 +1,20 @@
-product_version: 0.0.1
-phase: release-evidence-correction
-previous_release: v0.0.0
+product_version: 0.1.0
+phase: reference-feasibility
+previous_release: v0.0.1
 
 release_identity:
   manifest_format: 2
-  tag: v0.0.1
-  definition_commit: 6a7249c14539521a2b2d614b081134e6d40dd989
+  tag: v0.1.0
+  definition_commit: 7e9bf1b7b53eb5ccf369efe59a596840bae5eaac
 
 component_versions:
   product_contract: 0.0.0
-  release_evidence_contract: 0.0.1
+  release_evidence_contract: 0.1.0
   protocol_contract: 0.0.0
   client_runtime: not-started
-  server_runtime: not-started
+  server_runtime: reference-feasibility
 
-schema_version: 2.0.0
+schema_version: 2.1.0
 
 accepted_adrs:
   - ADR-0001
@@ -30,26 +30,32 @@ accepted_adrs:
   - ADR-0011
 
 document_hashes:
-  README.md: 32dc58192e2ed250495d9e2ff6e1d0d2ff96bf935d2ba298b82d57aa1fec20b8
-  docs/product-charter.md: 593dbb3a4fc393e2832e656e8c8c3ac0cc2397e7d21fe9bd4335f62ff26fc7fc
-  docs/persona-constitution.md: 7b9ab6c67ba9d2387187a865e9ac8a0e3c90c205acb891aa8a1cd917f0e484d3
-  docs/security-and-threat-model.md: 43c151c6364e5086b5bafacd044023d184619d4bcebadc93a1739aa51ea39037
-  docs/data-governance.md: c8a518fe8017644708050ca2838e03f29c7322aea4c602b13d947d916061c993
-  docs/memory-architecture.md: 9d963a4cd7ba1f4fa9e030e1b66a09b97e26c2bf45f0f4ffff8d7012931f3408
-  docs/evaluation-policy.md: ab8fd7e85166338904462716ab7c9e68f0aa7091360eb555f7c0d201c13ebbfe
-  docs/versioning-and-release.md: ed91463628c1cdf3dc1b4cc89abe390bec12ee6264c4a3eba80411421ab6679b
-  spec/product-lock.yaml: bfa41bd956b08296d3883317b5e579c9afb13b7579e7004e5bc43afa4678ee18
+  reports/v0.1.0-reference-feasibility.md: 3fdbb6628251aee1542441d37d8ba33a693f2002dbcadcbb16284f64b1c7e483
+  docs/risk-register.md: c75616dcc1a1ab8cea4194262d193305ba7540afca040cef1da6f7c3e3ca7e43
+  experiments/v0.1.0-rtx5090/flake.lock: 59dcd10f73b4392d83afb7ad11ce635f7c23ab529e21065fc073fbd2a30661e5
+  experiments/v0.1.0-rtx5090/pyproject.toml: 8aa4e766895182f85431744d54cc6f6cbff5959d6b11f276a79402b0e0463ff0
+  experiments/v0.1.0-rtx5090/uv.lock: 1071ee9d9438eeb2b0b5ab3b1ed889c2e8826513ac5aead64eea031752e99f27
+  experiments/v0.1.0-rtx5090/load_probe.py: 4c7a62ed5fc16264ee4761abfcaadc23178b2e615d02b0850042e11489a78e22
+  experiments/v0.1.0-rtx5090/fc_probe.py: 087292930274c8e9a045f4fd72268a5c85b2a3803622673728679193cdb4ec42
+  tools/v0_1_0/validate_run.py: 78c2a4a56fed62e71c737e5a2c284caf3a761684d02adf7a6a02f0824a45b5c1
+  runs/v0.1.0/47c125f9-3dfd-4e33-9762-85558dbfa884/run-binding.yaml: e80cc8f28e406b792627667d6cd9f7f1f98314b8500f4bb7dd1996f6347cd98e
+  runs/v0.1.0/47c125f9-3dfd-4e33-9762-85558dbfa884/metrics.json: 8490bdfeea17f90db735ab9d547a7b043546faa4860c6dd2959fa4fabe35d8b2
+  runs/v0.1.0/89c19075-441b-471b-8480-88ff83857fd2/run-binding.yaml: bf476bf2c8f9b0b91bd3683ac3266211802538456b3453768364c637efd1d03a
+  runs/v0.1.0/89c19075-441b-471b-8480-88ff83857fd2/metrics.json: ca24d400269413b0ac04ff64ea223339f53f418a5e9332906418c5c98090a4d5
+  runs/v0.1.0/89c19075-441b-471b-8480-88ff83857fd2/checkpoint-manifest.json: 28922aef8f8928634f23f5660901522fdee81b9c1b4a49fd67cfd4eeafbe8944
 
 validation_report:
-  path: reports/v0.0.1-validation.md
+  path: reports/v0.1.0-validation.md
 
 known_risks:
   - voicechat_11b_rtx5090_feasibility
-  - legal_rights_of_voice_sources
-  - clerk_production_plan_dependency
+  - full_duplex_latency
+  - voice_and_codex_resource_contention
+  - interactive_container_access
 
 corrections:
-  - non_self_referential_release_identity
-  - offline_remote_validation_separation
+  - nix-flake-reproducible-environment
+  - immutable-model-and-source-evidence
+  - reference-and-mitigation-separation
 
-next_version: 0.1.0
+next_version: 0.2.0

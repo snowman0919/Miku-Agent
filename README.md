@@ -4,12 +4,13 @@ Miku Agent는 실시간 한국어 음성 대화, 미쿠형 페르소나와 고�
 
 ## 현재 상태
 
-- 버전: `0.0.1`
-- 단계: Release Evidence Correction
-- 실행 환경: local-only
+- 버전: `0.1.0`
+- 단계: RTX 5090 Reference Feasibility
+- 결과: `CONDITIONAL`
+- 실행 환경: Nix flake 기반 server reference environment
 - 초기 캐릭터: `miku`
 
-V0.0.1은 애플리케이션·모델 구현 단계가 아니다. V0.0.0 제품 계약을 유지하면서 non-self-referential release identity와 offline/remote validation 분리를 교정한다. 서버 접속, 모델 다운로드·학습, 데이터 수집, Flutter/Unity scaffold, production 인증 구성은 수행하지 않는다.
+V0.1.0은 NVIDIA VoiceChat 11B의 RTX 5090 재현성과 서비스 가능성을 측정했다. 공식 FP32 경로는 일반 offline inference는 성공했지만 function-calling에서 OOM이 발생했고 실시간 기준을 통과하지 못했다. Experimental BF16 경로는 일반/function channel이 동작했지만 RTF 2.39이며, 공식 interactive container는 80 GB VRAM 전제 때문에 이 서버에서 검증하지 못했다. 상세 근거는 `reports/v0.1.0-reference-feasibility.md`에 있다.
 
 ## V1.0 목표
 
@@ -28,7 +29,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 make validate
 make audit-remote
-make audit-release TAG=v0.0.1
+make audit-release TAG=v0.1.0
 ```
 
 ## Source of truth
@@ -42,6 +43,6 @@ make audit-release TAG=v0.0.1
 5. `docs/roadmap.md`
 6. component README
 
-## V0.1.0 진입 조건
+## V0.2.0 진입 조건
 
-모든 V0.0.1 offline invariant, remote policy, release tag binding이 검증되고 clean한 release commit에 `v0.0.1` annotated tag가 있어야 한다. 그 뒤에만 `docs/handoff/v0.1.0-server-readiness.md`에 따라 RTX 5090 reference feasibility를 시작한다.
+V0.1.0 release evidence와 annotated tag를 검증한 뒤 Dataset Foundry의 데이터·권리·품질 관리 작업을 시작할 수 있다. 모델 training은 별도 gate 전까지 시작하지 않으며, RTX 5090 production deployment가 해결됐다고 간주하지 않는다.

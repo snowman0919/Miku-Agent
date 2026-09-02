@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0 - 2026-09-02
+
+- RTX 5090에서 NVIDIA VoiceChat 11B source/checkpoint를 immutable revision으로 고정했다.
+- Nix flake와 uv lock으로 Python 3.12, PyTorch 2.10 CUDA 12.8 환경을 재현했다.
+- 공식 FP32 baseline의 일반 inference 성공, function-call OOM, RTF 49.74를 기록했다.
+- Experimental BF16 경로에서 일반/function channel 성공과 RTF 2.39를 기록했다.
+- 공식 interactive container의 80 GB/runtime blocker와 CONDITIONAL 결정을 보존했다.
+- 모델 weight, 생성 음성, raw telemetry, credential은 Git에 포함하지 않았다.
+
 ## 0.0.1 - 2026-09-02
 
 - Release manifest를 non-self-referential Manifest Format 2로 전환했다.
