@@ -13,9 +13,13 @@ DB client나 arbitrary command field가 없다.
 environment/model cache와 다른 경로여야 한다. 권장 상태 구조는 component README의
 구조와 같으며 model cache와 output cache를 분리한다.
 
-현재 확인한 host `mathcat`은 RTX 3080 10GB이고 root filesystem 여유가 9.6GB뿐이다.
-따라서 이 host를 RTX 5090 worker root로 사용하거나 GPU model을 내려받지 않았다.
-Ollama GPU workload도 자동 종료하지 않았다.
+실제 worker는 SSH host `miku`의 `/home/kilexep/miku-data-worker`에 만들었다. 이 경로는
+ext4 `/dev/sdd`의 disposable storage이며 확인 시 약 862 GiB가 비어 있었다. GPU는
+RTX 5090 32,607 MiB이고 기존 V0.1.0 VoiceChat 환경과 model cache는 읽기 확인만 했으며
+수정하지 않았다.
+
+Core는 Nix/uv lock, 모델 작업은 별도 audio uv lock을 사용한다. 모델 weight와 pilot
+media/결과는 worker root 또는 사용자 cache에만 있고 Git에는 없다.
 
 ## 3080 integration requirement
 
@@ -28,4 +32,3 @@ Ollama GPU workload도 자동 종료하지 않았다.
 5. imported result에 transform fingerprint, worker environment와 original job ID를 보존한다.
 
 3080 DB schema와 importer location은 이 branch에서 추측하거나 수정하지 않는다.
-
