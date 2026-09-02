@@ -13,6 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_REPOSITORY = "snowman0919/Miku-Agent"
 EXPECTED_V000_TAG_OBJECT = "d1e97d732498f67b848264819e6316954a6ec52b"
 EXPECTED_V000_COMMIT = "08ea6c6dc06e0a1a3a2a71fc8daa704b35e368d4"
+EXPECTED_V001_TAG_OBJECT = "602f01eed26e0b343ae5028cbc42f5e8c265c67f"
+EXPECTED_V001_COMMIT = "a9d40ac385c8a9fe342558f0925c20d6d1711701"
+EXPECTED_V001_DEFINITION = "6a7249c14539521a2b2d614b081134e6d40dd989"
 PROHIBITED_COMMIT_FIELDS = {
     "repository_commit", "release_commit", "tag_target_commit", "self_commit", "head_commit",
 }

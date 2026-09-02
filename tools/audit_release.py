@@ -11,6 +11,8 @@ try:
     from .release_common import (
         EXPECTED_V000_COMMIT,
         EXPECTED_V000_TAG_OBJECT,
+        EXPECTED_V001_COMMIT,
+        EXPECTED_V001_TAG_OBJECT,
         ROOT,
         assert_no_prohibited_commit_fields,
         blob_sha256,
@@ -25,6 +27,8 @@ except ImportError:  # Direct script execution.
     from release_common import (
     EXPECTED_V000_COMMIT,
     EXPECTED_V000_TAG_OBJECT,
+    EXPECTED_V001_COMMIT,
+    EXPECTED_V001_TAG_OBJECT,
     ROOT,
     assert_no_prohibited_commit_fields,
     blob_sha256,
@@ -54,8 +58,8 @@ def remote_tag_refs(tag: str) -> dict[str, str]:
 
 def run_all(tag: str) -> list[Check]:
     checks: list[Check] = []
-    if tag != "v0.0.1":
-        raise AssertionError("this release evidence contract expects TAG=v0.0.1")
+    if tag not in {"v0.0.1", "v0.1.0"}:
+        raise AssertionError("supported release audit tags are v0.0.1 and v0.1.0")
     if git("show-ref", "--verify", "--quiet", f"refs/tags/{tag}", check=False).returncode != 0:
         raise AssertionError(f"local tag does not exist: {tag}")
     if git_text("cat-file", "-t", tag) != "tag":
@@ -82,13 +86,18 @@ def run_all(tag: str) -> list[Check]:
     checks.append(Check("definition document hashes", f"{len(manifest['document_hashes'])} Git object hashes"))
 
     ledger = yaml_at_ref(release_commit, "spec/release-history.yaml")
-    v001 = next((item for item in ledger["releases"] if item["version"] == "0.0.1"), None)
-    if not v001 or v001.get("status") != "released" or v001.get("definition_commit") != definition:
-        raise AssertionError("tagged release history does not bind V0.0.1 definition commit")
+    version = tag.removeprefix("v")
+    entry = next((item for item in ledger["releases"] if item["version"] == version), None)
+    if not entry or entry.get("status") != "released" or entry.get("definition_commit") != definition:
+        raise AssertionError(f"tagged release history does not bind {tag} definition commit")
     tag_type, old_object, old_peeled = v000_local_identity()
     if (tag_type, old_object, old_peeled) != ("tag", EXPECTED_V000_TAG_OBJECT, EXPECTED_V000_COMMIT):
         raise AssertionError("V0.0.0 immutable baseline changed")
     checks.append(Check("V0.0.0 historical integrity", f"{old_object} -> {old_peeled}"))
+    if tag == "v0.1.0":
+        if git_text("rev-parse", "v0.0.1") != EXPECTED_V001_TAG_OBJECT or git_text("rev-parse", "v0.0.1^{commit}") != EXPECTED_V001_COMMIT:
+            raise AssertionError("V0.0.1 immutable baseline changed")
+        checks.append(Check("V0.0.1 historical integrity", f"{EXPECTED_V001_TAG_OBJECT} -> {EXPECTED_V001_COMMIT}"))
 
     tag_message = git_text("for-each-ref", "--format=%(contents)", f"refs/tags/{tag}")
     tagged_manifest_hash = blob_sha256(release_commit, "release-manifest.yaml")

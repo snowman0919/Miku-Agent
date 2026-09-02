@@ -6,16 +6,16 @@
   "additionalProperties": false,
   "required": ["product_version", "phase", "previous_release", "release_identity", "component_versions", "schema_version", "accepted_adrs", "document_hashes", "validation_report", "known_risks", "corrections", "next_version"],
   "properties": {
-    "product_version": {"const": "0.0.1"},
-    "phase": {"const": "release-evidence-correction"},
-    "previous_release": {"const": "v0.0.0"},
+    "product_version": {"enum": ["0.0.1", "0.1.0"]},
+    "phase": {"enum": ["release-evidence-correction", "reference-feasibility"]},
+    "previous_release": {"enum": ["v0.0.0", "v0.0.1"]},
     "release_identity": {
       "type": "object",
       "additionalProperties": false,
       "required": ["manifest_format", "tag", "definition_commit"],
       "properties": {
         "manifest_format": {"const": 2},
-        "tag": {"const": "v0.0.1"},
+        "tag": {"enum": ["v0.0.1", "v0.1.0"]},
         "definition_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
       }
     },
@@ -25,23 +25,48 @@
       "required": ["product_contract", "release_evidence_contract", "protocol_contract", "client_runtime", "server_runtime"],
       "properties": {
         "product_contract": {"const": "0.0.0"},
-        "release_evidence_contract": {"const": "0.0.1"},
+        "release_evidence_contract": {"enum": ["0.0.1", "0.1.0"]},
         "protocol_contract": {"const": "0.0.0"},
         "client_runtime": {"const": "not-started"},
-        "server_runtime": {"const": "not-started"}
+        "server_runtime": {"enum": ["not-started", "reference-feasibility"]}
       }
     },
-    "schema_version": {"const": "2.0.0"},
+    "schema_version": {"enum": ["2.0.0", "2.1.0"]},
     "accepted_adrs": {"type": "array", "const": ["ADR-0001", "ADR-0002", "ADR-0003", "ADR-0004", "ADR-0005", "ADR-0006", "ADR-0007", "ADR-0008", "ADR-0009", "ADR-0010", "ADR-0011"]},
     "document_hashes": {"type": "object", "minProperties": 9, "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
     "validation_report": {
       "type": "object",
       "additionalProperties": false,
       "required": ["path"],
-      "properties": {"path": {"const": "reports/v0.0.1-validation.md"}}
+      "properties": {"path": {"enum": ["reports/v0.0.1-validation.md", "reports/v0.1.0-validation.md"]}}
     },
     "known_risks": {"type": "array", "minItems": 1, "items": {"type": "string"}},
-    "corrections": {"type": "array", "const": ["non_self_referential_release_identity", "offline_remote_validation_separation"]},
-    "next_version": {"const": "0.1.0"}
-  }
+    "corrections": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "next_version": {"enum": ["0.1.0", "0.2.0"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"product_version": {"const": "0.0.1"}}, "required": ["product_version"]},
+      "then": {
+        "properties": {
+          "phase": {"const": "release-evidence-correction"},
+          "previous_release": {"const": "v0.0.0"},
+          "release_identity": {"properties": {"tag": {"const": "v0.0.1"}}},
+          "schema_version": {"const": "2.0.0"},
+          "validation_report": {"properties": {"path": {"const": "reports/v0.0.1-validation.md"}}},
+          "next_version": {"const": "0.1.0"}
+        }
+      },
+      "else": {
+        "properties": {
+          "phase": {"const": "reference-feasibility"},
+          "previous_release": {"const": "v0.0.1"},
+          "release_identity": {"properties": {"tag": {"const": "v0.1.0"}}},
+          "schema_version": {"const": "2.1.0"},
+          "validation_report": {"properties": {"path": {"const": "reports/v0.1.0-validation.md"}}},
+          "next_version": {"const": "0.2.0"}
+        }
+      }
+    }
+  ]
 }

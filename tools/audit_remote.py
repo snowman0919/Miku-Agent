@@ -12,6 +12,8 @@ try:
         EXPECTED_REPOSITORY,
         EXPECTED_V000_COMMIT,
         EXPECTED_V000_TAG_OBJECT,
+        EXPECTED_V001_COMMIT,
+        EXPECTED_V001_TAG_OBJECT,
         ROOT,
         git,
         git_text,
@@ -25,6 +27,8 @@ except ImportError:  # Direct script execution.
     EXPECTED_REPOSITORY,
     EXPECTED_V000_COMMIT,
     EXPECTED_V000_TAG_OBJECT,
+    EXPECTED_V001_COMMIT,
+    EXPECTED_V001_TAG_OBJECT,
     ROOT,
     git,
     git_text,
@@ -90,6 +94,7 @@ def run_all() -> list[Check]:
     refs = remote_refs(
         "refs/heads/main", "refs/tags/v0.0.0", "refs/tags/v0.0.0^{}",
         "refs/tags/v0.0.1", "refs/tags/v0.0.1^{}",
+        "refs/tags/v0.1.0", "refs/tags/v0.1.0^{}",
     )
     local_type, local_object, local_peeled = v000_local_identity()
     if local_type != "tag" or local_object != EXPECTED_V000_TAG_OBJECT or local_peeled != EXPECTED_V000_COMMIT:
@@ -118,6 +123,21 @@ def run_all() -> list[Check]:
         if "refs/tags/v0.0.1" in refs:
             raise AssertionError("remote v0.0.1 exists without a matching local tag")
         checks.append(Check("V0.0.1 tag state", "not created; permitted during release preparation"))
+    if git_text("rev-parse", "v0.0.1") != EXPECTED_V001_TAG_OBJECT or git_text("rev-parse", "v0.0.1^{commit}") != EXPECTED_V001_COMMIT:
+        raise AssertionError("local V0.0.1 identity changed")
+    local_v010 = git("show-ref", "--verify", "--quiet", "refs/tags/v0.1.0", check=False)
+    if local_v010.returncode == 0:
+        if git_text("cat-file", "-t", "v0.1.0") != "tag":
+            raise AssertionError("local v0.1.0 is not annotated")
+        object_id = git_text("rev-parse", "v0.1.0")
+        peeled = git_text("rev-parse", "v0.1.0^{commit}")
+        if refs.get("refs/tags/v0.1.0") != object_id or refs.get("refs/tags/v0.1.0^{}") != peeled:
+            raise AssertionError("remote v0.1.0 differs from local annotated tag")
+        checks.append(Check("V0.1.0 remote integrity", f"{object_id} -> {peeled}"))
+    else:
+        if "refs/tags/v0.1.0" in refs:
+            raise AssertionError("remote v0.1.0 exists without a matching local tag")
+        checks.append(Check("V0.1.0 tag state", "not created; permitted during release preparation"))
     return checks
 
 

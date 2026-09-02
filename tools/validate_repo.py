@@ -17,6 +17,9 @@ try:
     from .release_common import (
         EXPECTED_V000_COMMIT,
         EXPECTED_V000_TAG_OBJECT,
+        EXPECTED_V001_COMMIT,
+        EXPECTED_V001_DEFINITION,
+        EXPECTED_V001_TAG_OBJECT,
         ROOT,
         assert_no_prohibited_commit_fields,
         commit_exists,
@@ -32,6 +35,9 @@ except ImportError:  # Direct script execution.
     from release_common import (
     EXPECTED_V000_COMMIT,
     EXPECTED_V000_TAG_OBJECT,
+    EXPECTED_V001_COMMIT,
+    EXPECTED_V001_DEFINITION,
+    EXPECTED_V001_TAG_OBJECT,
     ROOT,
     assert_no_prohibited_commit_fields,
     commit_exists,
@@ -195,7 +201,7 @@ def check_root_contracts() -> Check:
         errors = validate_instance(name, value)
         if errors:
             raise AssertionError(f"{name}: {errors}")
-    return Check("root machine contracts", "PASS", "product lock and V0.0.1 evidence contracts")
+    return Check("root machine contracts", "PASS", f"product lock and V{manifest['product_version']} evidence contracts")
 
 
 def check_product_invariants() -> Check:
@@ -265,11 +271,18 @@ def check_release_history() -> Check:
         raise AssertionError("release history is missing V0.0.0")
     tag_object, peeled = validate_v000_history_entry(v000)
     v001 = next((item for item in ledger["releases"] if item["version"] == "0.0.1"), None)
-    if v001 and v001["status"] == "released":
-        manifest = load_data(ROOT / "release-manifest.yaml")
+    if not v001 or v001.get("status") != "released":
+        raise AssertionError("release history is missing released V0.0.1")
+    if v001.get("definition_commit") != EXPECTED_V001_DEFINITION:
+        raise AssertionError("release history V0.0.1 definition differs from immutable baseline")
+    if git_text("rev-parse", "v0.0.1") != EXPECTED_V001_TAG_OBJECT or git_text("rev-parse", "v0.0.1^{commit}") != EXPECTED_V001_COMMIT:
+        raise AssertionError("V0.0.1 local tag identity differs from immutable baseline")
+    manifest = load_data(ROOT / "release-manifest.yaml")
+    if manifest.get("product_version") == "0.1.0":
+        v010 = next((item for item in ledger["releases"] if item["version"] == "0.1.0"), None)
         definition = manifest.get("release_identity", {}).get("definition_commit")
-        if v001.get("definition_commit") != definition:
-            raise AssertionError("release history V0.0.1 definition differs from manifest")
+        if not v010 or v010.get("status") != "released" or v010.get("definition_commit") != definition:
+            raise AssertionError("release history V0.1.0 definition differs from manifest")
     return Check("release history", "PASS", f"V0.0.0 tag object {tag_object} and peeled commit {peeled}")
 
 

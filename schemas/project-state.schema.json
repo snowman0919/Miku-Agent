@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://miku-agent.invalid/schemas/project-state.schema.json",
-  "title": "Project State V0.0.1",
+  "title": "Project State",
   "type": "object",
   "additionalProperties": false,
   "required": ["product_version", "phase", "status", "execution_environment", "server_use_allowed_from", "initial_character", "authentication", "repository_visibility", "public_distribution", "model_training_started", "dataset_collection_started", "server_validation_started", "previous_release", "release_evidence_format"],
   "properties": {
-    "product_version": {"const": "0.0.1"},
-    "phase": {"const": "release-evidence-correction"},
-    "status": {"const": "locked"},
-    "execution_environment": {"const": "local-only"},
+    "product_version": {"enum": ["0.0.1", "0.1.0"]},
+    "phase": {"enum": ["release-evidence-correction", "reference-feasibility"]},
+    "status": {"enum": ["locked", "conditional"]},
+    "execution_environment": {"enum": ["local-only", "server-reference-feasibility"]},
     "server_use_allowed_from": {"const": "0.1.0"},
     "initial_character": {"const": "miku"},
     "authentication": {"const": "clerk-dual-whitelist"},
@@ -17,8 +17,31 @@
     "public_distribution": {"const": false},
     "model_training_started": {"const": false},
     "dataset_collection_started": {"const": false},
-    "server_validation_started": {"const": false},
-    "previous_release": {"const": "v0.0.0"},
+    "server_validation_started": {"type": "boolean"},
+    "previous_release": {"enum": ["v0.0.0", "v0.0.1"]},
     "release_evidence_format": {"const": 2}
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"product_version": {"const": "0.0.1"}}, "required": ["product_version"]},
+      "then": {
+        "properties": {
+          "phase": {"const": "release-evidence-correction"},
+          "status": {"const": "locked"},
+          "execution_environment": {"const": "local-only"},
+          "server_validation_started": {"const": false},
+          "previous_release": {"const": "v0.0.0"}
+        }
+      },
+      "else": {
+        "properties": {
+          "phase": {"const": "reference-feasibility"},
+          "status": {"const": "conditional"},
+          "execution_environment": {"const": "server-reference-feasibility"},
+          "server_validation_started": {"const": true},
+          "previous_release": {"const": "v0.0.1"}
+        }
+      }
+    }
+  ]
 }
