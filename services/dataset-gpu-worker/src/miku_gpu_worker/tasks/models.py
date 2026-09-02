@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import os
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -18,17 +19,64 @@ def _context(parameters: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
     return Path(model_path), binding
 
 
+@lru_cache(maxsize=1)
+def _separation_model(model_root: str, model_id: str):
+    from demucs.pretrained import get_model
+
+    os.environ["TORCH_HOME"] = model_root
+    return get_model(model_id).to("cuda").eval()
+
+
+@lru_cache(maxsize=1)
+def _asr_model(model_path: str):
+    import torch
+    from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+
+    processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        model_path, dtype=torch.float16, local_files_only=True
+    ).to("cuda").eval()
+    return pipeline(
+        "automatic-speech-recognition", model=model, tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor, device=0, torch_dtype=torch.float16,
+    )
+
+
+@lru_cache(maxsize=1)
+def _alignment_model(model_path: str):
+    import torch
+    from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+
+    processor = Wav2Vec2Processor.from_pretrained(model_path, local_files_only=True)
+    model = Wav2Vec2ForCTC.from_pretrained(
+        model_path, dtype=torch.float16, local_files_only=True
+    )
+    processor.tokenizer.set_target_lang("kor")
+    model.load_adapter("kor", adapter_kwargs={"cache_dir": model_path, "local_files_only": True})
+    return processor, model.to("cuda").eval()
+
+
+@lru_cache(maxsize=1)
+def _speaker_model(model_path: str):
+    import torchaudio
+    if not hasattr(torchaudio, "list_audio_backends"):
+        torchaudio.list_audio_backends = lambda: []
+    from speechbrain.inference.speaker import EncoderClassifier
+
+    return EncoderClassifier.from_hparams(
+        source=model_path, savedir=None, run_opts={"device": "cuda"}
+    )
+
+
 def run_separation(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
     model_root, binding = _context(parameters)
     try:
         import torch
         from demucs.apply import apply_model
         from demucs.audio import AudioFile, save_audio
-        from demucs.pretrained import get_model
+        model = _separation_model(str(model_root), binding["model_id"])
     except ImportError as exc:
         raise WorkerError("MODEL_ACCESS_FAILED", f"separation environment unavailable: {exc}") from exc
-    os.environ["TORCH_HOME"] = str(model_root)
-    model = get_model(binding["model_id"]).to("cuda").eval()
     mixture = AudioFile(str(path)).read(
         streams=0, samplerate=model.samplerate, channels=model.audio_channels
     )
@@ -67,18 +115,9 @@ def run_separation(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
 def run_asr(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
     model_path, binding = _context(parameters)
     try:
-        import torch
-        from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+        recognizer = _asr_model(str(model_path))
     except ImportError as exc:
         raise WorkerError("MODEL_ACCESS_FAILED", f"ASR environment unavailable: {exc}") from exc
-    processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
-    model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        model_path, dtype=torch.float16, local_files_only=True
-    ).to("cuda").eval()
-    recognizer = pipeline(
-        "automatic-speech-recognition", model=model, tokenizer=processor.tokenizer,
-        feature_extractor=processor.feature_extractor, device=0, torch_dtype=torch.float16,
-    )
     result = recognizer(
         str(path), return_timestamps=True,
         generate_kwargs={"language": parameters.get("language", "ko"), "task": "transcribe"},
@@ -102,17 +141,10 @@ def run_alignment(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
         import librosa
         import torch
         import torchaudio
-        from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+        processor, model = _alignment_model(str(model_path))
     except ImportError as exc:
         raise WorkerError("MODEL_ACCESS_FAILED", f"alignment environment unavailable: {exc}") from exc
     samples, _ = librosa.load(path, sr=16000, mono=True)
-    processor = Wav2Vec2Processor.from_pretrained(model_path, local_files_only=True)
-    model = Wav2Vec2ForCTC.from_pretrained(
-        model_path, dtype=torch.float16, local_files_only=True
-    )
-    processor.tokenizer.set_target_lang("kor")
-    model.load_adapter("kor", adapter_kwargs={"cache_dir": str(model_path), "local_files_only": True})
-    model = model.to("cuda").eval()
     token_ids = processor.tokenizer(transcript, add_special_tokens=False).input_ids
     values = processor(samples, sampling_rate=16000, return_tensors="pt")
     with torch.inference_mode():
@@ -150,16 +182,10 @@ def run_speaker_embedding(path: Path, parameters: dict[str, Any]) -> dict[str, A
         import librosa
         import torch
         import torch.nn.functional as functional
-        import torchaudio
-        if not hasattr(torchaudio, "list_audio_backends"):
-            torchaudio.list_audio_backends = lambda: []
-        from speechbrain.inference.speaker import EncoderClassifier
+        model = _speaker_model(str(model_path))
     except ImportError as exc:
         raise WorkerError("MODEL_ACCESS_FAILED", f"speaker environment unavailable: {exc}") from exc
     samples, _ = librosa.load(path, sr=16000, mono=True)
-    model = EncoderClassifier.from_hparams(
-        source=str(model_path), savedir=None, run_opts={"device": "cuda"}
-    )
     with torch.inference_mode():
         value = model.encode_batch(torch.tensor(samples, device="cuda").unsqueeze(0)).squeeze()
     embedding = functional.normalize(value, dim=0).cpu().tolist()
