@@ -3,4 +3,4 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 python="$root/.venv/bin/python"
 [ -x "$python" ] || python=python3
-exec "$python" "$root/scripts/subagents/router" --provider opencode "$@"
+exec "$python" "$root/scripts/subagents/router" --provider command_code "$@"

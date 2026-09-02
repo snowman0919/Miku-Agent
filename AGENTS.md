@@ -1,5 +1,7 @@
 # Agent Working Agreement
 
+Subordinate-agent 실행과 provider routing은 [AGENTS-MoA.md](AGENTS-MoA.md)를 함께 따른다.
+
 ## Source of truth
 
 1. `spec/product-lock.yaml`

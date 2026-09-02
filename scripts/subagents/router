@@ -1,0 +1,281 @@
+#!/usr/bin/env python3
+"""Run one schema-validated subordinate job and write a redacted receipt."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+import uuid
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from jsonschema import Draft202012Validator
+
+ROOT = Path(__file__).resolve().parents[2]
+SAFE_ENV = {
+    "HOME", "USER", "PATH", "LANG", "LC_ALL", "TERM", "TMPDIR",
+    "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "SSL_CERT_FILE",
+    "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
+}
+SECRET_PATTERNS = (
+    re.compile(r"(?i)(authorization\s*:\s*bearer\s+)\S+"),
+    re.compile(r"\b(?:sk-[A-Za-z0-9_-]{16,}|github_pat_[A-Za-z0-9_]{16,})\b"),
+)
+
+
+class JobFailure(RuntimeError):
+    def __init__(self, category: str, message: str, retryable: bool = False):
+        super().__init__(message)
+        self.category = category
+        self.retryable = retryable
+
+
+def now() -> str:
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
+def digest(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def read_key(path: Path, name: str) -> str:
+    if not path.is_file():
+        return ""
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() == name:
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+                value = value[1:-1]
+            return value
+    return ""
+
+
+def redact(text: str, secret: str) -> str:
+    if secret:
+        text = text.replace(secret, "[REDACTED]")
+    for pattern in SECRET_PATTERNS:
+        text = pattern.sub(
+            lambda match: (match.group(1) if match.lastindex else "") + "[REDACTED]", text
+        )
+    return text
+
+
+def parse_json_text(text: str) -> dict[str, Any]:
+    stripped = text.strip()
+    if stripped.startswith("```") and stripped.endswith("```"):
+        stripped = re.sub(r"^```(?:json)?\s*|\s*```$", "", stripped, flags=re.IGNORECASE)
+    value = json.loads(stripped)
+    if not isinstance(value, dict):
+        raise ValueError("subordinate output must be a JSON object")
+    return value
+
+
+def run_command_code(args: argparse.Namespace, prompt: str, secret: str) -> tuple[str, dict[str, Any]]:
+    payload = {
+        "model": args.model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0,
+        "max_tokens": args.max_output_tokens,
+    }
+    headers = {
+        "Authorization": f"Bearer {secret}",
+        "Content-Type": "application/json",
+        "User-Agent": "miku-agent-subagent-router/1",
+    }
+    if not args.allow_non_zdr:
+        headers["x-cmd-zdr"] = "1"
+    request = urllib.request.Request(
+        "https://api.commandcode.ai/provider/v1/chat/completions",
+        data=json.dumps(payload).encode(),
+        headers=headers,
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=args.timeout) as response:
+            body = json.load(response)
+    except urllib.error.HTTPError as exc:
+        body = redact(exc.read().decode("utf-8", "replace"), secret)
+        category = {
+            401: "AUTH_INVALID",
+            403: "PLAN_API_UNAVAILABLE",
+            429: "QUOTA_EXCEEDED",
+        }.get(
+            exc.code,
+            "MODEL_UNAVAILABLE" if exc.code in {400, 422} else "PROVIDER_UNAVAILABLE",
+        )
+        raise JobFailure(
+            category, f"HTTP {exc.code}: {body[:1000]}", exc.code == 429 or exc.code >= 500
+        ) from exc
+    except (TimeoutError, urllib.error.URLError) as exc:
+        raise JobFailure("TIMEOUT", str(exc), True) from exc
+    try:
+        return body["choices"][0]["message"]["content"], body.get("usage", {})
+    except (KeyError, IndexError, TypeError) as exc:
+        raise JobFailure(
+            "OUTPUT_SCHEMA_INVALID", "provider response omitted message content"
+        ) from exc
+
+
+def run_opencode(args: argparse.Namespace, prompt: str, secret: str) -> tuple[str, dict[str, Any]]:
+    environment = {name: value for name, value in os.environ.items() if name in SAFE_ENV}
+    environment["OPENCODE_API_KEY"] = secret
+    command = [
+        "opencode", "run", "--pure", "--format", "json", "--model", args.model, prompt
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=args.workdir,
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=args.timeout,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise JobFailure("MODEL_UNAVAILABLE", "opencode CLI is not installed") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise JobFailure("TIMEOUT", "OpenCode invocation timed out", True) from exc
+    if completed.returncode:
+        message = redact(completed.stderr or completed.stdout, secret)
+        category = (
+            "AUTH_INVALID"
+            if re.search(r"auth|credential|api.?key", message, re.IGNORECASE)
+            else "TASK_FAILURE"
+        )
+        raise JobFailure(category, message[:1000])
+    texts: list[str] = []
+    usage: dict[str, Any] = {}
+    try:
+        for line in completed.stdout.splitlines():
+            event = json.loads(line)
+            part = event.get("part", {})
+            if event.get("type") == "text" and isinstance(part.get("text"), str):
+                texts.append(part["text"])
+            if event.get("type") == "step_finish":
+                usage = {"tokens": part.get("tokens"), "cost": part.get("cost")}
+    except (json.JSONDecodeError, AttributeError) as exc:
+        raise JobFailure("OUTPUT_SCHEMA_INVALID", "OpenCode emitted invalid JSON events") from exc
+    if not texts:
+        raise JobFailure("OUTPUT_SCHEMA_INVALID", "OpenCode emitted no text result")
+    return "\n".join(texts), usage
+
+
+def write_receipt(path: Path, receipt: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    temporary = path.with_suffix(path.suffix + f".{os.getpid()}.tmp")
+    temporary.write_text(
+        json.dumps(receipt, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary.chmod(0o600)
+    os.replace(temporary, path)
+
+
+def parser() -> argparse.ArgumentParser:
+    result = argparse.ArgumentParser()
+    result.add_argument("--provider", required=True, choices=("command_code", "opencode"))
+    result.add_argument("--model", required=True)
+    result.add_argument("--role", required=True)
+    result.add_argument("--schema", type=Path, required=True)
+    result.add_argument("--receipt", type=Path, required=True)
+    result.add_argument("--job-id")
+    result.add_argument("--timeout", type=int, default=300)
+    result.add_argument("--retries", type=int, choices=range(3), default=0)
+    result.add_argument("--max-output-tokens", type=int, default=4096)
+    result.add_argument("--allow-non-zdr", action="store_true")
+    result.add_argument("--workdir", type=Path, default=Path.cwd())
+    result.add_argument("message", nargs="*")
+    return result
+
+
+def main() -> int:
+    args = parser().parse_args()
+    args.job_id = args.job_id or str(uuid.uuid4())
+    prompt = " ".join(args.message).strip() if args.message else sys.stdin.read().strip()
+    started = time.monotonic()
+    key_name = "COMMANDCODE_API_KEY" if args.provider == "command_code" else "OPENCODE_API_KEY"
+    env_path = Path(os.environ.get("MIKU_SUBAGENT_ENV", ROOT / ".env"))
+    secret = read_key(env_path, key_name)
+    receipt: dict[str, Any] = {
+        "job_id": args.job_id,
+        "role": args.role,
+        "provider": args.provider,
+        "model": args.model,
+        "started_at": now(),
+        "prompt_sha256": digest(prompt.encode()),
+        "schema_sha256": "",
+        "retention": (
+            "zdr"
+            if args.provider == "command_code" and not args.allow_non_zdr
+            else "provider_default"
+        ),
+        "attempts": 0,
+        "usage": {},
+        "result": {"status": "failed", "validated": False},
+        "failure": None,
+    }
+    try:
+        if not prompt:
+            raise JobFailure("TASK_FAILURE", "prompt is empty")
+        if not secret:
+            raise JobFailure("AUTH_MISSING", f"{key_name} is missing")
+        schema_bytes = args.schema.read_bytes()
+        schema = json.loads(schema_bytes)
+        Draft202012Validator.check_schema(schema)
+        receipt["schema_sha256"] = digest(schema_bytes)
+        runner = run_command_code if args.provider == "command_code" else run_opencode
+        for attempt in range(args.retries + 1):
+            receipt["attempts"] = attempt + 1
+            try:
+                raw, usage = runner(args, prompt, secret)
+                value = parse_json_text(raw)
+                errors = sorted(
+                    Draft202012Validator(schema).iter_errors(value),
+                    key=lambda error: list(error.path),
+                )
+                if errors:
+                    raise JobFailure("OUTPUT_SCHEMA_INVALID", errors[0].message)
+                receipt["usage"] = usage
+                receipt["output_sha256"] = digest(
+                    json.dumps(value, ensure_ascii=False, sort_keys=True).encode()
+                )
+                receipt["result"] = {"status": "completed", "validated": True}
+                print(json.dumps(value, ensure_ascii=False, sort_keys=True))
+                break
+            except JobFailure as exc:
+                if not exc.retryable or attempt == args.retries:
+                    raise
+                time.sleep(2**attempt)
+    except (JobFailure, OSError, ValueError, json.JSONDecodeError) as exc:
+        failure = (
+            exc
+            if isinstance(exc, JobFailure)
+            else JobFailure("AGENT_RUNTIME_ERROR", str(exc))
+        )
+        receipt["failure"] = {
+            "category": failure.category,
+            "reason": redact(str(failure), secret),
+        }
+        print(f"{failure.category}: {redact(str(failure), secret)}", file=sys.stderr)
+    finally:
+        receipt["completed_at"] = now()
+        receipt["wall_ms"] = round((time.monotonic() - started) * 1000)
+        write_receipt(args.receipt, receipt)
+    return 0 if receipt["result"]["validated"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
