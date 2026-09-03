@@ -438,6 +438,14 @@ def import_text_bundle(
     if (manifest.get("format") != "miku-wikimedia-text-bundle-v1"
             or manifest.get("policy") != POLICY or manifest.get("policy_sha256") != POLICY_SHA256):
         raise ValueError("unsupported or altered Wikimedia text policy")
+    dump_sha1 = manifest.get("dump_sha1")
+    dump_sha256 = manifest.get("dump_sha256")
+    tokenizer_sha256 = manifest.get("tokenizer_sha256")
+    if (not isinstance(dump_sha1, str) or not re.fullmatch(r"[0-9a-f]{40}", dump_sha1)
+            or not isinstance(dump_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", dump_sha256)
+            or not isinstance(tokenizer_sha256, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", tokenizer_sha256)):
+        raise ValueError("invalid Wikimedia dump or tokenizer identity")
     bundle_name = manifest.get("bundle")
     if not isinstance(bundle_name, str) or Path(bundle_name).name != bundle_name:
         raise ValueError("bundle must be adjacent to its manifest")
@@ -470,6 +478,11 @@ def import_text_bundle(
             if existing == expected_count and binding:
                 return {"count": existing, "idempotent": True, "tokens": expected_tokens}
             raise RuntimeError("source already has a different text import")
+    dump_object = paths.object_path(dump_sha256)
+    tokenizer_object = paths.object_path(tokenizer_sha256)
+    if (_hash_file(dump_object) != dump_sha256 or _hash_file(dump_object, "sha1") != dump_sha1
+            or _hash_file(tokenizer_object) != tokenizer_sha256):
+        raise ValueError("bound Wikimedia dump or tokenizer bytes failed integrity verification")
     created_at = registry.now()
     evidence = _canonical({
         "actor_type": "evaluator",
@@ -478,7 +491,7 @@ def import_text_bundle(
         "policy_sha256": POLICY_SHA256,
         "read_complete": False,
     })
-    tokenizer = Tokenizer.from_file(str(paths.object_path(manifest["tokenizer_sha256"])))
+    tokenizer = Tokenizer.from_file(str(tokenizer_object))
 
     def records(*, verify_tokens: bool):
         seen: set[str] = set()
