@@ -1,0 +1,115 @@
+{
+  "algorithm": {
+    "candidate_search": "deterministic MinHash LSH; candidates verified by exact Jaccard",
+    "cluster_rule": "connected components of verified pairs",
+    "duplex_text": "concatenated non-empty event text",
+    "normalization": "Unicode NFKC, casefold, collapsed whitespace"
+  },
+  "corpora": {
+    "accepted_duplex": {
+      "character_5gram_jaccard": {
+        "candidate_pairs": 26113,
+        "duplicate_clusters": 87,
+        "effective_unique_rows": 1877,
+        "largest_cluster_rows": 6,
+        "lsh_bands": 16,
+        "matched_pairs": 172,
+        "minhash_permutations": 64,
+        "rows_in_duplicate_clusters": 210,
+        "threshold_ppm": 800000
+      },
+      "generator_family": {
+        "groups": 1,
+        "largest_group_rows": 2000
+      },
+      "generator_prompt_family": {
+        "groups": 1,
+        "largest_group_rows": 2000
+      },
+      "input_rows_sha256": "7105b90b6b4ffb4ed6dc828f8062deb4130f8fd616ff0057b6dc8740152dae1f",
+      "lineage_family": {
+        "groups": 1,
+        "largest_group_rows": 2000
+      },
+      "normalized_exact": {
+        "duplicate_clusters": 43,
+        "effective_unique_rows": 1955,
+        "largest_cluster_rows": 3,
+        "rows_in_duplicate_clusters": 88
+      },
+      "rows": 2000,
+      "semantic_embedding": {
+        "effective_unique_rows": null,
+        "status": "not_measured"
+      },
+      "template_family": {
+        "groups": 192,
+        "largest_group_rows": 11
+      },
+      "token_2gram_jaccard": {
+        "candidate_pairs": 26709,
+        "duplicate_clusters": 59,
+        "effective_unique_rows": 1939,
+        "largest_cluster_rows": 3,
+        "lsh_bands": 16,
+        "matched_pairs": 63,
+        "minhash_permutations": 64,
+        "rows_in_duplicate_clusters": 120,
+        "threshold_ppm": 800000
+      }
+    },
+    "speech_render_candidate": {
+      "character_5gram_jaccard": {
+        "candidate_pairs": 640272,
+        "duplicate_clusters": 1486,
+        "effective_unique_rows": 5987,
+        "largest_cluster_rows": 103,
+        "lsh_bands": 16,
+        "matched_pairs": 111212,
+        "minhash_permutations": 64,
+        "rows_in_duplicate_clusters": 15499,
+        "threshold_ppm": 800000
+      },
+      "generator_family": {
+        "groups": 2,
+        "largest_group_rows": 11845
+      },
+      "generator_prompt_family": {
+        "groups": 20,
+        "largest_group_rows": 1040
+      },
+      "input_rows_sha256": "b6b31ed6482f44aeb266d9113484cf8d4339340286bf84d613cfcaccc1438c7a",
+      "lineage_family": {
+        "groups": 1,
+        "largest_group_rows": 20000
+      },
+      "normalized_exact": {
+        "duplicate_clusters": 0,
+        "effective_unique_rows": 20000,
+        "largest_cluster_rows": 1,
+        "rows_in_duplicate_clusters": 0
+      },
+      "rows": 20000,
+      "semantic_embedding": {
+        "effective_unique_rows": null,
+        "status": "not_measured"
+      },
+      "template_family": {
+        "groups": 194,
+        "largest_group_rows": 104
+      },
+      "token_2gram_jaccard": {
+        "candidate_pairs": 605660,
+        "duplicate_clusters": 1332,
+        "effective_unique_rows": 10616,
+        "largest_cluster_rows": 103,
+        "lsh_bands": 16,
+        "matched_pairs": 74502,
+        "minhash_permutations": 64,
+        "rows_in_duplicate_clusters": 10716,
+        "threshold_ppm": 800000
+      }
+    }
+  },
+  "schema_version": 1
+}

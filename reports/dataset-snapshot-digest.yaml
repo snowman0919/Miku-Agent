@@ -8,12 +8,30 @@ fixture_sample_count: 2356
 candidate_sample_count: 20000
 evaluation_sample_count: 5000
 accepted_sample_count: 2001
-effective_unique_samples: null
+effective_unique_samples: 583
+effective_unique_policy: accepted agentic receipt unique plus accepted duplex semantic cosine 0.98 clusters
 measured_unique_by_corpus:
   agentic_receipt_unique: 1
   duplex_event_sequence_unique: 2000
+  duplex_normalized_text_unique: 1955
+  duplex_character_5gram_effective_unique: 1877
+  duplex_token_2gram_effective_unique: 1939
+  duplex_semantic_cosine_980000_effective_unique: 582
+  duplex_semantic_cosine_990000_effective_unique: 1453
   candidate_text_exact_unique: 20000
-semantic_effective_unique_samples: null
+  candidate_text_character_5gram_effective_unique: 5987
+  candidate_text_token_2gram_effective_unique: 10616
+  candidate_text_semantic_cosine_980000_effective_unique: 1536
+  candidate_text_semantic_cosine_990000_effective_unique: 7715
+semantic_effective_unique_samples: 582
+duplicate_analysis:
+  lexical_report_sha256: be86d4589b5a2015188d1993561c9d0d1195831d8f435d40cf4ee18f3a951daa
+  semantic_report_sha256: fab951be4aab9bd8c45b946b245b06f1bf6c56d7d485b0c29ea06fc7a4619af7
+  semantic_model: intfloat/multilingual-e5-small
+  semantic_model_revision: 614241f622f53c4eeff9890bdc4f31cfecc418b3
+  semantic_primary_cosine_threshold_ppm: 980000
+  semantic_cross_split_findings: 0
+  cross_modality_effective_unique_status: not_measured
 dataset_root_sha256: 92462194bc24561a23e426b83b6b1323a01ac1d7cf46d42c8f54572868271229
 eval_holdout_manifest_sha256: b8be7a1091a57ab933e4d135ecf041d8073856138fbfdb243bf2c35ea37003e8
 canonical_manifest_recheck:

@@ -11,9 +11,10 @@
 5. 제출 전 `sha256sum <audio-file>`로 각 checksum을 계산하고 bundle digest
    `9839ffe39a962a0221b60c96cfce6852bbcbeb45f1c60621c2d5d0f7cdaab539`와 함께 보존한다.
 
-Bundle은 20,000행, exact unique 20,000, 예상 66.234283시간이다. 실제 render는 0시간,
-human review 0행, accepted 0행이다. Release minimum 30 effective hours를 만족하려면 reject와
-중복을 감안해 최소 30시간보다 많이 render해야 하며, 이 bundle의 예상치는 충분하지만 보장값이 아니다.
+Bundle은 20,000행, exact unique 20,000, 예상 66.234283시간이다. 그러나 pinned E5 cosine
+0.98/0.99 semantic effective unique는 1,536/7,715개뿐이다. 같은 본문에 시간·frame prefix만
+바꾼 최대 104행 군집을 확인했으므로 20,000개 전체 render를 권장하지 않는다. 실제 render는
+0시간, human review 0행, accepted 0행이며, 먼저 더 다양한 script 본문으로 bundle을 교체해야 한다.
 
 ## Other Intake
 
@@ -26,4 +27,5 @@ human review 0행, accepted 0행이다. Release minimum 30 effective hours를 �
 
 현재 target speech effective hours, human-reviewed persona와 human-adjudicated duplex는 0이다.
 Execution-backed agentic은 local engineering receipt 1건을 accepted로 검증했으며 1,999건이 더 필요하다.
-Duplex는 synthetic timestamp-backed 2,000건을 accepted로 검증했지만 사람 판정 1,000건이 더 필요하다.
+Duplex는 synthetic timestamp-backed raw 2,000건을 accepted로 검증했지만 primary semantic
+effective unique는 582개다. Effective audio/timestamp-backed 1,418개와 사람 판정 1,000개가 더 필요하다.
