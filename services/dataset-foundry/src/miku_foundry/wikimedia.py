@@ -180,6 +180,17 @@ def _plain_text(wikitext: str) -> str:
     )
 
 
+def _passes_quality_gates(text: str, token_count: int) -> bool:
+    return (
+        len(text) >= POLICY["minimum_document_characters"]
+        and token_count >= POLICY["minimum_document_tokens"]
+        and _hangul_ratio_ppm(text) >= POLICY["minimum_hangul_letter_ratio_ppm"]
+        and not PII_RE.search(text)
+        and not URL_RE.search(text)
+        and all(not BOILERPLATE_LINE_RE.match(line) for line in text.splitlines())
+    )
+
+
 def _clean_document(plain: str, deduper: _Deduper) -> tuple[str, dict[str, int]]:
     stats = {"pii_sentences_removed": 0, "exact_sentences_removed": 0, "near_sentences_removed": 0}
     kept = []
@@ -289,9 +300,7 @@ def prepare_wikimedia_text(
                     continue
                 cleaned, removed = _clean_document(plain, deduper)
                 token_count = len(tokenizer.encode(cleaned, add_special_tokens=False).ids) if cleaned else 0
-                if (len(cleaned) < POLICY["minimum_document_characters"]
-                        or token_count < POLICY["minimum_document_tokens"]
-                        or _hangul_ratio_ppm(cleaned) < POLICY["minimum_hangul_letter_ratio_ppm"]):
+                if not _passes_quality_gates(cleaned, token_count):
                     deduper.reject_document()
                     stats["clean_documents_removed"] += 1
                     page.clear()
@@ -454,7 +463,7 @@ def import_text_bundle(
                         or provenance.get("dump_sha256") != manifest.get("dump_sha256")
                         or provenance.get("tokenizer_sha256") != manifest.get("tokenizer_sha256")
                         or provenance.get("document_sha256") != hashlib.sha256(text.encode()).hexdigest()
-                        or PII_RE.search(text)
+                        or not _passes_quality_gates(text, provenance["token_count"])
                         or (verify_tokens and len(tokenizer.encode(text, add_special_tokens=False).ids)
                             != provenance["token_count"])):
                     raise ValueError("invalid or duplicate Wikimedia text row")

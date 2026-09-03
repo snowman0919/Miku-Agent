@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import bz2
+import gzip
+import hashlib
 import json
 from pathlib import Path
 
+import pytest
 from tokenizers import Tokenizer
 from tokenizers.models import WordLevel
 from tokenizers.pre_tokenizers import Whitespace
@@ -76,7 +79,6 @@ def test_wikimedia_text_is_integrity_checked_deduplicated_reviewed_and_exportabl
     assert manifest["stats"]["exact_documents_removed"] == 1
     assert manifest["stats"]["near_sentences_removed"] >= 3
     assert manifest["stats"]["pii_sentences_removed"] == 1
-    import gzip
     rows = [json.loads(line) for line in gzip.open(bundle, "rt", encoding="utf-8")]
     assert all("https://" not in row["text"] for row in rows)
 
@@ -94,6 +96,27 @@ def test_wikimedia_text_is_integrity_checked_deduplicated_reviewed_and_exportabl
     store = ObjectStore(paths, registry)
     store.ingest(dump, source_id, role="text:raw_dump", media_type="application/x-bzip2")
     store.ingest(tokenizer_path, source_id, role="text:tokenizer", media_type="application/json")
+
+    altered = tmp_path / "altered.jsonl.gz"
+    altered_rows = list(rows)
+    altered_rows[0]["text"] += " http:// example.invalid/path"
+    altered_rows[0]["provenance"]["document_sha256"] = hashlib.sha256(
+        altered_rows[0]["text"].encode()
+    ).hexdigest()
+    previous_tokens = altered_rows[0]["provenance"]["token_count"]
+    altered_rows[0]["provenance"]["token_count"] = len(
+        tokenizer.encode(altered_rows[0]["text"], add_special_tokens=False).ids
+    )
+    with gzip.open(altered, "wt", encoding="utf-8") as stream:
+        stream.writelines(json.dumps(row, ensure_ascii=False) + "\n" for row in altered_rows)
+    altered_manifest = dict(manifest, bundle=altered.name,
+                            bundle_sha256=hashlib.sha256(altered.read_bytes()).hexdigest(),
+                            stats=dict(manifest["stats"], tokens_accepted=manifest["stats"]["tokens_accepted"]
+                                       + altered_rows[0]["provenance"]["token_count"] - previous_tokens))
+    altered_manifest_path = altered.with_suffix(altered.suffix + ".manifest.json")
+    altered_manifest_path.write_text(json.dumps(altered_manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid or duplicate Wikimedia text row"):
+        import_text_bundle(paths, registry, altered_manifest_path, source_id, actor="operator", dry_run=True)
 
     imported = import_text_bundle(paths, registry, Path(manifest["manifest_path"]), source_id, actor="operator")
     assert imported["count"] == 3 and imported["tokens"] == manifest["stats"]["tokens_accepted"]
