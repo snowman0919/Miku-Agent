@@ -93,7 +93,10 @@ class _Deduper:
     def __init__(self, path: Path):
         self.connection = sqlite3.connect(path)
         self.connection.executescript(
-            """CREATE TABLE documents(hash TEXT PRIMARY KEY);
+            """PRAGMA journal_mode=OFF;
+               PRAGMA synchronous=OFF;
+               PRAGMA temp_store=MEMORY;
+               CREATE TABLE documents(hash TEXT PRIMARY KEY);
                CREATE TABLE sentences(exact_hash TEXT PRIMARY KEY, normalized TEXT NOT NULL,
                                       h0 INTEGER, h1 INTEGER, h2 INTEGER, h3 INTEGER);
                CREATE INDEX sentence_h0 ON sentences(h0);
@@ -101,9 +104,14 @@ class _Deduper:
                CREATE INDEX sentence_h2 ON sentences(h2);
                CREATE INDEX sentence_h3 ON sentences(h3);"""
         )
+        self.connection.execute("BEGIN")
 
     def close(self) -> None:
         self.connection.close()
+
+    def checkpoint(self) -> None:
+        self.connection.commit()
+        self.connection.execute("BEGIN")
 
     def begin_document(self, document_hash: str) -> bool:
         self.connection.execute("SAVEPOINT document")
@@ -332,7 +340,7 @@ def prepare_wikimedia_text(
                 stats["tokens_accepted"] += token_count
                 page.clear()
                 if stats["documents_accepted"] % 1000 == 0:
-                    deduper.connection.commit()
+                    deduper.checkpoint()
                 if max_pages and stats["pages_seen"] >= max_pages:
                     break
             output.flush()
