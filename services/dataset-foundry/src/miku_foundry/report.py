@@ -41,12 +41,30 @@ def inventory(registry: Registry) -> dict[str, object]:
                  count(*) FILTER (WHERE training_status='accepted' AND failure_recovery=1) failure_recovery
                FROM agentic_trajectories"""
         ).fetchone())
+        duplex = dict(connection.execute(
+            """SELECT
+                 count(*) FILTER (WHERE training_status='accepted') accepted,
+                 count(*) FILTER (WHERE training_status='accepted' AND human_adjudication IS NOT NULL) human_adjudicated,
+                 count(*) FILTER (WHERE training_status='accepted' AND (
+                   audio_input_sha256 IS NOT NULL OR audio_output_sha256 IS NOT NULL
+                   OR json_extract(provenance_json,'$.timestamp_backed')=1
+                 )) audio_or_timestamp_backed,
+                 count(DISTINCT events_json) FILTER (WHERE training_status='accepted') distinct_event_sequences
+               FROM duplex_timelines"""
+        ).fetchone())
+        duplex["scenario_distribution"] = {
+            row["scenario"]: row["n"] for row in connection.execute(
+                """SELECT scenario,count(*) n FROM duplex_timelines
+                   WHERE training_status='accepted' GROUP BY scenario ORDER BY scenario"""
+            )
+        }
     return {
         "counts": counts,
         "corpus": corpus,
         "rights_records": rights,
         "source_training_status": training,
         "agentic": agentic,
+        "duplex": duplex,
         "audio": summarize(registry),
         "split_leakage": leakage_findings(registry),
     }

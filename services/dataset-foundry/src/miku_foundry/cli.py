@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .agentic import import_execution_receipt
 from .config import initialize_layout, paths_from_env
+from .duplex import import_duplex_bundle
 from .export import export_training, snapshot
 from .ingest import register_source
 from .jobs import authorize_remote_5090, ensure_job, prepare_remote_package
@@ -30,6 +31,7 @@ WRITE_COMMANDS = {"init", "ingest", "register-source", "register-rights", "plan-
                   "export", "queue-5090", "pilot", "promote", "promote-sample"}
 WRITE_COMMANDS.add("import-worker-result")
 WRITE_COMMANDS.add("import-agentic-receipt")
+WRITE_COMMANDS.add("import-duplex-bundle")
 
 
 def _json(value: object) -> None:
@@ -121,6 +123,10 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--dry-run", action="store_true")
     command = sub.add_parser("import-agentic-receipt")
     command.add_argument("receipt")
+    command.add_argument("--actor", required=True)
+    command.add_argument("--dry-run", action="store_true")
+    command = sub.add_parser("import-duplex-bundle")
+    command.add_argument("bundle")
     command.add_argument("--actor", required=True)
     command.add_argument("--dry-run", action="store_true")
     return root
@@ -264,6 +270,11 @@ def main(argv: list[str] | None = None) -> int:
             _json({"would_import_agentic_receipt": args.receipt, "actor": args.actor})
         else:
             _json(import_execution_receipt(paths, registry, Path(args.receipt), actor=args.actor))
+    elif args.command == "import-duplex-bundle":
+        if dry_run:
+            _json({"would_import_duplex_bundle": args.bundle, "actor": args.actor})
+        else:
+            _json(import_duplex_bundle(paths, registry, Path(args.bundle), actor=args.actor))
     return 0
 
 

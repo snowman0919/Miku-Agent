@@ -58,8 +58,19 @@
           },
           "type": {
             "type": "string"
+          },
+          "end_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
           }
-        }
+        },
+        "additionalProperties": false
       }
     },
     "language": {

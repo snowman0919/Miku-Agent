@@ -22,4 +22,8 @@ review evidence와 corpus quality를 다시 검사한다.
 canonical object로 먼저 보존한다. Source-bound receipt object가 없으면 SQLite trigger가
 `execution_backed` trajectory 생성을 거부한다.
 
+`miku-data import-duplex-bundle BUNDLE --actor ACTOR`는 schema와 timestamp/policy provenance를
+행마다 검증하고 원본 JSONL을 canonical object로 보존한다. Synthetic timestamp evidence는 audio나
+human adjudication으로 표시하지 않는다.
+
 현재 V0.1.0의 input 16 kHz와 output 22.05 kHz 관측값은 provenance로만 다룬다. CONDITIONAL feasibility 때문에 final training/streaming representation이나 production VoiceChat 성공을 가정하지 않는다.
