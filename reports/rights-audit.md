@@ -1,9 +1,9 @@
 # Rights Audit
 
-- Rights records: owned 22, licensed 0, permitted 0, unknown 1, restricted 0, rejected 0.
-- Explicit training scope: `training_allowed=true` 1, false/default 22.
+- Rights records: owned 23, licensed 0, permitted 0, unknown 1, restricted 0, rejected 0.
+- Explicit training scope: `training_allowed=true` 2, false/default 22.
 - Unknown 1건은 speech render 계획용 candidate source이며 `candidate-render-planning-only`다.
-- Training accepted sources/samples: 1/1. 둘 다 source-bound execution receipt를 가진 agentic 항목이다.
+- Training accepted sources/samples: 2/2,001. Agentic 1건과 timestamp-backed Duplex 2,000건이다.
 - Unknown 또는 restricted training accepted: 0.
 - Evaluation 6 source는 private evaluation only, fixture 15 source는 pipeline validation 용도다.
 
