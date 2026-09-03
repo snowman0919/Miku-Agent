@@ -24,6 +24,7 @@ from .rights import promote_training, register_rights
 from .split import assign_group, leakage_findings
 from .store import ObjectStore
 from .worker_import import import_worker_result
+from .wikimedia import import_text_bundle, prepare_wikimedia_text
 
 
 WRITE_COMMANDS = {"init", "ingest", "register-source", "register-rights", "plan-transform", "run-job",
@@ -32,6 +33,8 @@ WRITE_COMMANDS = {"init", "ingest", "register-source", "register-rights", "plan-
 WRITE_COMMANDS.add("import-worker-result")
 WRITE_COMMANDS.add("import-agentic-receipt")
 WRITE_COMMANDS.add("import-duplex-bundle")
+WRITE_COMMANDS.add("prepare-wikimedia-text")
+WRITE_COMMANDS.add("import-text-bundle")
 
 
 def _json(value: object) -> None:
@@ -127,6 +130,19 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--dry-run", action="store_true")
     command = sub.add_parser("import-duplex-bundle")
     command.add_argument("bundle")
+    command.add_argument("--actor", required=True)
+    command.add_argument("--dry-run", action="store_true")
+    command = sub.add_parser("prepare-wikimedia-text")
+    command.add_argument("dump")
+    command.add_argument("--output", required=True)
+    command.add_argument("--tokenizer", required=True)
+    command.add_argument("--tokenizer-id", required=True)
+    command.add_argument("--expected-sha1", required=True)
+    command.add_argument("--dump-date", required=True)
+    command.add_argument("--max-pages", type=int)
+    command = sub.add_parser("import-text-bundle")
+    command.add_argument("manifest")
+    command.add_argument("--source-id", required=True)
     command.add_argument("--actor", required=True)
     command.add_argument("--dry-run", action="store_true")
     return root
@@ -275,6 +291,14 @@ def main(argv: list[str] | None = None) -> int:
             _json({"would_import_duplex_bundle": args.bundle, "actor": args.actor})
         else:
             _json(import_duplex_bundle(paths, registry, Path(args.bundle), actor=args.actor))
+    elif args.command == "prepare-wikimedia-text":
+        _json(prepare_wikimedia_text(
+            Path(args.dump), Path(args.output), Path(args.tokenizer), expected_sha1=args.expected_sha1,
+            dump_date=args.dump_date, tokenizer_id=args.tokenizer_id, max_pages=args.max_pages,
+        ))
+    elif args.command == "import-text-bundle":
+        _json(import_text_bundle(paths, registry, Path(args.manifest), args.source_id,
+                                 actor=args.actor, dry_run=dry_run))
     return 0
 
 

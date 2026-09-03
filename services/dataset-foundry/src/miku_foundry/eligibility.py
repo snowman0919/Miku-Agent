@@ -26,7 +26,26 @@ def _sha256(value: object) -> bool:
 
 
 def assert_corpus_row_eligible(corpus: str, row: Mapping[str, object]) -> None:
-    if corpus == "persona":
+    if corpus == "text":
+        provenance = json.loads(str(row["provenance_json"]))
+        gates = provenance.get("quality_gates") if isinstance(provenance, dict) else None
+        attribution = provenance.get("attribution") if isinstance(provenance, dict) else None
+        if (not isinstance(provenance, dict) or not _sha256(provenance.get("document_sha256"))
+                or not _sha256(provenance.get("policy_sha256"))
+                or not _sha256(provenance.get("tokenizer_sha256"))
+                or not _sha256(provenance.get("dump_sha256"))
+                or not isinstance(provenance.get("token_count"), int)
+                or isinstance(provenance.get("token_count"), bool) or provenance["token_count"] <= 0
+                or not isinstance(provenance.get("source_page_url"), str)
+                or not provenance["source_page_url"].startswith("https://ko.wikipedia.org/")
+                or not isinstance(attribution, dict)
+                or attribution.get("license_url") != "https://creativecommons.org/licenses/by-sa/4.0/"
+                or attribution.get("modified") is not True
+                or not attribution.get("title") or not attribution.get("revision_url")
+                or gates != {"boilerplate": "passed", "document_dedup": "passed", "encoding": "UTF-8",
+                              "language": "ko", "pii": "passed", "sentence_near_dedup": "passed"}):
+            raise PermissionError("text row lacks reproducible quality, dedup, tokenizer, or attribution evidence")
+    elif corpus == "persona":
         if row["hard_violation"]:
             raise PermissionError("persona hard violation blocks training")
         dimensions = json.loads(str(row["dimensions_json"]))

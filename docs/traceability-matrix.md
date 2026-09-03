@@ -18,5 +18,6 @@
 | D-014 | Dataset object는 SHA-256 identity와 recoverable ingest intent를 사용하고 SQLite만 canonical mutable metadata를 보유 | dataset/architecture.md | ADR-0012 | dataset-foundry | dataset/object, dataset/transform | object integrity + recovery | V0.2.0 | accepted |
 | D-015 | RTX 3080만 canonical data를 쓰며 RTX 5090은 manifest와 grant에 결속된 disposable worker | dataset/gpu-worker-topology.md | ADR-0013 | dataset-foundry.remote_worker | dataset/remote-job | remote lease + hash import | V0.2.0 | accepted |
 | D-016 | Rights, quality, review, training 상태는 독립이며 모든 gate가 통과해야 training accepted | dataset/rights-promotion.md | ADR-0014 | dataset-quality-gates | dataset/rights-record, dataset/review | rights promotion + export gate | V0.2.0 | accepted |
+| D-017 | Korean Wikimedia token은 고정 Nemotron tokenizer, 날짜별 dump, attribution과 dedup/quality policy를 통과한 private-training text만 계산 | dataset/architecture.md | ADR-0015 | product-lock.repository/data | dataset/source, dataset/sample | Wikimedia checksum + text intake/export gate | V0.2.0 | accepted |
 
 Schema 표기의 짧은 이름은 `schemas/<name>.schema.json`, machine-readable 경로는 `spec/product-lock.yaml`을 뜻한다.

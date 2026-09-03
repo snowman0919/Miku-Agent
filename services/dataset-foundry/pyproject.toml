@@ -7,7 +7,12 @@ name = "miku-dataset-foundry"
 version = "0.2.0.dev0"
 description = "Rights-aware local dataset foundry for Miku Agent"
 requires-python = ">=3.11"
-dependencies = ["duckdb>=1.4,<2", "jsonschema>=4.21,<5"]
+dependencies = [
+  "duckdb>=1.4,<2",
+  "jsonschema>=4.21,<5",
+  "mwparserfromhell>=0.7.2,<0.8",
+  "tokenizers>=0.22,<0.23",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9"]

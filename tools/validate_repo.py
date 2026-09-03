@@ -126,6 +126,7 @@ DECISION_EVIDENCE = {
     "0012": ("docs/dataset/architecture.md", ("sha-256", "sqlite", "canonical")),
     "0013": ("docs/dataset/gpu-worker-topology.md", ("rtx 3080", "rtx 5090", "manifest")),
     "0014": ("docs/dataset/rights-promotion.md", ("rights", "quality", "training")),
+    "0015": ("services/dataset-foundry/README.md", ("tokenizer", "attribution", "private")),
 }
 
 
@@ -246,8 +247,10 @@ def check_product_invariants() -> Check:
 
 def check_adrs_and_traceability() -> Check:
     adr_paths = sorted((ROOT / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
-    if len(adr_paths) != 14:
-        raise AssertionError(f"expected 14 ADRs in the V0.2 workspace, found {len(adr_paths)}")
+    if len(adr_paths) != len(DECISION_EVIDENCE):
+        raise AssertionError(
+            f"expected {len(DECISION_EVIDENCE)} ADRs in the V0.2 workspace, found {len(adr_paths)}"
+        )
     headings = ["Status", "Date", "Context", "Decision", "Alternatives Considered", "Consequences", "Security Impact", "Data Impact", "Validation", "Supersedes", "Superseded By"]
     trace = (ROOT / "docs" / "traceability-matrix.md").read_text(encoding="utf-8")
     for path in adr_paths:
@@ -266,7 +269,7 @@ def check_adrs_and_traceability() -> Check:
         cells = [cell.strip() for cell in row.strip("|").split("|")]
         if len(cells) != 9 or not all(cells[index] for index in (3, 4, 5, 6)) or cells[8] != "accepted":
             raise AssertionError(f"incomplete traceability row: {row}")
-    return Check("ADR and traceability", "PASS", f"14 accepted ADRs, {len(rows)} decision links")
+    return Check("ADR and traceability", "PASS", f"{len(adr_paths)} accepted ADRs, {len(rows)} decision links")
 
 
 def check_decision_consistency() -> Check:
@@ -279,7 +282,10 @@ def check_decision_consistency() -> Check:
         for anchor in anchors:
             if anchor.lower() not in adr_text or anchor.lower() not in document_text:
                 raise AssertionError(f"ADR-{adr_number} and {document} lost shared anchor {anchor!r}")
-    return Check("ADR/document consistency", "PASS", "14 accepted decisions share semantic anchors")
+    return Check(
+        "ADR/document consistency", "PASS",
+        f"{len(DECISION_EVIDENCE)} accepted decisions share semantic anchors",
+    )
 
 
 def check_release_history() -> Check:
