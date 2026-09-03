@@ -13,6 +13,8 @@ def test_opencode_output_is_validated_and_receipt_redacts_secret(tmp_path: Path)
     executable = tmp_path / "opencode"
     executable.write_text(
         "#!/bin/sh\n"
+        "script_dir=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n"
+        "pwd > \"$script_dir/observed-cwd\"\n"
         "printf '%s\\n' '{\"type\":\"text\",\"part\":{\"text\":\"{\\\"status\\\":\\\"completed\\\",\\\"summary\\\":\\\"ok\\\",\\\"result\\\":{}}\"}}'\n"
         "printf '%s\\n' '{\"type\":\"step_finish\",\"part\":{\"tokens\":{\"total\":1},\"cost\":0}}'\n",
         encoding="utf-8",
@@ -49,6 +51,7 @@ def test_opencode_output_is_validated_and_receipt_redacts_secret(tmp_path: Path)
     record = json.loads(receipt.read_text(encoding="utf-8"))
     assert record["result"] == {"status": "completed", "validated": True}
     assert record["retention"] == "provider_default"
+    assert Path((tmp_path / "observed-cwd").read_text().strip()) != ROOT
     assert secret not in receipt.read_text(encoding="utf-8") + completed.stdout + completed.stderr
 
 

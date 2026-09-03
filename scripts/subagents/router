@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -129,25 +131,32 @@ def run_command_code(args: argparse.Namespace, prompt: str, secret: str) -> tupl
 
 
 def run_opencode(args: argparse.Namespace, prompt: str, secret: str) -> tuple[str, dict[str, Any]]:
+    if args.workdir is not None and not args.allow_workspace_write:
+        raise JobFailure(
+            "PERMISSION_DENIED", "explicit OpenCode workdir requires --allow-workspace-write"
+        )
     environment = {name: value for name, value in os.environ.items() if name in SAFE_ENV}
     environment["OPENCODE_API_KEY"] = secret
     command = [
         "opencode", "run", "--pure", "--format", "json", "--model", args.model, prompt
     ]
-    try:
-        completed = subprocess.run(
-            command,
-            cwd=args.workdir,
-            env=environment,
-            capture_output=True,
-            text=True,
-            timeout=args.timeout,
-            check=False,
-        )
-    except FileNotFoundError as exc:
-        raise JobFailure("MODEL_UNAVAILABLE", "opencode CLI is not installed") from exc
-    except subprocess.TimeoutExpired as exc:
-        raise JobFailure("TIMEOUT", "OpenCode invocation timed out", True) from exc
+    context = (tempfile.TemporaryDirectory(prefix="miku-opencode-")
+               if args.workdir is None else contextlib.nullcontext(args.workdir))
+    with context as workdir:
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=workdir,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=args.timeout,
+                check=False,
+            )
+        except FileNotFoundError as exc:
+            raise JobFailure("MODEL_UNAVAILABLE", "opencode CLI is not installed") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise JobFailure("TIMEOUT", "OpenCode invocation timed out", True) from exc
     if completed.returncode:
         message = redact(completed.stderr or completed.stdout, secret)
         category = (
@@ -196,7 +205,8 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--retries", type=int, choices=range(3), default=0)
     result.add_argument("--max-output-tokens", type=int, default=4096)
     result.add_argument("--allow-non-zdr", action="store_true")
-    result.add_argument("--workdir", type=Path, default=Path.cwd())
+    result.add_argument("--workdir", type=Path)
+    result.add_argument("--allow-workspace-write", action="store_true")
     result.add_argument("message", nargs="*")
     return result
 
