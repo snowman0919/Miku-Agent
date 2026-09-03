@@ -48,6 +48,7 @@ def summarize(registry: Registry) -> dict[str, int]:
         "raw_speech_ms": 0,
         "accepted_physical_speech_ms": 0,
         "effective_speech_ms": 0,
+        "accepted_stt_ms": 0,
         "raw_singing_ms": 0,
         "accepted_auxiliary_singing_ms": 0,
         "quarantine_ms": 0,
@@ -56,6 +57,7 @@ def summarize(registry: Registry) -> dict[str, int]:
     speech: list[tuple[str, int, int]] = []
     singing: list[tuple[str, int, int]] = []
     accepted_speech: list[tuple[str, int, int]] = []
+    accepted_stt: list[tuple[str, int, int]] = []
     accepted_singing: list[tuple[str, int, int]] = []
     quarantine: list[tuple[str, int, int]] = []
     rejected: list[tuple[str, int, int]] = []
@@ -81,7 +83,7 @@ def summarize(registry: Registry) -> dict[str, int]:
                  (SELECT e.evidence_json FROM reviews r LEFT JOIN review_evidence e USING(review_id)
                   WHERE r.entity_type='audio' AND r.entity_id=a.sample_id
                   ORDER BY r.revision DESC LIMIT 1) sample_review_evidence,
-                 s.training_status source_training_status,
+                 s.training_status source_training_status,s.source_type,s.character_id,
                  s.corpus_class
           FROM audio_samples a JOIN sources s ON s.source_id=a.source_id
         """
@@ -118,7 +120,9 @@ def summarize(registry: Registry) -> dict[str, int]:
                 rejected.append(interval)
             elif not accepted:
                 quarantine.append(interval)
-            else:
+            elif row["source_type"] == "stt":
+                accepted_stt.append(interval)
+            elif row["character_id"] == "miku":
                 accepted_speech.append(interval)
                 weight = 1_000_000
                 for field in (
@@ -135,6 +139,7 @@ def summarize(registry: Registry) -> dict[str, int]:
     result["raw_speech_ms"] = _union_ms(speech)
     result["accepted_physical_speech_ms"] = _union_ms(accepted_speech)
     result["effective_speech_ms"] = _weighted_union_ms(weighted)
+    result["accepted_stt_ms"] = _union_ms(accepted_stt)
     result["raw_singing_ms"] = _union_ms(singing)
     result["accepted_auxiliary_singing_ms"] = _union_ms(accepted_singing)
     result["quarantine_ms"] = _union_ms(quarantine)

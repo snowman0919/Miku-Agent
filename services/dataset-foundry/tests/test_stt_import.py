@@ -1,0 +1,107 @@
+from __future__ import annotations
+
+import gzip
+import hashlib
+import json
+import uuid
+from pathlib import Path
+
+import pytest
+
+from conftest import accept_source_review
+from miku_foundry.effective_hours import summarize
+from miku_foundry.ingest import register_source
+from miku_foundry.rights import promote_training, register_rights
+from miku_foundry.split import assign_group
+from miku_foundry.stt import POLICY, POLICY_SHA256, import_zeroth_stt
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_zeroth_stt_import_is_bound_validated_and_idempotent(foundry, tmp_path: Path):
+    paths, registry = foundry
+    audio_root = tmp_path / "audio"
+    audio = audio_root / "train_data_01" / "003" / "utt.flac"
+    audio.parent.mkdir(parents=True)
+    packed = (16000 << 44) | (15 << 36) | 16000
+    audio.write_bytes(b"fLaC" + b"\x80\x00\x00\x22" + b"\x10\x00\x10\x00" + b"\0" * 6
+                      + packed.to_bytes(8, "big") + b"\0" * 16)
+    digest = _sha256(audio)
+    archive_sha256 = "a" * 64
+    text = "안녕하세요"
+    row = {
+        "sample_id": str(uuid.uuid5(
+            uuid.NAMESPACE_URL, f"openslr:40\0{archive_sha256}\0utt\0{digest}"
+        )),
+        "utterance_id": "utt", "speaker_id": "003", "path": "train_data_01/003/utt.flac",
+        "audio_sha256": digest, "size_bytes": audio.stat().st_size,
+        "raw_text": text, "spoken_text": text, "normalized_text": text,
+        "audio_metrics": {
+            "sample_rate_hz": 16000, "channels": 1, "bits_per_sample": 16,
+            "total_samples": 16000, "duration_ms": 1000, "peak_ppm": 500000,
+            "clipping_ppm": 0, "dc_offset_ppm": 0, "silence_ppm": 100000,
+            "decode_status": "passed",
+        },
+        "asr": {"status": "passed", "hypothesis": text, "cer_ppm": 0},
+        "alignment": {"status": "passed", "word_intervals": 1, "phone_intervals": 5,
+                      "spn_intervals": 0, "boundary_anomalies": 0, "coverage_ppm": 900000},
+    }
+    bundle = tmp_path / "zeroth.jsonl.gz"
+    canonical_row = json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    with bundle.open("wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as stream:
+        stream.write((canonical_row + "\n").encode())
+    manifest = {
+        "format": "miku-zeroth-korean-stt-bundle-v1", "policy": POLICY,
+        "policy_sha256": POLICY_SHA256, "processor_revision": "1" * 40,
+        "archive": {"url": "https://openslr.org/40/", "license": "CC-BY-4.0",
+                    "sha256": archive_sha256, "size_bytes": 10339720618},
+        "bundle": bundle.name, "bundle_sha256": _sha256(bundle),
+        "evaluation_transcript_sha256": [hashlib.sha256("평가 문장".encode()).hexdigest()],
+        "asr_binding_sha256": "b" * 64, "alignment_binding_sha256": "c" * 64,
+        "decoder": "flac-test/1", "stats": {"accepted_rows": 1,
+            "accepted_duration_ms": 1000, "accepted_audio_bytes": audio.stat().st_size},
+    }
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    source_id = register_source(
+        registry, source_id=None, source_type="stt", title="Zeroth fixture",
+        origin="https://openslr.org/40/", acquisition_method="verified official corpus",
+        language="ko-KR", character_id="non-target", derivative_family="zeroth-fixture",
+        quality_status="passed", review_status="reviewed",
+    )
+    register_rights(registry, source_id, "licensed", "license", "CC BY 4.0 fixture",
+                    "private ML training", reviewer="operator", actor_type="user",
+                    training_allowed=True)
+    accept_source_review(registry, source_id)
+    promote_training(registry, source_id, actor="operator")
+    assign_group(registry, "zeroth-fixture", split="train", freeze=True)
+
+    assert import_zeroth_stt(paths, registry, manifest_path, audio_root, source_id,
+                             actor="operator", dry_run=True)["count"] == 1
+    row["asr"]["cer_ppm"] = 1
+    with bundle.open("wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as stream:
+        stream.write((json.dumps(row, ensure_ascii=False, sort_keys=True,
+                                 separators=(",", ":")) + "\n").encode())
+    manifest["bundle_sha256"] = _sha256(bundle)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="baseline or alignment"):
+        import_zeroth_stt(paths, registry, manifest_path, audio_root, source_id,
+                          actor="operator", dry_run=True)
+
+    row["asr"]["cer_ppm"] = 0
+    with bundle.open("wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as stream:
+        stream.write((canonical_row + "\n").encode())
+    manifest["bundle_sha256"] = _sha256(bundle)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    result = import_zeroth_stt(paths, registry, manifest_path, audio_root, source_id, actor="operator")
+    assert result["count"] == 1 and result["duration_ms"] == 1000
+    assert import_zeroth_stt(paths, registry, manifest_path, audio_root, source_id,
+                             actor="operator")["idempotent"] is True
+    totals = summarize(registry)
+    assert totals["accepted_stt_ms"] == 1000
+    assert totals["accepted_physical_speech_ms"] == totals["effective_speech_ms"] == 0
+    with registry.connect() as connection:
+        assert connection.execute("SELECT count(*) FROM review_evidence").fetchone()[0] == 2

@@ -62,21 +62,27 @@ def test_remote_package_is_waiting_and_contains_no_database_binding(foundry):
     })
 
 
-def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry):
+def test_singing_stt_and_unknown_rights_never_inflate_target_speech_hours(foundry):
     _, registry = foundry
     cleared = source(registry, family="cleared", training="accepted")
     unknown = source(registry, family="unknown", training="accepted")
     singing = source(registry, family="singing", training="accepted")
+    stt = source(registry, family="stt", training="accepted")
+    with registry.transaction() as connection:
+        connection.execute("UPDATE sources SET source_type='stt',character_id='non-target' WHERE source_id=?", (stt,))
     register_rights(registry, cleared, "owned", "record", "fixture", "training", reviewer="op", actor_type="user", training_allowed=True)
     register_rights(registry, unknown, "unknown", "discovery", "unverified", "none", reviewer="op", actor_type="user")
     register_rights(registry, singing, "owned", "record", "fixture", "auxiliary", reviewer="op", actor_type="user", training_allowed=True)
+    register_rights(registry, stt, "owned", "record", "fixture", "stt training", reviewer="op", actor_type="user", training_allowed=True)
     accept_source_review(registry, cleared)
     accept_source_review(registry, singing)
+    accept_source_review(registry, stt)
     accepted_samples = []
     with registry.transaction() as connection:
         for index, (source_id, modality, duration) in enumerate(((cleared, "speech", 3600000),
                                                                   (unknown, "speech", 1800000),
-                                                                  (singing, "singing_aux", 7200000))):
+                                                                  (singing, "singing_aux", 7200000),
+                                                                  (stt, "speech", 3600000))):
             digest = f"{index + 1:064x}"
             now = registry.now()
             connection.execute("INSERT INTO objects VALUES (?,?,?,?,?)", (digest, 1, None, now, now))
@@ -94,21 +100,22 @@ def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry
                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (sample_id, source_id, digest, duration, "ko-KR", "x", "x", "x", modality,
                  1000000, 1000000, 1000000, 1000000,
-                 "auxiliary" if modality == "singing_aux" else "gold", "accepted",
+                 "auxiliary" if modality == "singing_aux" else "silver" if source_id == stt else "gold", "accepted",
                  digest, 0, duration, digest, registry.segment_fingerprint(digest, 0, duration, "x")),
             )
             if source_id != unknown:
-                accepted_samples.append((sample_id, duration, modality))
-    for sample_id, duration, modality in accepted_samples:
+                accepted_samples.append((sample_id, duration, modality, source_id))
+    for sample_id, duration, modality, source_id in accepted_samples:
         add_review(
             registry, "audio", sample_id, "accept", "operator", "audio checked", expected_revision=0,
-            evidence={"actor_type": "human" if modality == "speech" else "evaluator",
+            evidence={"actor_type": "evaluator" if source_id == stt or modality == "singing_aux" else "human",
                       "batch_size": 1, "media_reviewed_ms": duration},
         )
     result = summarize(registry)
-    assert result["raw_speech_ms"] == 5400000
+    assert result["raw_speech_ms"] == 9000000
     assert result["accepted_physical_speech_ms"] == 3600000
     assert result["effective_speech_ms"] == 3600000
+    assert result["accepted_stt_ms"] == 3600000
     assert result["raw_singing_ms"] == 7200000
     assert result["accepted_auxiliary_singing_ms"] == 7200000
 

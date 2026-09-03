@@ -22,6 +22,7 @@ from .review import add_review, promote_sample
 from .review_server import serve
 from .rights import promote_training, register_rights
 from .split import assign_group, leakage_findings
+from .stt import import_zeroth_stt
 from .store import ObjectStore
 from .worker_import import import_worker_result
 from .wikimedia import import_text_bundle, prepare_wikimedia_text
@@ -37,6 +38,7 @@ WRITE_COMMANDS.add("prepare-wikimedia-text")
 WRITE_COMMANDS.add("import-text-bundle")
 WRITE_COMMANDS.add("record-source-quality")
 WRITE_COMMANDS.add("review-source")
+WRITE_COMMANDS.add("import-zeroth-stt")
 
 
 def _json(value: object) -> None:
@@ -163,6 +165,12 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--dry-run", action="store_true")
     command = sub.add_parser("import-text-bundle")
     command.add_argument("manifest")
+    command.add_argument("--source-id", required=True)
+    command.add_argument("--actor", required=True)
+    command.add_argument("--dry-run", action="store_true")
+    command = sub.add_parser("import-zeroth-stt")
+    command.add_argument("manifest")
+    command.add_argument("--audio-root", required=True)
     command.add_argument("--source-id", required=True)
     command.add_argument("--actor", required=True)
     command.add_argument("--dry-run", action="store_true")
@@ -343,6 +351,9 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "import-text-bundle":
         _json(import_text_bundle(paths, registry, Path(args.manifest), args.source_id,
                                  actor=args.actor, dry_run=dry_run))
+    elif args.command == "import-zeroth-stt":
+        _json(import_zeroth_stt(paths, registry, Path(args.manifest), Path(args.audio_root),
+                                args.source_id, actor=args.actor, dry_run=dry_run))
     return 0
 
 
