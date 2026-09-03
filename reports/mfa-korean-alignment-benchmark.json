@@ -72,6 +72,27 @@
     "peak_rss_kib": 789872,
     "gpu_used": false
   },
+  "worker_round_trip": {
+    "job_id": "c7ae9dbd-6d6f-43fa-a79d-0af7b9a3564a",
+    "code_commit": "8f48087c4a4a4b174db931dc381cb4529aa5f16b",
+    "input_duration_seconds": 4.6538775510204085,
+    "status": "completed",
+    "worker_verification": true,
+    "word_interval_count": 14,
+    "phone_interval_count": 50,
+    "spn_interval_count": 0,
+    "wall_seconds": 16.534979099997145,
+    "features_sha256": "c95d5df167971386f9649282c10468b455c856b715f0b25dea911ebedab3d2c9",
+    "result_sha256": "1c2dada04a3faa6af4330dd4c1567a4f828bef7e28490cca7dc1d03c45182966",
+    "canonical_import": {
+      "state": "completed",
+      "import_rows": 1,
+      "first_import_idempotent": false,
+      "second_import_idempotent": true,
+      "training_status_changed": false,
+      "rights_status_changed": false
+    }
+  },
   "decision": {
     "worker_backend": "selected",
     "mms_backend": "blocked_noncommercial",
