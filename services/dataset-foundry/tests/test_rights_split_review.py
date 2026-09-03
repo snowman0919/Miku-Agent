@@ -49,6 +49,9 @@ def test_cleared_rights_require_evidence_and_all_gates(foundry):
     with pytest.raises(ValueError):
         register_rights(registry, source_id, "owned", "record", "", "training",
                         reviewer="operator", actor_type="user-delegated")
+    with pytest.raises(PermissionError, match="not bound"):
+        register_rights(registry, source_id, "owned", "record", "external claim", "training",
+                        reviewer="operator", actor_type="user-delegated", evidence_sha256="1" * 64)
     register_rights(registry, source_id, "owned", "record", "fixture generation record", "training",
                     reviewer="operator", actor_type="user-delegated", training_allowed=True)
     accept_source_review(registry, source_id)

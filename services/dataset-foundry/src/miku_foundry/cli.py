@@ -71,6 +71,9 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--allowed-use", required=True)
     command.add_argument("--reviewer", required=True)
     command.add_argument("--actor-type", required=True)
+    command.add_argument("--restrictions", default="")
+    command.add_argument("--evidence-sha256")
+    command.add_argument("--expires-at", type=int)
     command.add_argument("--training-allowed", action=argparse.BooleanOptionalAction, default=False)
     command.add_argument("--dry-run", action="store_true")
     command = sub.add_parser("promote")
@@ -199,7 +202,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             _json({"rights_id": register_rights(registry, args.source_id, args.status, args.evidence_type,
                    args.evidence_ref, args.allowed_use, reviewer=args.reviewer, actor_type=args.actor_type,
-                   training_allowed=args.training_allowed)})
+                   restrictions=args.restrictions, evidence_sha256=args.evidence_sha256,
+                   expires_at=args.expires_at, training_allowed=args.training_allowed)})
     elif args.command == "promote":
         if dry_run:
             _json({"would_promote": args.source_id})

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from .registry import RIGHTS_CLEARED, Registry
 from .review import assert_review_accepted
 
@@ -12,7 +14,14 @@ def register_rights(registry: Registry, source_id: str, status: str, evidence_ty
         raise ValueError("training_allowed must be a boolean")
     if status in RIGHTS_CLEARED and not evidence_ref.strip():
         raise ValueError("cleared rights require evidence")
+    if evidence_sha256 is not None and re.fullmatch(r"[0-9a-f]{64}", evidence_sha256) is None:
+        raise ValueError("rights evidence SHA-256 is invalid")
     with registry.transaction() as connection:
+        if evidence_sha256 is not None and not connection.execute(
+            "SELECT 1 FROM source_objects WHERE source_id=? AND sha256=?",
+            (source_id, evidence_sha256),
+        ).fetchone():
+            raise PermissionError("rights evidence object is not bound to its source")
         previous = registry.current_rights(connection, source_id)
         if actor_type == "agent" and previous and previous["status"] in {"unknown", "restricted"} and status in RIGHTS_CLEARED:
             raise PermissionError("an agent cannot promote unresolved rights")
