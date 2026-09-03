@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/subagents/speech-script-critic.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["findings", "recommendations"],
+  "properties": {
+    "findings": {
+      "type": "array", "minItems": 3, "maxItems": 10,
+      "items": {"type": "string", "minLength": 4}
+    },
+    "recommendations": {
+      "type": "array", "minItems": 2, "maxItems": 10,
+      "items": {"type": "string", "minLength": 4}
+    }
+  }
+}
