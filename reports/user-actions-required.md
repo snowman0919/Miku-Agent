@@ -21,6 +21,8 @@ human review 0행, accepted 0행이다. Release minimum 30 effective hours를 �
   `$MIKU_DATA_ROOT/intake/{singing-aux,korean-stt,persona-sources,agentic-sources}` README에 따라 제출한다.
 - Rights evidence가 없으면 technical processing만 quarantine에서 수행한다.
 - Target transcript/alignment, speaker consistency, quality tier와 Gold persona는 human review가 필요하다.
+- Intake 후 `miku-data review serve`로 항목별 evidence-backed 판정을 완료하고, 별도
+  `promote-sample` 단계에서 training 승격한다.
 
 이 입력 전까지 target speech effective hours, human-reviewed persona, execution-backed agentic와
 accepted duplex 핵심 수치는 0이다.

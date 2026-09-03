@@ -14,5 +14,5 @@
 - Audio rows 1,100, unique sample/object identity 1,010/1,010, referenced duration 5,891,723 ms.
 - Unique physical interval duration 5,801,723 ms; effective accepted speech 0 ms.
 - Candidate script exact unique 20,000이지만 semantic effective unique는 아직 측정하지 않았다.
-- Reviews 461, worker jobs 462, successful result imports 460.
+- Reviews 461, evidence-backed human corpus reviews 0, worker jobs 462, successful result imports 460.
 - Canonical root의 raw media, SQLite와 Parquet는 Git 밖에 있다.
