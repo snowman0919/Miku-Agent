@@ -99,7 +99,9 @@ def test_wikimedia_text_is_integrity_checked_deduplicated_reviewed_and_exportabl
                               actor="operator")["idempotent"] is True
     exported = export_training(registry, tmp_path / "train.jsonl", split="train", corpus="text")
     assert exported["count"] == 3
-    assert inventory(registry)["korean_text"] == {
+    report = inventory(registry)
+    assert report["current_rights_sources"] == {"licensed": 1}
+    assert report["korean_text"] == {
         "accepted_documents": 3,
         "accepted_tokens": manifest["stats"]["tokens_accepted"],
         "exact_unique_documents": 3,

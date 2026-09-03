@@ -13,6 +13,12 @@ def inventory(registry: Registry) -> dict[str, object]:
             counts[table] = connection.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
         rights = {row["status"]: row["n"] for row in connection.execute(
             "SELECT status,count(*) n FROM rights_records GROUP BY status ORDER BY status")}
+        current_rights = {row["status"]: row["n"] for row in connection.execute(
+            """SELECT status,count(*) n FROM rights_records r
+               WHERE rights_id=(SELECT rights_id FROM rights_records latest
+                 WHERE latest.source_id=r.source_id ORDER BY created_at DESC,rights_id DESC LIMIT 1)
+               GROUP BY status ORDER BY status"""
+        )}
         training = {row["training_status"]: row["n"] for row in connection.execute(
             "SELECT training_status,count(*) n FROM sources GROUP BY training_status ORDER BY training_status")}
         corpus = {}
@@ -76,6 +82,7 @@ def inventory(registry: Registry) -> dict[str, object]:
         "counts": counts,
         "corpus": corpus,
         "rights_records": rights,
+        "current_rights_sources": current_rights,
         "source_training_status": training,
         "agentic": agentic,
         "duplex": duplex,

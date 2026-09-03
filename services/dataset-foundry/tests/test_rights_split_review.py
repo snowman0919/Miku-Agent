@@ -5,10 +5,11 @@ import sqlite3
 import pytest
 
 from conftest import accept_source_review, source
-from miku_foundry.ingest import register_source
+from miku_foundry.ingest import record_source_quality, register_source
 from miku_foundry.review import ReviewConflict, add_review
 from miku_foundry.rights import promote_training, register_rights
 from miku_foundry.split import assign_group, deterministic_split
+from miku_foundry.store import ObjectStore
 
 
 def test_rights_gate_rejects_unknown_and_agent_self_promotion(foundry):
@@ -67,6 +68,25 @@ def test_cleared_rights_without_training_scope_cannot_promote(foundry):
                     "private evaluation only", reviewer="operator", actor_type="user")
     with pytest.raises(PermissionError, match="rights gate"):
         promote_training(registry, source_id, actor="operator")
+
+
+def test_source_quality_and_review_states_require_bound_evidence(foundry, tmp_path):
+    paths, registry = foundry
+    source_id = source(registry, quality="unscored", review="unreviewed")
+    evidence = tmp_path / "quality.json"
+    evidence.write_text("{}", encoding="utf-8")
+    digest = ObjectStore(paths, registry).ingest(evidence, source_id, role="quality:evidence")
+    record_source_quality(registry, source_id, "passed", digest, actor="evaluator")
+    add_review(
+        registry, "source", source_id, "accept", "evaluator", "quality source checked",
+        expected_revision=0,
+        evidence={"actor_type": "evaluator", "batch_size": 1, "media_reviewed_ms": 0},
+    )
+    with registry.connect() as connection:
+        row = connection.execute(
+            "SELECT quality_status,review_status FROM sources WHERE source_id=?", (source_id,)
+        ).fetchone()
+    assert tuple(row) == ("passed", "reviewed")
 
 
 def test_split_is_stable_and_frozen_assignment_cannot_move(foundry):

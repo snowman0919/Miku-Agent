@@ -173,7 +173,12 @@ def add_review(
                     (review_id, checked_evidence["actor_type"], checked_evidence["media_reviewed_ms"],
                      int(checked_evidence["read_complete"]), checked_evidence["batch_size"],
                      json.dumps(checked_evidence, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
-                     registry.now()),
+                    registry.now()),
+                )
+            if entity_type == "source":
+                connection.execute(
+                    "UPDATE sources SET review_status=? WHERE source_id=?",
+                    ("reviewed" if decision in {"accept", "reject"} else "unreviewed", entity_id),
                 )
             registry.audit(connection, "review.revised", reviewer, entity_type, entity_id,
                            {"previous": latest["decision"] if latest else None, "new": decision,

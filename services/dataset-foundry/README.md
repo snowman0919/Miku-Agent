@@ -38,6 +38,9 @@ miku-data prepare-wikimedia-text DUMP.xml.bz2 --output CLEAN.jsonl.gz \
 miku-data import-text-bundle CLEAN.jsonl.gz.manifest.json --source-id UUID --actor REVIEWER
 ```
 
+Source quality evidence는 먼저 object로 ingest한 뒤 `record-source-quality`로 결속하고,
+`review-source --evidence REVIEW.json`의 단건 review와 `promote`를 각각 수행한다.
+
 Accepted row는 정제 text를 `normalized_text`에 한 번만 저장하고 원본 wikitext와 정제 bundle은
 content-addressed object로 보존한다. 각 row의 attribution에는 page title, revision URL, license와
 수정 여부를 기록한다.

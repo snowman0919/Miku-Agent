@@ -12,13 +12,13 @@ from .agentic import import_execution_receipt
 from .config import initialize_layout, paths_from_env
 from .duplex import import_duplex_bundle
 from .export import export_training, snapshot
-from .ingest import register_source
+from .ingest import record_source_quality, register_source
 from .jobs import authorize_remote_5090, ensure_job, prepare_remote_package
 from .lineage import plan_transform
 from .pilot import build as build_pilot
 from .registry import Registry
 from .report import inventory
-from .review import promote_sample
+from .review import add_review, promote_sample
 from .review_server import serve
 from .rights import promote_training, register_rights
 from .split import assign_group, leakage_findings
@@ -35,6 +35,8 @@ WRITE_COMMANDS.add("import-agentic-receipt")
 WRITE_COMMANDS.add("import-duplex-bundle")
 WRITE_COMMANDS.add("prepare-wikimedia-text")
 WRITE_COMMANDS.add("import-text-bundle")
+WRITE_COMMANDS.add("record-source-quality")
+WRITE_COMMANDS.add("review-source")
 
 
 def _json(value: object) -> None:
@@ -75,6 +77,20 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--evidence-sha256")
     command.add_argument("--expires-at", type=int)
     command.add_argument("--training-allowed", action=argparse.BooleanOptionalAction, default=False)
+    command.add_argument("--dry-run", action="store_true")
+    command = sub.add_parser("record-source-quality")
+    command.add_argument("--source-id", required=True)
+    command.add_argument("--status", choices=("passed", "failed"), required=True)
+    command.add_argument("--evidence-sha256", required=True)
+    command.add_argument("--actor", required=True)
+    command.add_argument("--dry-run", action="store_true")
+    command = sub.add_parser("review-source")
+    command.add_argument("--source-id", required=True)
+    command.add_argument("--decision", choices=("accept", "quarantine", "reject"), required=True)
+    command.add_argument("--reviewer", required=True)
+    command.add_argument("--reason", required=True)
+    command.add_argument("--expected-revision", type=int, default=0)
+    command.add_argument("--evidence", required=True)
     command.add_argument("--dry-run", action="store_true")
     command = sub.add_parser("promote")
     command.add_argument("--source-id", required=True)
@@ -211,6 +227,22 @@ def main(argv: list[str] | None = None) -> int:
                    args.evidence_ref, args.allowed_use, reviewer=args.reviewer, actor_type=args.actor_type,
                    restrictions=args.restrictions, evidence_sha256=args.evidence_sha256,
                    expires_at=args.expires_at, training_allowed=args.training_allowed)})
+    elif args.command == "record-source-quality":
+        if dry_run:
+            _json({"would_record_quality": args.status, "source_id": args.source_id})
+        else:
+            record_source_quality(registry, args.source_id, args.status, args.evidence_sha256,
+                                  actor=args.actor)
+            _json({"quality_status": args.status, "source_id": args.source_id})
+    elif args.command == "review-source":
+        evidence = _load_json(args.evidence)
+        if dry_run:
+            _json({"would_review_source": args.source_id, "decision": args.decision})
+        else:
+            _json({"review_id": add_review(
+                registry, "source", args.source_id, args.decision, args.reviewer, args.reason,
+                expected_revision=args.expected_revision, evidence=evidence,
+            )})
     elif args.command == "promote":
         if dry_run:
             _json({"would_promote": args.source_id})
