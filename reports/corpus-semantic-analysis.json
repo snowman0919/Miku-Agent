@@ -43,6 +43,42 @@
         }
       }
     },
+    "accepted_korean_foundation": {
+      "input_rows_sha256": "1ec5d1155c9ba14d5949f413eba375b11da5aff97f93d76873a3fa1320fa33d9",
+      "rows": 78112,
+      "threshold_results": {
+        "980000": {
+          "cosine_threshold_ppm": 980000,
+          "duplicate_clusters": 21,
+          "effective_unique_rows": 78082,
+          "largest_cluster_rows": 8,
+          "matched_pairs": 38,
+          "nearest_neighbor_cosine_ppm": {
+            "max": 990830,
+            "p50": 917895,
+            "p90": 941219,
+            "p95": 948011,
+            "p99": 962006
+          },
+          "rows_in_duplicate_clusters": 51
+        },
+        "990000": {
+          "cosine_threshold_ppm": 990000,
+          "duplicate_clusters": 1,
+          "effective_unique_rows": 78110,
+          "largest_cluster_rows": 3,
+          "matched_pairs": 2,
+          "nearest_neighbor_cosine_ppm": {
+            "max": 990830,
+            "p50": 917895,
+            "p90": 941219,
+            "p95": 948011,
+            "p99": 962006
+          },
+          "rows_in_duplicate_clusters": 3
+        }
+      }
+    },
     "speech_render_candidate": {
       "input_rows_sha256": "6350d92eb04e24ce5d351bed3b7482a004c313c9aef2f30a4145add556f3860d",
       "rows": 20000,
@@ -82,8 +118,8 @@
   },
   "cross_split": {
     "accepted_agentic_to_agentic_eval": {
-      "candidate_rows": 1,
-      "candidate_rows_sha256": "a96d9aa39740d817296a8ef67467a68ec42ba3c96429aa5f7b4fdd2d29923df7",
+      "candidate_rows": 3,
+      "candidate_rows_sha256": "57c9d88169316ba3e92a4eafe4e1d61ee9878254952b4258460475eaa089599f",
       "evaluation_rows": 500,
       "evaluation_rows_sha256": "73beb07961ab4ba6a768aaee562a1da7da1bae6fcd3210fb4fd53168bed22a28",
       "threshold_results": {
@@ -181,6 +217,7 @@
   "model": {
     "id": "intfloat/multilingual-e5-small",
     "license": "mit",
+    "max_seq_length": 512,
     "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
     "snapshot_manifest": {
       "files": {
@@ -203,7 +240,7 @@
     "cuda_runtime": "12.8",
     "gpu": "NVIDIA GeForce RTX 5090",
     "python": "3.12.14",
-    "sentence_transformers": "5.7.0",
+    "sentence_transformers": "6.0.1",
     "torch": "2.10.0+cu128",
     "transformers": "4.56.0"
   },

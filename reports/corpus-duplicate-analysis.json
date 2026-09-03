@@ -58,6 +58,58 @@
         "threshold_ppm": 800000
       }
     },
+    "accepted_korean_foundation": {
+      "character_5gram_jaccard": {
+        "candidate_pairs": 1213,
+        "duplicate_clusters": 0,
+        "effective_unique_rows": 78112,
+        "largest_cluster_rows": 1,
+        "lsh_bands": 16,
+        "matched_pairs": 0,
+        "minhash_permutations": 64,
+        "rows_in_duplicate_clusters": 0,
+        "threshold_ppm": 800000
+      },
+      "generator_family": {
+        "groups": 1,
+        "largest_group_rows": 78112
+      },
+      "generator_prompt_family": {
+        "groups": 1,
+        "largest_group_rows": 78112
+      },
+      "input_rows_sha256": "cab1adc2abee45e37311820e2c27e24ba50e311a7af1149f23b2cdfa83fcab28",
+      "lineage_family": {
+        "groups": 1,
+        "largest_group_rows": 78112
+      },
+      "normalized_exact": {
+        "duplicate_clusters": 0,
+        "effective_unique_rows": 78112,
+        "largest_cluster_rows": 1,
+        "rows_in_duplicate_clusters": 0
+      },
+      "rows": 78112,
+      "semantic_embedding": {
+        "effective_unique_rows": null,
+        "status": "not_measured"
+      },
+      "template_family": {
+        "groups": 1,
+        "largest_group_rows": 78112
+      },
+      "token_2gram_jaccard": {
+        "candidate_pairs": 609,
+        "duplicate_clusters": 0,
+        "effective_unique_rows": 78112,
+        "largest_cluster_rows": 1,
+        "lsh_bands": 16,
+        "matched_pairs": 0,
+        "minhash_permutations": 64,
+        "rows_in_duplicate_clusters": 0,
+        "threshold_ppm": 800000
+      }
+    },
     "speech_render_candidate": {
       "character_5gram_jaccard": {
         "candidate_pairs": 640272,

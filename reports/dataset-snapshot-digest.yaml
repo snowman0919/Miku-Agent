@@ -1,15 +1,17 @@
 dataset_id: miku-data
-version: d0.2.0-alpha9
-state: candidate
+version: d0.2.0-alpha10
+state: curated
 schema_version: 2
-source_count: 24
-sample_count: 29359
+source_count: 25
+sample_count: 107471
 fixture_sample_count: 2356
 candidate_sample_count: 20000
 evaluation_sample_count: 5000
-accepted_sample_count: 2003
-effective_unique_samples: 585
-effective_unique_policy: accepted agentic receipt unique plus accepted duplex semantic cosine 0.98 clusters
+accepted_sample_count: 80115
+accepted_korean_text_documents: 78112
+accepted_korean_text_tokens: 129341916
+effective_unique_samples: 78667
+effective_unique_policy: accepted Korean text and Duplex semantic cosine 0.98 clusters plus accepted Agentic receipt unique
 measured_unique_by_corpus:
   agentic_receipt_unique: 3
   duplex_event_sequence_unique: 2000
@@ -18,54 +20,66 @@ measured_unique_by_corpus:
   duplex_token_2gram_effective_unique: 1939
   duplex_semantic_cosine_980000_effective_unique: 582
   duplex_semantic_cosine_990000_effective_unique: 1453
+  accepted_korean_text_exact_unique: 78112
+  accepted_korean_text_semantic_cosine_980000_effective_unique: 78082
+  accepted_korean_text_semantic_cosine_990000_effective_unique: 78110
   candidate_text_exact_unique: 20000
   candidate_text_character_5gram_effective_unique: 5987
   candidate_text_token_2gram_effective_unique: 10616
   candidate_text_semantic_cosine_980000_effective_unique: 1536
   candidate_text_semantic_cosine_990000_effective_unique: 7715
-semantic_effective_unique_samples: 582
+semantic_effective_unique_samples: 78664
 duplicate_analysis:
-  lexical_report_sha256: be86d4589b5a2015188d1993561c9d0d1195831d8f435d40cf4ee18f3a951daa
-  semantic_report_sha256: fab951be4aab9bd8c45b946b245b06f1bf6c56d7d485b0c29ea06fc7a4619af7
+  lexical_report_sha256: ac853ffb8e712422490649b112776dadc7051720ceb0e77c5043a181ec98d77b
+  semantic_report_sha256: 87c6ae8ce6f63b728017ac408df7ab544f29829a5fe58543c1b7ea8727a0ac50
   semantic_model: intfloat/multilingual-e5-small
   semantic_model_revision: 614241f622f53c4eeff9890bdc4f31cfecc418b3
   semantic_primary_cosine_threshold_ppm: 980000
   semantic_cross_split_findings: 0
   cross_modality_effective_unique_status: not_measured
-dataset_root_sha256: 4e8ed6f4cdad431fe6ece98db80719859ba5fb40b6a530d69a17bfb54377a856
+dataset_root_sha256: caddc53325691ec895c8d11e0f28083a78f7092b7dc6bf051e33c64173901f07
 eval_holdout_manifest_sha256: b8be7a1091a57ab933e4d135ecf041d8073856138fbfdb243bf2c35ea37003e8
 canonical_manifest_recheck:
-  row_count: 29359
-  sha256: 4e8ed6f4cdad431fe6ece98db80719859ba5fb40b6a530d69a17bfb54377a856
+  row_count: 107471
+  sha256: caddc53325691ec895c8d11e0f28083a78f7092b7dc6bf051e33c64173901f07
 snapshot:
-  id: miku-data-d0.2.0-alpha9
+  id: miku-data-d0.2.0-alpha10
+  receipt_sha256: d9d82859fa6685a4a1b2fa01186f34952a5f7b24a62ddb2869295d253de554db
   parquet_sha256:
     agentic_trajectories.parquet: 5f623fe704e9c68fe934eea1b834a71940d8179af718d440e36327832c56009e
     audio_metrics.parquet: a9aae70e7012276bfc1835c61c73d77dbc867a2bd5140a40c4c95ccebccfd70e
     audio_samples.parquet: 0899118c892b9bd90d5c30e946f162a1ca89788017a1f2f760ed80a243dcfe43
     duplex_timelines.parquet: 766742929c11067250e36ef4cb7d6c1f1757928e76f2e42b6a0b5361dffcc73f
     lineage_edges.parquet: 9f7f315606158d798a7d21c358838ae7cdffd7a5e825e3230b5c2242309d5ad1
-    objects.parquet: 0379e63cfee6a402f496a1cbc1f4f950bd51fc5aa3d38e5f9473cbc4101b9a75
+    objects.parquet: e290e13f757dee79c6aabdb5d40c9c6f217dc4a58f3c041f992349cdc0735e5a
     persona_samples.parquet: 285f46a6a7f767973bf8283b405b471fb4f9200dae539af8c0cf1233c98ea1e6
-    review_evidence.parquet: 9d386a90016eef37befed8cb75fd1198e528876fbab89131cdebbb23dad684ba
-    reviews.parquet: b823f42a9381504e1a5606c8c9a26891c4940d8f8626d307e26d72cd4c9247d9
-    rights_records.parquet: 50af54f7e12e19353632a29f88aae6bb9c2828d2b1d3196861f3fc9737dd2ce0
-    source_objects.parquet: 087efbb7cb14283febbb33065c6a2bc6fdf1fb63ae6a68fdb3f9144006c57b90
-    sources.parquet: 603a2f12049ba84cf55a6fa8d19432ad2a6b89d022c3f315bc78aaf881bcf015
-    split_assignments.parquet: a40f50c1a86387490ae289e4056e7c89ef37eeb9932c2b078f811b26891ffa81
-    text_samples.parquet: 3311a24c881d8e92668a5aebbe1776d6859de55d533deb2e63e08788c31d2cb9
+    review_evidence.parquet: f514a4a545c2dfe3591bf5b375fdcbe370589dc0e6fbb61abfc6bd9066688166
+    reviews.parquet: bf5f6543809385c241f96e650eae3ddf7a81a59f82f2d7ab67e1908a0c2009e7
+    rights_records.parquet: b004552de9197055f60c613ebb54c607f476fe3e6887590cab01a2bd346b6fb6
+    source_objects.parquet: 539c0d0ea1dd203921129630b0184462c0d28843823fdfc694ad7818d4048304
+    sources.parquet: 39cc1820e2977ac2077b055b6ec41126afef26fa25a57d80ef1275c4bc6913af
+    split_assignments.parquet: 222d6ca1674edee43efecd8a8f6018320ea8752ac61e9e33be93c2cfb9c71c5b
+    text_samples.parquet: 9e33ae6476fb1159e4180340d4b20652591bb50b191f57b77dd14b324284d38c
     transforms.parquet: 72f887f566e2dfac949e7c6cc1802caacd5db662cc635f23ebb1a7dd7ad155ff
     worker_result_imports.parquet: a2ed080d34e7c4fbcdf96246dc1420deae9f44a61f58f51a990c3cd4b18e61f3
 rights:
-  owned: 23
-  licensed: 0
-  permitted: 0
-  unknown: 1
-  restricted: 0
-  rejected: 0
-  training_allowed: 2
-  training_denied_or_default: 22
+  current_sources:
+    owned: 23
+    licensed: 1
+    permitted: 0
+    unknown: 1
+    restricted: 0
+    rejected: 0
+  append_only_records:
+    owned: 23
+    licensed: 4
+    unknown: 1
+  training_allowed_sources: 3
+  training_denied_or_default_sources: 22
   accepted_unknown_or_restricted: 0
 quality:
-  training_accepted: 2003
+  training_accepted: 80115
+  accepted_korean_text_tokens: 129341916
   effective_speech_ms: 0
+  source_quality_status: passed
+  independent_text_quality_findings: 0
