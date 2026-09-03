@@ -25,6 +25,7 @@ ASR_BINDING = {
     "model_id": "openai/whisper-large-v3-turbo",
     "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
     "weight_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1",
+    "config_sha256": "c5b526b3e3cd64cd8940dabb45e8ba726629e22d8ed389c29b552f9140daf04a",
     "dtype": "float16",
     "language": "ko",
     "task": "transcribe",
@@ -100,13 +101,15 @@ def validate_and_extract(archive: Path, extracted: Path, expected_sha256: str) -
     extracted.mkdir(parents=True, exist_ok=True)
     with tarfile.open(archive, "r:gz") as stream:
         members = stream.getmembers()
+        selected = []
         for member in members:
             relative = PurePosixPath(member.name)
             if (relative.is_absolute() or ".." in relative.parts or not relative.parts
-                    or relative.parts[0] not in {"AUDIO_INFO", "train_data_01", "test_data_01"}
                     or not (member.isfile() or member.isdir())):
                 raise ValueError(f"unsafe archive member: {member.name}")
-        stream.extractall(extracted, members=members, filter="data")
+            if relative.parts[0] in {"AUDIO_INFO", "train_data_01", "test_data_01"}:
+                selected.append(member)
+        stream.extractall(extracted, members=selected, filter="data")
     marker.write_text(expected_sha256 + "\n", encoding="ascii")
 
 
@@ -135,7 +138,7 @@ def analyze_one(root: Path, path: Path, text: str) -> dict[str, object]:
     relative = path.relative_to(root).as_posix()
     return {
         "utterance_id": path.stem,
-        "speaker_id": path.relative_to(root).parts[1],
+        "speaker_id": path.relative_to(root).parts[2],
         "path": relative,
         "audio_sha256": sha256(path),
         "size_bytes": path.stat().st_size,
@@ -161,6 +164,11 @@ def analyze(extracted: Path, work: Path, jobs: int) -> list[dict[str, object]]:
         return read_jsonl(output)
     train = transcripts(extracted, "train_data_01")
     audio = sorted(extracted.joinpath("train_data_01").rglob("*.flac"))
+    train_speakers = {path.relative_to(extracted).parts[2] for path in audio}
+    test_speakers = {path.relative_to(extracted).parts[2]
+                     for path in extracted.joinpath("test_data_01").rglob("*.flac")}
+    if not train_speakers or not test_speakers or train_speakers & test_speakers:
+        raise ValueError("official train/test speakers overlap or are missing")
     if set(path.stem for path in audio) != set(train):
         raise ValueError("train audio and transcript identities differ")
     with ThreadPoolExecutor(max_workers=jobs) as pool:
@@ -364,6 +372,15 @@ def main() -> int:
         raise ValueError("invalid immutable binding or concurrency")
     started = time.monotonic()
     args.work.mkdir(parents=True, exist_ok=True)
+    mfa_model = args.worker_root / "models/mfa-korean-3.0.0"
+    for path, expected in (
+        (args.model_path / "model.safetensors", ASR_BINDING["weight_sha256"]),
+        (args.model_path / "config.json", ASR_BINDING["config_sha256"]),
+        (mfa_model / "korean_mfa_acoustic_v3.0.0.zip", ALIGNMENT_BINDING["acoustic_sha256"]),
+        (mfa_model / "korean_mfa_dictionary_v3.0.0.dict", ALIGNMENT_BINDING["dictionary_sha256"]),
+    ):
+        if sha256(path) != expected:
+            raise ValueError(f"pinned model hash mismatch: {path.name}")
     extracted = args.work / "extracted"
     validate_and_extract(args.archive, extracted, args.expected_sha256)
     rows = analyze(extracted, args.work, args.jobs)
