@@ -227,11 +227,15 @@ def _provenance_matches_manifest(
 
 
 def _clean_document(plain: str, deduper: _Deduper) -> tuple[str, dict[str, int]]:
-    stats = {"pii_sentences_removed": 0, "exact_sentences_removed": 0, "near_sentences_removed": 0}
+    stats = {"boilerplate_sentences_removed": 0, "pii_sentences_removed": 0,
+             "exact_sentences_removed": 0, "near_sentences_removed": 0}
     kept = []
     for sentence in SENTENCE_RE.split(plain):
         sentence = _normalize(sentence)
         if len(sentence) < 20:
+            continue
+        if BOILERPLATE_LINE_RE.match(sentence):
+            stats["boilerplate_sentences_removed"] += 1
             continue
         if PII_RE.search(sentence):
             stats["pii_sentences_removed"] += 1
@@ -284,6 +288,7 @@ def prepare_wikimedia_text(
         "clean_documents_removed": 0,
         "documents_accepted": 0,
         "tokens_accepted": 0,
+        "boilerplate_sentences_removed": 0,
         "pii_sentences_removed": 0,
         "exact_sentences_removed": 0,
         "near_sentences_removed": 0,
