@@ -1,8 +1,10 @@
 # Rights Audit
 
-- Rights records: owned 20, licensed 0, permitted 0, unknown 0, restricted 0, rejected 0.
-- Training accepted sources with unknown/restricted rights: 0.
-- Training accepted samples: 0.
-- Evidence type: local deterministic generation record.
+- Rights records: owned 21, licensed 0, permitted 0, unknown 1, restricted 0, rejected 0.
+- Unknown 1건은 speech render 계획용 candidate source이며 `candidate-render-planning-only`다.
+- Training accepted sources/samples: 0/0.
+- Unknown 또는 restricted training accepted: 0.
+- Evaluation 6 source는 private evaluation only, fixture 15 source는 pipeline validation 용도다.
 
-이는 pilot content의 생성 provenance만 입증한다. Miku target voice/SVS output license나 외부 corpus 권리를 대신하지 않는다. 실제 source는 source-by-source human evidence review 전까지 quarantine이다.
+Owned local generation evidence는 Miku/SVS engine output 학습 조건이나 외부 corpus license를
+대신하지 않는다. 실제 source는 source별 rights evidence와 human review 전까지 quarantine이다.

@@ -1,8 +1,8 @@
-# Duplex Corpus Pilot
+# Duplex Corpus
 
-- Timelines: 500.
-- Event strata: normal 100, backchannel 100, interruption 100, self-correction 100, tool-waiting 100.
-- Audio-rendered timelines: 0.
-- Training status: quarantine 500.
+- Infrastructure fixture 500, frozen evaluation 500, accepted 0.
+- Human adjudicated accepted 0, audio/timestamp-backed accepted 0.
+- Evaluation 500개에는 synthetic timestamp/event evidence가 있으나 audio와 human adjudication은 없다.
+- Fixture와 evaluation을 actual full-duplex 또는 release corpus 성능으로 계산하지 않는다.
 
-이는 millisecond event skeleton과 provenance contract를 검증한다. V0.1.0에서 미측정인 TTFA/interruption/full-duplex 성능을 통과했다고 주장하지 않는다.
+Release minimum 대비 accepted 10,000, human adjudicated 1,000, accepted audio/timestamp-backed 2,000이 부족하다.

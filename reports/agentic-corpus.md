@@ -1,9 +1,9 @@
-# Agentic Corpus Pilot
+# Agentic Corpus
 
-- Trajectories: 500; 각 task type 100 (`file.read`, `repository.inspect`, `permission.request`, `result.verify`, `tool.failure`).
-- Failure/recovery candidates: 100.
-- Execution-backed: 0.
-- Synthetic verified-success flag: 400; actual execution-backed completion: 0.
-- Training status: quarantine 500.
+- Infrastructure fixture 500; candidate/accepted 0/0.
+- Execution-backed/receipt-backed/human-verified accepted: 0/0/0.
+- Failure/recovery accepted: 0.
+- Evaluation task text holdout 500개는 trajectory가 아니다.
+- Fixture의 `verified=1` 400개는 `synthetic_expected`일 뿐 실제 실행 성공으로 계산하지 않는다.
 
-실제 isolated task receipt가 없으므로 synthetic `verified` field를 execution evidence로 보고하지 않는다.
+Release minimum 대비 accepted 10,000, execution-backed 2,000, failure/recovery 2,000이 부족하다.

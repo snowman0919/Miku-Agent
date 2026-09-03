@@ -1,9 +1,13 @@
-# Audio Quality Pilot
+# Audio Quality
 
-- Unique sources/objects: 10/10.
-- Decoded format: mono PCM16 WAV, 16,000 Hz, unique physical duration 10,000 ms.
-- Logical segment-reference duration: 100,000 ms.
-- Maximum clipping ratio: 0 ppm; maximum measured DC offset: 0 ppm.
-- Accepted/effective speech: 0/0 ms.
+- Rows 1,100; unique sample/object 1,010/1,010.
+- Referenced/unique physical interval duration: 5,891,723 / 5,801,723 ms.
+- Fixture: 100 rows, 10 unique sine objects, 100,000 ms referenced, 10,000 ms physical.
+- Evaluation: 1,000 unique eSpeak Korean PCM objects, 5,791,723 ms.
+- Accepted/effective target speech: 0/0 ms.
+- Audio metrics: 1,010 objects; object verification failures 0.
 
-Audio는 deterministic sine probe다. Object ingest, decode metric, sample indexing과 review 경로만 검증하며 ASR, alignment, speaker identity, speech likeness 또는 target voice quality를 PASS로 만들지 않는다. GPU separation/ASR job은 실행하지 않았다.
+RTX 5090 technical processing은 quality/prosody 100개씩 실행했지만 20개 unique input object를
+반복한 infrastructure workload다. Human calibration과 confusion matrix가 없으므로 자동 quality
+score를 acceptance model로 사용하지 않는다. ASR, alignment와 speaker 결과도 target quality
+PASS가 아니다.

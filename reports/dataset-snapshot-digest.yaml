@@ -1,26 +1,39 @@
 dataset_id: miku-data
-version: d0.1.0-pilot
-state: pilot
-schema_version: 1
-source_count: 20
-sample_count: 2356
-dataset_root_sha256: 78dd030e490ee462480c0ab79ec61814713ccc7b45c40ac5bd4559d4333cb6bb
+version: d0.2.0-alpha1
+state: candidate
+schema_version: 2
+source_count: 22
+sample_count: 27356
+fixture_sample_count: 2356
+candidate_sample_count: 20000
+evaluation_sample_count: 5000
+accepted_sample_count: 0
+effective_unique_samples: null
+dataset_root_sha256: b76c51bca0860859f9ff9024f05ea197f2022d7533a9f9daa8870d1cca1e6764
 eval_holdout_manifest_sha256: b8be7a1091a57ab933e4d135ecf041d8073856138fbfdb243bf2c35ea37003e8
+canonical_manifest_recheck:
+  row_count: 27356
+  sha256: b76c51bca0860859f9ff9024f05ea197f2022d7533a9f9daa8870d1cca1e6764
 snapshot:
-  id: miku-data-d0.1.0-pilot-r3
+  id: miku-data-d0.2.0-alpha1
   parquet_sha256:
-    agentic_trajectories.parquet: 723a4d3e5e6ef7436d237cc44d8e0f25e27ff56811fad517934303a5229a7417
-    audio_metrics.parquet: a66ce8164d840a56ae5163cf66d838356e46c02efe379bda47345354aeea0500
-    audio_samples.parquet: a43cbfbdf361c2c01dc7d6e6569f278bae5927f921f869c583605aad73ce4df1
-    duplex_timelines.parquet: ab38535f6e7603fa3b14a3337bf0da067f13159bfe867d106248d2e932964a27
-    lineage_edges.parquet: 4789e405ee0895d61629ff84165a9e4ee589a1cc41e2f36d8bd54df14ff1e993
+    agentic_trajectories.parquet: 3c58181d63add0d06cb66ddee37e8131bef1f62d92f0ec67fe50a2ea595b6376
+    audio_metrics.parquet: a9aae70e7012276bfc1835c61c73d77dbc867a2bd5140a40c4c95ccebccfd70e
+    audio_samples.parquet: 0899118c892b9bd90d5c30e946f162a1ca89788017a1f2f760ed80a243dcfe43
+    duplex_timelines.parquet: 28d7d49c90f89ab002cd4d90d44b7fbee46d53fddd272edb87154f9e4afdd878
+    lineage_edges.parquet: 87c3e3950958d1eecc2f945e6474bdf5635bf0c8852426e109cf38a3ba4f50e0
     persona_samples.parquet: 285f46a6a7f767973bf8283b405b471fb4f9200dae539af8c0cf1233c98ea1e6
-    reviews.parquet: e77e6c8cc416c1cea3e995cc88050cda078c3742141c4a2359073a743bc641ba
-    sources.parquet: bd0d4827aa3b759654a26623fd2b65a732f3e21f4281431f824ca73177547c36
+    reviews.parquet: c8c1ec3233b81955ff7c98689a654577189858f623d54919e08f617c422fb7e8
+    sources.parquet: 591785e790a2ca94b33fb18afd375fb85860362dd66dd9a9731910609c3dfc21
     split_assignments.parquet: 290199021d07684506da2816750b3cccdb2d18621c9bd760c6b1f4ca9729194c
-    text_samples.parquet: a4aa998b3f68ac8d67b1002c5f63dca1f6253203d10a29a52e9cb6b1c50e6e6b
+    text_samples.parquet: 3311a24c881d8e92668a5aebbe1776d6859de55d533deb2e63e08788c31d2cb9
 rights:
-  owned: 20
+  owned: 21
+  licensed: 0
+  permitted: 0
+  unknown: 1
+  restricted: 0
+  rejected: 0
   accepted_unknown_or_restricted: 0
 quality:
   training_accepted: 0

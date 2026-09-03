@@ -1,9 +1,9 @@
-# Persona Corpus Pilot
+# Persona Corpus
 
-- Samples: 1,000.
-- Provenance: deterministic local template v1.
-- Hard violation flags: 0.
-- Gold/Silver/human-reviewed: 0/0/0.
-- Training status: quarantine 1,000.
+- Infrastructure fixture 1,000; candidate/accepted 0/0.
+- Gold/Silver/contrastive negative/human-reviewed: 0/0/0/0.
+- Persona evaluation prompt는 text holdout 1,000개이며 persona training row가 아니다.
+- Deterministic fixture의 pseudo dimension은 schema 검증용이고 training count에서 제외한다.
+- Accepted corpus가 없어 near-duplicate rate, hard-violation acceptance와 12-dimension fidelity를 보고하지 않는다.
 
-12 dimension 값은 schema·분포 파이프라인용 deterministic annotation candidate다. 독립 critic과 human adjudication이 없으므로 persona fidelity 성과로 해석하지 않는다.
+Release minimum 대비 Gold 5,000, Silver 50,000, negative 10,000이 각각 전량 부족하다.
