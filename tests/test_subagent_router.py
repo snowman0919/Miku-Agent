@@ -1,6 +1,8 @@
 import json
 import os
 import subprocess
+import importlib.util
+import hashlib
 from pathlib import Path
 
 
@@ -75,3 +77,29 @@ def test_failed_provider_is_not_validated_and_secret_is_redacted(tmp_path: Path)
     assert record["result"] == {"status": "failed", "validated": False}
     assert record["failure"]["category"] == "AUTH_INVALID"
     assert secret not in receipt.read_text(encoding="utf-8") + completed.stderr
+
+
+def test_window_audit_counts_acceptance_not_attempts(tmp_path: Path) -> None:
+    script = ROOT / "tools/audit_subagent_window.py"
+    spec = importlib.util.spec_from_file_location("window_audit", script)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    (tmp_path / "receipts").mkdir(); (tmp_path / "outputs").mkdir()
+    jobs = []
+    for index, provider in enumerate(("command_code", "command_code", "opencode")):
+        job_id = f"job-{index}"; value = {"value": index}
+        output_sha = hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
+        (tmp_path / "outputs" / f"{job_id}.json").write_text(json.dumps(value), encoding="utf-8")
+        (tmp_path / "receipts" / f"{job_id}.json").write_text(json.dumps({
+            "job_id": job_id, "provider": provider, "model": "model", "role": "role",
+            "attempts": 1, "wall_ms": 1, "result": {"status": "completed", "validated": True},
+            "failure": None, "output_sha256": output_sha,
+        }), encoding="utf-8")
+        jobs.append({"job_id": job_id, "receipt": f"receipts/{job_id}.json",
+                     "output": f"outputs/{job_id}.json", "output_sha256": output_sha,
+                     "parent_decision": "accepted", "used_in": "test"})
+    (tmp_path / "accepted-window.json").write_text(json.dumps({"accepted_jobs": jobs}), encoding="utf-8")
+    result = module.audit(tmp_path, minimum=3)
+    assert result["accepted_jobs"] == 3
+    assert result["command_code_to_opencode_ratio"] == 2
