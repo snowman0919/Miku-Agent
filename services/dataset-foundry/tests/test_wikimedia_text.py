@@ -4,6 +4,7 @@ import bz2
 import gzip
 import hashlib
 import json
+import uuid
 from pathlib import Path
 
 import pytest
@@ -103,6 +104,12 @@ def test_wikimedia_text_is_integrity_checked_deduplicated_reviewed_and_exportabl
     altered_rows[0]["provenance"]["document_sha256"] = hashlib.sha256(
         altered_rows[0]["text"].encode()
     ).hexdigest()
+    altered_rows[0]["sample_id"] = str(uuid.uuid5(
+        uuid.NAMESPACE_URL,
+        f'{altered_rows[0]["provenance"]["source_page_url"]}\0'
+        f'{altered_rows[0]["provenance"]["source_revision_id"]}\0'
+        f'{altered_rows[0]["provenance"]["document_sha256"]}',
+    ))
     previous_tokens = altered_rows[0]["provenance"]["token_count"]
     altered_rows[0]["provenance"]["token_count"] = len(
         tokenizer.encode(altered_rows[0]["text"], add_special_tokens=False).ids

@@ -191,6 +191,41 @@ def _passes_quality_gates(text: str, token_count: int) -> bool:
     )
 
 
+def _provenance_matches_manifest(
+    sample_id: object, provenance: object, manifest: dict[str, object]
+) -> bool:
+    if not isinstance(sample_id, str) or not isinstance(provenance, dict):
+        return False
+    page_id = provenance.get("source_page_id")
+    revision_id = provenance.get("source_revision_id")
+    title = provenance.get("source_page_title")
+    document_sha256 = provenance.get("document_sha256")
+    if (isinstance(page_id, bool) or not isinstance(page_id, int) or page_id <= 0
+            or isinstance(revision_id, bool) or not isinstance(revision_id, int) or revision_id <= 0
+            or not isinstance(title, str) or not title
+            or not isinstance(document_sha256, str)):
+        return False
+    page_url = f"https://ko.wikipedia.org/?curid={page_id}"
+    return (
+        provenance.get("source_page_url") == page_url
+        and provenance.get("attribution") == {
+            "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+            "modified": True,
+            "revision_url": f"https://ko.wikipedia.org/w/index.php?oldid={revision_id}",
+            "title": title,
+        }
+        and provenance.get("license") == "CC-BY-SA-4.0"
+        and provenance.get("dump_date") == manifest.get("dump_date")
+        and provenance.get("dump_sha1") == manifest.get("dump_sha1")
+        and provenance.get("tokenizer_id") == manifest.get("tokenizer_id")
+        and isinstance(provenance.get("source_revision_timestamp"), str)
+        and bool(provenance["source_revision_timestamp"])
+        and sample_id == str(uuid.uuid5(
+            uuid.NAMESPACE_URL, f"{page_url}\0{revision_id}\0{document_sha256}"
+        ))
+    )
+
+
 def _clean_document(plain: str, deduper: _Deduper) -> tuple[str, dict[str, int]]:
     stats = {"pii_sentences_removed": 0, "exact_sentences_removed": 0, "near_sentences_removed": 0}
     kept = []
@@ -452,6 +487,7 @@ def import_text_bundle(
                 value = json.loads(line)
                 sample_id, text, provenance = value["sample_id"], value["text"], value["provenance"]
                 if (sample_id in seen or not isinstance(text, str) or not text
+                        or not _provenance_matches_manifest(sample_id, provenance, manifest)
                         or value.get("coverage_tags") != ["korean_foundation", "wikipedia", "licensed"]
                         or provenance.get("policy_sha256") != POLICY_SHA256
                         or provenance.get("processor_revision") != manifest.get("processor_revision")
