@@ -9,11 +9,11 @@ candidate_sample_count: 20000
 evaluation_sample_count: 5000
 accepted_sample_count: 2001
 effective_unique_samples: null
-accepted_effective_unique_samples: 2001
-effective_unique_by_corpus:
-  agentic: 1
-  duplex: 2000
-  candidate_text: null
+measured_unique_by_corpus:
+  agentic_receipt_unique: 1
+  duplex_event_sequence_unique: 2000
+  candidate_text_exact_unique: 20000
+semantic_effective_unique_samples: null
 dataset_root_sha256: 92462194bc24561a23e426b83b6b1323a01ac1d7cf46d42c8f54572868271229
 eval_holdout_manifest_sha256: b8be7a1091a57ab933e4d135ecf041d8073856138fbfdb243bf2c35ea37003e8
 canonical_manifest_recheck:
