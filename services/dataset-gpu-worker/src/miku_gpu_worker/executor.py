@@ -150,24 +150,28 @@ class Worker:
         if binding is None:
             raise WorkerError("MODEL_HASH_MISMATCH", f"{task} requires a model binding")
         entry = validate_binding(task, binding)
-        lock = REPOSITORY_ROOT / "experiments/v0.2.0-gpu-worker/environments/audio/uv.lock"
+        lock_name = entry["environment"].rsplit("@", 1)[0]
+        environment_root = REPOSITORY_ROOT / "experiments/v0.2.0-gpu-worker/environments"
+        lock = (environment_root / lock_name).resolve()
+        if not lock.is_relative_to(environment_root.resolve()):
+            raise WorkerError("MODEL_OUTPUT_INVALID", "environment lock escaped registry root")
         if sha256_file(lock) != binding["environment_lock_sha256"]:
-            raise WorkerError("ENVIRONMENT_MISMATCH", "audio environment lock hash differs")
+            raise WorkerError("ENVIRONMENT_MISMATCH", "model environment lock hash differs")
         if task == "source_separation":
             model_path = self.root / "models" / "torch"
             weight = model_path / "hub" / "checkpoints" / entry["weight_file"]
         else:
             repository = entry.get("repository", "")
-            model_id = (
-                repository.removeprefix("https://huggingface.co/").rstrip("/")
-                if repository.startswith("https://huggingface.co/")
-                else entry["model_id"]
-            )
-            model_path = (
-                self.root / "models" / "huggingface" / "hub"
-                / f"models--{model_id.replace('/', '--')}"
-                / "snapshots" / entry["revision"]
-            )
+            if repository.startswith("https://huggingface.co/"):
+                model_id = repository.removeprefix("https://huggingface.co/").rstrip("/")
+                model_path = (self.root / "models" / "huggingface" / "hub"
+                              / f"models--{model_id.replace('/', '--')}"
+                              / "snapshots" / entry["revision"])
+            else:
+                model_directory = entry.get("model_directory")
+                if not isinstance(model_directory, str) or Path(model_directory).name != model_directory:
+                    raise WorkerError("MODEL_OUTPUT_INVALID", "invalid model directory")
+                model_path = self.root / "models" / model_directory
             weight = model_path / entry["weight_file"]
         if not model_path.is_dir() or not weight.is_file() or sha256_file(weight) != binding["weight_sha256"]:
             raise WorkerError("MODEL_HASH_MISMATCH", "pinned model bytes are missing or changed")
@@ -263,6 +267,7 @@ class Worker:
                         "_model_binding": binding,
                         "_model_path": str(model_path),
                         "_output_dir": str(outputs),
+                        "_worker_root": str(self.root),
                     })
                 sampler = GpuSampler(recorder) if job["resource_request"]["gpu_count"] else None
                 with GpuLock(self.root / "gpu0.lock"):

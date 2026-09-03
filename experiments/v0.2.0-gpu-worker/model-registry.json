@@ -80,6 +80,24 @@
     "status": "blocked"
   },
   {
+    "model_id": "montreal-forced-aligner/korean_mfa-3.0.0",
+    "provider": "Montreal Corpus Tools",
+    "repository": "https://github.com/MontrealCorpusTools/mfa-models",
+    "task": "forced_alignment",
+    "license": "CC-BY-4.0",
+    "code_license": "MIT",
+    "revision": "f76a59f7491eadda0fee212b329521e20e349e75",
+    "weight_file": "korean_mfa_acoustic_v3.0.0.zip",
+    "weight_sha256": "46f7a73ab46828c679562b160e0577beecfb4a9a827efe5ab392aee947451a4d",
+    "config_sha256": "75683f4dc2a7dd95295a068206d248a30bd2f4f2231fd4449210c91d1e78150b",
+    "config_file": "korean_mfa_dictionary_v3.0.0.dict",
+    "model_directory": "mfa-korean-3.0.0",
+    "required_dtype": "float32",
+    "peak_vram_mib": 0,
+    "environment": "mfa/environment-lock.json@ca5a60aca8a60eee2867f39e38fd5d5c3c46312c63d1c6004e322547bc6f2f4a",
+    "status": "selected"
+  },
+  {
     "model_id": "speechbrain/spkrec-ecapa-voxceleb",
     "provider": "SpeechBrain",
     "repository": "https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb",

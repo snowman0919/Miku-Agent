@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "python": "3.12.14",
+  "montreal_forced_aligner": {
+    "version": "3.4.2",
+    "source_commit": "d2dc283bd79667e086b1f93050a1855349f63f1f",
+    "license": "MIT"
+  },
+  "conda": {
+    "platform": "linux-64",
+    "explicit_lock": "conda-linux-64.lock",
+    "sha256": "02900ddafc47cda23a631e242512f8869f454d80c25f4bd037ccc083ceac0a33"
+  },
+  "pip": {
+    "requirements": "requirements.lock",
+    "sha256": "81d73ec3ff9f5c6b0db088cbae7469537201b7d8f0d95e27d78fc921a63d5218"
+  }
+}

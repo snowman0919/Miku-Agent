@@ -20,3 +20,8 @@ Reference protocol pilot:
 GPU candidate runner는 `benchmark_{separation,asr,alignment,speaker}.py`다. 모두
 generated fixture, local immutable model snapshot과 repository 밖 output 경로를 사용한다.
 정확한 실행 결과와 제한은 `reports/v0.2.0-5090-worker.md`에 기록한다.
+
+한국어 강제 정렬의 선택 backend는 MFA 3.4.2와 Korean MFA 3.0.0이다. Conda/PyPI
+lock은 `environments/mfa/`, beam 설정은 `mfa-korean-alignment.yaml`, 합성 STT eval
+20개 결과는 `reports/mfa-korean-alignment-benchmark.json`에 있다. 모델과 raw
+TextGrid/JSON은 worker root에만 두며 CC BY 4.0 attribution을 보존한다.

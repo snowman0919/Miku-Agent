@@ -28,8 +28,10 @@ inbox snapshot을 한 번 drain하므로 user session scheduler가 반복 호출
   structured error, OS GPU lock, stale recovery, cache verification 구현
 - reference transform: PCM16 WAV `audio_quality`, frame별 F0/energy/voicing을 보존하는
   `prosody_extract` 구현
-- model transform: 재현 가능한 benchmark runner와 pinned registry까지 구현했다. Job
-  protocol adapter는 아직 연결하지 않았으며 미설치 task는 `MODEL_ACCESS_FAILED`다.
+- model transform: source separation, ASR, forced alignment, speaker embedding adapter를
+  pinned registry와 job protocol에 연결했다. 한국어 정렬은 MFA 3.4.2와 Korean MFA
+  acoustic/dictionary 3.0.0을 사용하며 word/phone interval을 반환한다. Runtime/model이
+  없거나 hash가 다르면 `MODEL_ACCESS_FAILED`/`MODEL_HASH_MISMATCH`로 실패한다.
 - canonical decision: 출력에서 `accepted_for_training`, `training_status`,
   `rights_status`, `eval_split`을 재귀적으로 거부
 

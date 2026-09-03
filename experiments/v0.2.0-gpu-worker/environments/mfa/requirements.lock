@@ -1,0 +1,2 @@
+python-mecab-ko @ https://files.pythonhosted.org/packages/aa/88/dd2e5e7d44351bba0c9fb462273df9dcd43c3e000bfd0a4279e52584e2f7/python_mecab_ko-1.3.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl --hash=sha256:3c0e98a7d94278f4f5d93f03e35cc8044460c0076ab4698b764d5c44bd897dbe
+python-mecab-ko-dic @ https://files.pythonhosted.org/packages/4e/63/23fb02dd36d96527eb0c93300e8db22ab42805c1a232af621c5a8f175e37/python_mecab_ko_dic-2.1.1.post2-py3-none-any.whl --hash=sha256:ef8f4e80c8976f1340a7264abb0c96f384fe059fd897584aeba0151753c6ae9b

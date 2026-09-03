@@ -195,7 +195,9 @@ def test_local_review_application_serves_detail_range_and_revision_safe_post(fou
     token = server.review_token  # type: ignore[attr-defined]
     try:
         root = urllib.request.urlopen(base + "/", timeout=2)
-        assert b"waveform" in root.read() and "nonce-" in root.headers["Content-Security-Policy"]
+        page = root.read()
+        assert b"waveform" in page and b"p.word_intervals" in page
+        assert "nonce-" in root.headers["Content-Security-Policy"]
         with pytest.raises(urllib.error.HTTPError) as denied:
             urllib.request.urlopen(base + "/api/review-queue?entity_type=audio", timeout=2)
         assert denied.value.code == 403

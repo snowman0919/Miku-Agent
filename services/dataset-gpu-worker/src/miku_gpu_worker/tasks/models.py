@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import math
 import os
+import shutil
+import subprocess
+import tempfile
+import wave
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from ..errors import WorkerError
+
+MFA_KOREAN_MODEL_ID = "montreal-forced-aligner/korean_mfa-3.0.0"
 
 
 def _context(parameters: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
@@ -135,6 +142,8 @@ def run_alignment(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
     transcript = parameters.get("transcript")
     if not isinstance(transcript, str) or not transcript.strip():
         raise WorkerError("MODEL_OUTPUT_INVALID", "forced alignment requires a transcript")
+    if binding["model_id"] == MFA_KOREAN_MODEL_ID:
+        return _run_mfa_alignment(path, transcript.strip(), model_path, binding, parameters)
     if parameters.get("technical_pilot_only") is not True:
         raise WorkerError("MODEL_ACCESS_FAILED", "MMS alignment is blocked outside technical pilots")
     try:
@@ -174,6 +183,98 @@ def run_alignment(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:
         "phoneme_timing": False,
         "license_gate": "BLOCKED_NONCOMMERCIAL",
     }
+
+
+def _run_mfa_alignment(
+    path: Path, transcript: str, model_path: Path, binding: dict[str, Any],
+    parameters: dict[str, Any],
+) -> dict[str, Any]:
+    beam = parameters.get("beam", 100)
+    retry_beam = parameters.get("retry_beam", 400)
+    timeout = parameters.get("timeout_seconds", 300)
+    if (not isinstance(beam, int) or not 10 <= beam <= 1000
+            or not isinstance(retry_beam, int) or not beam < retry_beam <= 4000
+            or not isinstance(timeout, int) or not 1 <= timeout <= 3600):
+        raise WorkerError("MODEL_OUTPUT_INVALID", "invalid MFA beam or timeout")
+    worker_root_value = parameters.pop("_worker_root", None)
+    output_root_value = parameters.pop("_output_dir", None)
+    if not isinstance(worker_root_value, str) or not isinstance(output_root_value, str):
+        raise WorkerError("ENVIRONMENT_MISMATCH", "MFA worker paths are missing")
+    worker_root = Path(worker_root_value)
+    output_root = Path(output_root_value)
+    executable = worker_root / "environments/mfa-3.4.2/bin/mfa"
+    dictionary = model_path / "korean_mfa_dictionary_v3.0.0.dict"
+    acoustic = model_path / "korean_mfa_acoustic_v3.0.0.zip"
+    if not executable.is_file():
+        raise WorkerError("MODEL_ACCESS_FAILED", "pinned MFA environment is unavailable")
+    try:
+        with wave.open(str(path), "rb") as stream:
+            duration = stream.getnframes() / stream.getframerate()
+    except (OSError, EOFError, wave.Error, ZeroDivisionError) as exc:
+        raise WorkerError("INPUT_DECODE_FAILED", f"MFA requires decodable WAV input: {exc}") from exc
+    with tempfile.TemporaryDirectory(dir=output_root, prefix=".mfa-") as temporary:
+        root = Path(temporary)
+        corpus = root / "corpus"
+        aligned = root / "aligned"
+        corpus.mkdir()
+        shutil.copy2(path, corpus / "utterance.wav")
+        (corpus / "utterance.lab").write_text(transcript + "\n", encoding="utf-8")
+        environment = os.environ.copy()
+        environment["MFA_ROOT_DIR"] = str(worker_root / "cache/mfa")
+        environment["PATH"] = str(executable.parent) + os.pathsep + environment.get("PATH", "")
+        command = [
+            str(executable), "align", str(corpus), str(dictionary), str(acoustic), str(aligned),
+            "--output_format", "json", "--beam", str(beam), "--retry_beam", str(retry_beam),
+            "--temporary_directory", str(root / "work"), "--single_speaker", "--no_use_postgres",
+            "--no_use_mp", "--clean", "--final_clean", "--quiet", "--overwrite",
+        ]
+        try:
+            completed = subprocess.run(
+                command, check=False, capture_output=True, text=True, timeout=timeout, env=environment,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise WorkerError("TIMEOUT", "MFA alignment timed out", retryable=True) from exc
+        except OSError as exc:
+            raise WorkerError("MODEL_ACCESS_FAILED", f"MFA runtime failed: {exc}") from exc
+        if completed.returncode:
+            detail = (completed.stderr or completed.stdout).strip()[-500:]
+            raise WorkerError("MODEL_OUTPUT_INVALID", f"MFA alignment failed: {detail}")
+        result_path = aligned / "utterance.json"
+        if not result_path.is_file():
+            raise WorkerError("MODEL_OUTPUT_INVALID", "MFA produced no alignment")
+        try:
+            value = json.loads(result_path.read_text(encoding="utf-8"))
+            words = _mfa_intervals(value, "words", duration)
+            phones = _mfa_intervals(value, "phones", duration)
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise WorkerError("MODEL_OUTPUT_INVALID", f"invalid MFA output: {exc}") from exc
+    return {
+        "model_binding": binding,
+        "transcript": transcript,
+        "word_intervals": words,
+        "phoneme_intervals": phones,
+        "phoneme_timing": True,
+        "duration_seconds": duration,
+        "license_gate": "ATTRIBUTION_REQUIRED",
+        "spn_interval_count": sum(item["label"] == "spn" for item in phones),
+    }
+
+
+def _mfa_intervals(value: dict[str, Any], tier: str, duration: float) -> list[dict[str, Any]]:
+    result = []
+    previous = 0.0
+    for entry in value["tiers"][tier]["entries"]:
+        start, end, label = entry
+        if (not isinstance(start, (int, float)) or not isinstance(end, (int, float))
+                or not isinstance(label, str) or not label or not math.isfinite(start)
+                or not math.isfinite(end) or start < previous - 1e-6 or end <= start
+                or end > duration + 0.001):
+            raise ValueError(f"invalid {tier} interval")
+        result.append({"label": label, "start_seconds": start, "end_seconds": end})
+        previous = end
+    if not result:
+        raise ValueError(f"empty {tier} tier")
+    return result
 
 
 def run_speaker_embedding(path: Path, parameters: dict[str, Any]) -> dict[str, Any]:

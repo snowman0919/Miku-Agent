@@ -19,6 +19,7 @@ from miku_gpu_worker.locking import GpuLock
 from miku_gpu_worker.protocol import assert_noncanonical_output, validate_job_package, validate_schema
 from miku_gpu_worker.registry import MODEL_REGISTRY, load_registry, validate_binding
 from miku_gpu_worker.tasks.audio import run_prosody
+from miku_gpu_worker.tasks.models import run_alignment
 
 CODE_COMMIT = "1" * 40
 
@@ -259,3 +260,37 @@ def test_prosody_preserves_temporal_f0_features(tmp_path: Path) -> None:
     result = run_prosody(path, {"frame_ms": 40})
     assert len(result["f0_hz"]) == len(result["energy_rms"]) == len(result["voiced"])
     assert any(value is not None for value in result["f0_hz"])
+
+
+def test_mfa_alignment_runs_pinned_cli_and_returns_word_phone_timing(tmp_path: Path) -> None:
+    worker_root = tmp_path / "worker"
+    executable = worker_root / "environments/mfa-3.4.2/bin/mfa"
+    executable.parent.mkdir(parents=True)
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, os, pathlib, sys\n"
+        "assert os.environ['MFA_ROOT_DIR'].endswith('/cache/mfa')\n"
+        "assert '--beam' in sys.argv and '--retry_beam' in sys.argv\n"
+        "out=pathlib.Path(sys.argv[5]); out.mkdir(parents=True)\n"
+        "out.joinpath('utterance.json').write_text(json.dumps({'tiers': {"
+        "'words': {'entries': [[0.0, 0.1, '안녕']]}, "
+        "'phones': {'entries': [[0.0, 0.1, 'spn']]}}}))\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    model = worker_root / "models/mfa-korean-3.0.0"
+    model.mkdir(parents=True)
+    (model / "korean_mfa_dictionary_v3.0.0.dict").touch()
+    (model / "korean_mfa_acoustic_v3.0.0.zip").touch()
+    output = worker_root / "jobs/running/job/outputs"; output.mkdir(parents=True)
+    audio = tmp_path / "input.wav"; make_wav(audio)
+    result = run_alignment(audio, {
+        "transcript": "안녕", "_model_path": str(model), "_worker_root": str(worker_root),
+        "_output_dir": str(output), "_model_binding": {
+            "model_id": "montreal-forced-aligner/korean_mfa-3.0.0",
+        },
+    })
+    assert result["word_intervals"][0]["label"] == "안녕"
+    assert result["phoneme_intervals"][0]["label"] == "spn"
+    assert result["phoneme_timing"] is True and result["license_gate"] == "ATTRIBUTION_REQUIRED"
+    assert not list(output.glob(".mfa-*"))
