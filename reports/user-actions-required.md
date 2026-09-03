@@ -26,6 +26,6 @@ Bundle은 20,000행, exact unique 20,000, 예상 66.234283시간이다. 그러�
   `promote-sample` 단계에서 training 승격한다.
 
 현재 target speech effective hours, human-reviewed persona와 human-adjudicated duplex는 0이다.
-Execution-backed agentic은 local engineering receipt 1건을 accepted로 검증했으며 1,999건이 더 필요하다.
+Execution-backed agentic은 local engineering receipt 3건을 accepted로 검증했으며 1,997건이 더 필요하다.
 Duplex는 synthetic timestamp-backed raw 2,000건을 accepted로 검증했지만 primary semantic
 effective unique는 582개다. Effective audio/timestamp-backed 1,418개와 사람 판정 1,000개가 더 필요하다.

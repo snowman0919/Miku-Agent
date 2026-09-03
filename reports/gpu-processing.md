@@ -4,7 +4,7 @@
 
 Canonical registry/object store만 authoritative writer다. Worker package 생성, 반환 hash 검증,
 atomic object ingest, lineage와 quarantine review 등록을 수행했다. Canonical root는
-1,073,671,109 bytes, free 63,399,350,272 bytes다. 50 GiB 아래에서는 대량 intake/transform을 중단하고 원본이나
+1,098,830,351 bytes, free 63,369,457,664 bytes다. 50 GiB 아래에서는 대량 intake/transform을 중단하고 원본이나
 accepted data를 삭제하지 않는다.
 
 ## RTX 5090 Worker

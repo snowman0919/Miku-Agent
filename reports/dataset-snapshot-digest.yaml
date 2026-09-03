@@ -1,17 +1,17 @@
 dataset_id: miku-data
-version: d0.2.0-alpha8
+version: d0.2.0-alpha9
 state: candidate
 schema_version: 2
 source_count: 24
-sample_count: 29357
+sample_count: 29359
 fixture_sample_count: 2356
 candidate_sample_count: 20000
 evaluation_sample_count: 5000
-accepted_sample_count: 2001
-effective_unique_samples: 583
+accepted_sample_count: 2003
+effective_unique_samples: 585
 effective_unique_policy: accepted agentic receipt unique plus accepted duplex semantic cosine 0.98 clusters
 measured_unique_by_corpus:
-  agentic_receipt_unique: 1
+  agentic_receipt_unique: 3
   duplex_event_sequence_unique: 2000
   duplex_normalized_text_unique: 1955
   duplex_character_5gram_effective_unique: 1877
@@ -32,25 +32,25 @@ duplicate_analysis:
   semantic_primary_cosine_threshold_ppm: 980000
   semantic_cross_split_findings: 0
   cross_modality_effective_unique_status: not_measured
-dataset_root_sha256: 8241c09ba1c0a686302c6e38c447102038d60a5a3ed556bf868543b648887b05
+dataset_root_sha256: 4e8ed6f4cdad431fe6ece98db80719859ba5fb40b6a530d69a17bfb54377a856
 eval_holdout_manifest_sha256: b8be7a1091a57ab933e4d135ecf041d8073856138fbfdb243bf2c35ea37003e8
 canonical_manifest_recheck:
-  row_count: 29357
-  sha256: 8241c09ba1c0a686302c6e38c447102038d60a5a3ed556bf868543b648887b05
+  row_count: 29359
+  sha256: 4e8ed6f4cdad431fe6ece98db80719859ba5fb40b6a530d69a17bfb54377a856
 snapshot:
-  id: miku-data-d0.2.0-alpha8
+  id: miku-data-d0.2.0-alpha9
   parquet_sha256:
-    agentic_trajectories.parquet: ff646510f3158a38aa2930434ec4354d803a792573f3b5a7e3cf118f8fac5ce9
+    agentic_trajectories.parquet: 5f623fe704e9c68fe934eea1b834a71940d8179af718d440e36327832c56009e
     audio_metrics.parquet: a9aae70e7012276bfc1835c61c73d77dbc867a2bd5140a40c4c95ccebccfd70e
     audio_samples.parquet: 0899118c892b9bd90d5c30e946f162a1ca89788017a1f2f760ed80a243dcfe43
     duplex_timelines.parquet: 766742929c11067250e36ef4cb7d6c1f1757928e76f2e42b6a0b5361dffcc73f
     lineage_edges.parquet: 9f7f315606158d798a7d21c358838ae7cdffd7a5e825e3230b5c2242309d5ad1
-    objects.parquet: 95bf7c586b44a30870f85df23f3d70cfc379f11f35228f8892fb40261624afeb
+    objects.parquet: 0379e63cfee6a402f496a1cbc1f4f950bd51fc5aa3d38e5f9473cbc4101b9a75
     persona_samples.parquet: 285f46a6a7f767973bf8283b405b471fb4f9200dae539af8c0cf1233c98ea1e6
-    review_evidence.parquet: 23cea5873a438b163ef8278f58447a6ddfbf583a7f8ffa422a656fb77a71a757
-    reviews.parquet: 442bf8426b1c50256d3855ada7f3cd246e6d059977bf2dc7e84a84e671377163
+    review_evidence.parquet: 9d386a90016eef37befed8cb75fd1198e528876fbab89131cdebbb23dad684ba
+    reviews.parquet: b823f42a9381504e1a5606c8c9a26891c4940d8f8626d307e26d72cd4c9247d9
     rights_records.parquet: 50af54f7e12e19353632a29f88aae6bb9c2828d2b1d3196861f3fc9737dd2ce0
-    source_objects.parquet: 5fe202d596a0ecd75f6000c6c8803fe06226d0b30fc4e19b4bfc6b3992edd4ef
+    source_objects.parquet: 087efbb7cb14283febbb33065c6a2bc6fdf1fb63ae6a68fdb3f9144006c57b90
     sources.parquet: 603a2f12049ba84cf55a6fa8d19432ad2a6b89d022c3f315bc78aaf881bcf015
     split_assignments.parquet: a40f50c1a86387490ae289e4056e7c89ef37eeb9932c2b078f811b26891ffa81
     text_samples.parquet: 3311a24c881d8e92668a5aebbe1776d6859de55d533deb2e63e08788c31d2cb9
@@ -67,5 +67,5 @@ rights:
   training_denied_or_default: 22
   accepted_unknown_or_restricted: 0
 quality:
-  training_accepted: 2001
+  training_accepted: 2003
   effective_speech_ms: 0

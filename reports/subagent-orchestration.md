@@ -35,3 +35,22 @@ credential, private raw audio, 권리 미확인 원문과 repository secret은 �
 - 이 결과는 prompt design의 12/12 semantic yield evidence일 뿐 accepted subordinate job이나
   canonical corpus로 계산하지 않는다. 사용하면 기존 20:10 비율과 independent cross-review를
   유지할 수 없기 때문이다. Output과 receipt는 Git 밖 `window-002-pilot`에 보존한다.
+
+## Diverse Window 003
+
+- Accepted job은 Command Code 2, OpenCode 1이며 실제 비율 2.0으로 2:1 target을 충족했다.
+  Laguna와 LongCat이 각각 생성하고 Nemotron이 독립 비평했다.
+- 제외된 job 3건은 JSON truncation 1, upstream unavailable 1, critic schema 초과 1이다.
+- Parent가 생성 20개를 모두 읽고, 검증되지 않은 수치·고정 경로/날짜·기술 오류·부자연스러운
+  말투가 있는 13개를 제외해 7개만 candidate로 남겼다.
+- 7개는 기존 candidate 20,000개와 normalized exact 및 Jaccard 0.8 match가 0이다. Pinned E5
+  cosine 0.98/0.99의 cross/within match도 0이며 최대 cross cosine은 0.910924다.
+- Adjudication/seed/duplicate report SHA-256은
+  `0c56babc7e5a4b04f3b6caf38c3e1923770a7c01b5a92052c6ff18f0dabe9ca1` /
+  `768224d65d96fcaa2d992a6c0f9efb39945fd2fa1cf578ce82df6be040d79e19` /
+  `be0c195a8cd619cd73518aa1dab851418dc4b9940eaca1cbb758bdd622ccfbfb`다.
+- 첫 critic이 repository cwd에 요청하지 않은 `critique_result.json`을 썼다. Parent가 이를 Git 밖
+  evidence 폴더로 옮겼고(SHA-256 `76c84c24b5157c46d35eaf8aa929db8896d4d25246d70f5c028cc16116364eab`),
+  OpenCode wrapper의 기본 cwd를 임시 격리 디렉터리로 바꿨다. 명시적 workspace write는 새 opt-in이 필요하다.
+- 7개는 다양성 증거일 뿐 canonical 또는 training corpus로 계산하지 않는다. Raw output과 receipt는
+  Git 밖 `window-003-diverse`에 보존한다.
