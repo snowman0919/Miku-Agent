@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import source
+from conftest import accept_source_review, source
 from miku_foundry.export import export_training
 from miku_foundry.eligibility import PERSONA_DIMENSIONS
 from miku_foundry.review import add_review, gold_requires_double_review, promote_sample
@@ -83,6 +83,7 @@ def test_gold_audio_requires_full_single_item_review_and_preserves_edits(foundry
 def test_gold_double_review_bucket_blocks_export_until_second_reviewer(foundry, tmp_path: Path):
     paths, registry = foundry
     source_id = source(registry, training="accepted")
+    accept_source_review(registry, source_id)
     register_rights(registry, source_id, "owned", "record", "fixture", "training",
                     reviewer="operator", actor_type="user", training_allowed=True)
     assign_group(registry, "family-a", split="train")
@@ -106,6 +107,7 @@ def test_gold_double_review_bucket_blocks_export_until_second_reviewer(foundry, 
 def test_gold_corpus_double_review_coverage_is_at_least_ten_percent(foundry, tmp_path: Path):
     paths, registry = foundry
     source_id = source(registry, training="accepted")
+    accept_source_review(registry, source_id)
     register_rights(registry, source_id, "owned", "record", "fixture", "training",
                     reviewer="operator", actor_type="user", training_allowed=True)
     assign_group(registry, "family-a", split="train")
@@ -148,6 +150,7 @@ def test_sample_promotion_rechecks_source_review_and_quality(foundry):
     source_id = source(registry)
     register_rights(registry, source_id, "owned", "record", "fixture", "training",
                     reviewer="operator", actor_type="user", training_allowed=True)
+    accept_source_review(registry, source_id)
     promote_training(registry, source_id, actor="operator")
     sample_id, _ = audio_item(paths, registry, source_id, quality_tier="silver")
     add_review(

@@ -8,6 +8,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from .agentic import import_execution_receipt
 from .config import initialize_layout, paths_from_env
 from .export import export_training, snapshot
 from .ingest import register_source
@@ -28,6 +29,7 @@ WRITE_COMMANDS = {"init", "ingest", "register-source", "register-rights", "plan-
                   "segment", "transcribe", "align", "normalize", "score", "dedup", "split", "snapshot",
                   "export", "queue-5090", "pilot", "promote", "promote-sample"}
 WRITE_COMMANDS.add("import-worker-result")
+WRITE_COMMANDS.add("import-agentic-receipt")
 
 
 def _json(value: object) -> None:
@@ -115,6 +117,10 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("receipt")
     command = sub.add_parser("import-worker-result")
     command.add_argument("package")
+    command.add_argument("--actor", required=True)
+    command.add_argument("--dry-run", action="store_true")
+    command = sub.add_parser("import-agentic-receipt")
+    command.add_argument("receipt")
     command.add_argument("--actor", required=True)
     command.add_argument("--dry-run", action="store_true")
     return root
@@ -253,6 +259,11 @@ def main(argv: list[str] | None = None) -> int:
             _json({"would_import_worker_result": args.package, "actor": args.actor})
         else:
             _json(import_worker_result(paths, registry, Path(args.package), actor=args.actor))
+    elif args.command == "import-agentic-receipt":
+        if dry_run:
+            _json({"would_import_agentic_receipt": args.receipt, "actor": args.actor})
+        else:
+            _json(import_execution_receipt(paths, registry, Path(args.receipt), actor=args.actor))
     return 0
 
 

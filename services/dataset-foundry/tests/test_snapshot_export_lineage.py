@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import source
+from conftest import accept_source_review, source
 import miku_foundry.export as export_module
 from miku_foundry.export import canonical_manifest, export_training
 from miku_foundry.lineage import add_lineage, plan_transform
@@ -38,6 +38,7 @@ def _audio_row(registry, source_id: str, digest: str, training_status: str = "ac
 def test_canonical_manifest_is_byte_stable_for_same_registry(foundry, tmp_path: Path):
     paths, registry = foundry
     source_id = source(registry, training="accepted")
+    accept_source_review(registry, source_id)
     register_rights(registry, source_id, "owned", "record", "fixture", "training",
                     reviewer="operator", actor_type="user", training_allowed=True)
     assign_group(registry, "family-a", split="train")
@@ -60,7 +61,15 @@ def test_canonical_manifest_is_byte_stable_for_same_registry(foundry, tmp_path: 
     with registry.transaction() as connection:
         connection.execute("UPDATE audio_samples SET quality_ppm=900000 WHERE source_id=?", (source_id,))
     metadata_changed = tmp_path / "metadata-changed.jsonl"
-    assert canonical_manifest(registry, metadata_changed)[0] != rights_result[0]
+    metadata_result = canonical_manifest(registry, metadata_changed)
+    assert metadata_result[0] != rights_result[0]
+    add_review(
+        registry, "source", source_id, "reject", "operator", "source review revoked",
+        expected_revision=1,
+        evidence={"actor_type": "evaluator", "batch_size": 1, "media_reviewed_ms": 0},
+    )
+    source_review_changed = tmp_path / "source-review-changed.jsonl"
+    assert canonical_manifest(registry, source_review_changed)[0] != metadata_result[0]
 
 
 def test_failed_snapshot_leaves_no_final_or_staging_directory(foundry, monkeypatch):
@@ -79,6 +88,7 @@ def test_failed_snapshot_leaves_no_final_or_staging_directory(foundry, monkeypat
 def test_current_rights_revocation_blocks_export(foundry, tmp_path: Path):
     paths, registry = foundry
     source_id = source(registry, training="accepted")
+    accept_source_review(registry, source_id)
     register_rights(registry, source_id, "owned", "record", "fixture", "training",
                     reviewer="operator", actor_type="user", training_allowed=True)
     assign_group(registry, "family-a", split="train")
@@ -95,6 +105,7 @@ def test_current_rights_revocation_blocks_export(foundry, tmp_path: Path):
 def test_training_export_requires_evidence_backed_sample_review(foundry, tmp_path: Path):
     paths, registry = foundry
     source_id = source(registry, training="accepted")
+    accept_source_review(registry, source_id)
     register_rights(registry, source_id, "owned", "record", "fixture", "training",
                     reviewer="operator", actor_type="user", training_allowed=True)
     assign_group(registry, "family-a", split="train")
@@ -113,6 +124,13 @@ def test_training_export_requires_evidence_backed_sample_review(foundry, tmp_pat
         evidence={"actor_type": "evaluator", "batch_size": 1, "media_reviewed_ms": 0},
     )
     assert export_training(registry, tmp_path / "accepted.jsonl", split="train", corpus="audio")["count"] == 1
+    add_review(
+        registry, "source", source_id, "reject", "operator", "source review revoked",
+        expected_revision=1,
+        evidence={"actor_type": "evaluator", "batch_size": 1, "media_reviewed_ms": 0},
+    )
+    with pytest.raises(PermissionError, match="source lacks"):
+        export_training(registry, tmp_path / "revoked.jsonl", split="train", corpus="audio")
 
 
 def test_transitive_lineage_group_mismatch_is_reported(foundry, tmp_path: Path):

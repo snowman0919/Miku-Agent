@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .registry import RIGHTS_CLEARED, Registry
+from .review import assert_review_accepted
 
 
 def register_rights(registry: Registry, source_id: str, status: str, evidence_type: str,
@@ -44,6 +45,7 @@ def promote_training(registry: Registry, source_id: str, *, actor: str) -> None:
             raise PermissionError("rights evidence expired")
         if source["quality_status"] != "passed" or source["review_status"] != "reviewed":
             raise PermissionError("quality and review gates must pass independently")
+        assert_review_accepted(connection, "source", source_id)
         if source["corpus_class"] in {"infrastructure_fixture", "evaluation_corpus"}:
             raise PermissionError("fixture and evaluation sources cannot be training promoted")
         connection.execute(

@@ -69,7 +69,8 @@ SCHEMA_TARGETS = {
     "reaction-command": "reaction-command.schema.json",
 }
 DATASET_SCHEMA_NAMES = {
-    "agentic-trajectory.schema.json", "audio-sample.schema.json", "dataset-release.schema.json",
+    "agentic-execution-receipt.schema.json", "agentic-trajectory.schema.json",
+    "audio-sample.schema.json", "dataset-release.schema.json",
     "duplex-timeline.schema.json", "object.schema.json", "persona-sample.schema.json",
     "remote-job.schema.json", "review.schema.json", "rights-record.schema.json",
     "source.schema.json", "split-assignment.schema.json", "text-sample.schema.json",

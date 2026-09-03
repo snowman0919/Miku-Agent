@@ -7,6 +7,7 @@ import pytest
 from miku_foundry.config import FoundryPaths, initialize_layout
 from miku_foundry.ingest import register_source
 from miku_foundry.registry import Registry
+from miku_foundry.review import add_review
 
 
 @pytest.fixture
@@ -25,3 +26,11 @@ def source(registry: Registry, *, family: str = "family-a", quality: str = "pass
                            derivative_family=family, quality_status=quality, review_status=review,
                            training_status=training,
                            corpus_class="accepted_corpus" if training == "accepted" else "quarantine_real_corpus")
+
+
+def accept_source_review(registry: Registry, source_id: str, *, expected_revision: int = 0) -> None:
+    add_review(
+        registry, "source", source_id, "accept", "operator", "source checked",
+        expected_revision=expected_revision,
+        evidence={"actor_type": "evaluator", "batch_size": 1, "media_reviewed_ms": 0},
+    )

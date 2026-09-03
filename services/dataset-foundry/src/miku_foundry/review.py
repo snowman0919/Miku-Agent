@@ -68,8 +68,8 @@ def _validated_evidence(
     evidence: dict[str, object] | None, edits: dict[str, object] | None,
 ) -> dict[str, object] | None:
     if evidence is None:
-        if decision == "accept" and entity_type in SAMPLE_TABLES:
-            raise ValueError("accepted samples require review evidence")
+        if decision == "accept" and entity_type in {*SAMPLE_TABLES, "source"}:
+            raise ValueError("accepted samples and sources require review evidence")
         if edits:
             raise ValueError("sample edits require review evidence")
         return None

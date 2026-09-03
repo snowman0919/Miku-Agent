@@ -60,10 +60,18 @@ def _source_state(connection, source_id: str, entity_type: str, entity_id: str) 
            WHERE r.entity_type=? AND r.entity_id=? ORDER BY r.revision DESC LIMIT 1""",
         (entity_type, entity_id),
     ).fetchone()
+    source_review = connection.execute(
+        """SELECT r.*,e.actor_type review_actor_type,e.media_reviewed_ms,e.read_complete,
+                  e.batch_size,e.evidence_json,e.created_at evidence_created_at
+           FROM reviews r LEFT JOIN review_evidence e USING(review_id)
+           WHERE r.entity_type='source' AND r.entity_id=? ORDER BY r.revision DESC LIMIT 1""",
+        (source_id,),
+    ).fetchone()
     return {
         "group_id": source["derivative_family"],
         "corpus_class": source["corpus_class"],
         "source_metadata_sha256": _record_digest(dict(source)),
+        "source_review_record_sha256": _record_digest(dict(source_review)) if source_review else None,
         "rights_status": rights["status"] if rights else "unknown",
         "rights_training_allowed": bool(rights["training_allowed"]) if rights else False,
         "rights_evidence_sha256": _record_digest(dict(rights)) if rights else None,
@@ -107,6 +115,7 @@ def canonical_manifest(registry: Registry, destination: Path) -> tuple[str, int]
                 ),
                 "corpus_class": state["corpus_class"],
                 "source_metadata_sha256": state["source_metadata_sha256"],
+                "source_review_record_sha256": state["source_review_record_sha256"],
                 "rights_status": state["rights_status"],
                 "rights_training_allowed": state["rights_training_allowed"],
                 "rights_evidence_sha256": state["rights_evidence_sha256"],
@@ -138,6 +147,7 @@ def canonical_manifest(registry: Registry, destination: Path) -> tuple[str, int]
                     "lineage_sha256": _lineage_digest(connection, None),
                     "corpus_class": state["corpus_class"],
                     "source_metadata_sha256": state["source_metadata_sha256"],
+                    "source_review_record_sha256": state["source_review_record_sha256"],
                     "rights_status": state["rights_status"],
                     "rights_training_allowed": state["rights_training_allowed"],
                     "rights_evidence_sha256": state["rights_evidence_sha256"],

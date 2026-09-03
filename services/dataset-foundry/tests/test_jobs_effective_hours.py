@@ -6,9 +6,10 @@ import sqlite3
 
 import pytest
 
-from conftest import source
+from conftest import accept_source_review, source
 from miku_foundry.effective_hours import summarize
 from miku_foundry.jobs import authorize_remote_5090, canonical_json, ensure_job, prepare_remote_package
+from miku_foundry.review import add_review
 from miku_foundry.rights import register_rights
 from miku_foundry.store import ObjectStore
 
@@ -69,6 +70,9 @@ def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry
     register_rights(registry, cleared, "owned", "record", "fixture", "training", reviewer="op", actor_type="user", training_allowed=True)
     register_rights(registry, unknown, "unknown", "discovery", "unverified", "none", reviewer="op", actor_type="user")
     register_rights(registry, singing, "owned", "record", "fixture", "auxiliary", reviewer="op", actor_type="user", training_allowed=True)
+    accept_source_review(registry, cleared)
+    accept_source_review(registry, singing)
+    accepted_samples = []
     with registry.transaction() as connection:
         for index, (source_id, modality, duration) in enumerate(((cleared, "speech", 3600000),
                                                                   (unknown, "speech", 1800000),
@@ -76,6 +80,7 @@ def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry
             digest = f"{index + 1:064x}"
             now = registry.now()
             connection.execute("INSERT INTO objects VALUES (?,?,?,?,?)", (digest, 1, None, now, now))
+            sample_id = registry.new_id()
             connection.execute(
                 "INSERT INTO audio_metrics VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                 (digest, 16000, 1, duration, 2, 0, 0, 0, 0, "test-fixture", now),
@@ -87,11 +92,19 @@ def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry
                      source_tier_weight_ppm,quality_tier,training_status,parent_object_sha256,
                      segment_start_ms,segment_end_ms,clip_object_sha256,segment_fingerprint
                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (registry.new_id(), source_id, digest, duration, "ko-KR", "x", "x", "x", modality,
+                (sample_id, source_id, digest, duration, "ko-KR", "x", "x", "x", modality,
                  1000000, 1000000, 1000000, 1000000,
                  "auxiliary" if modality == "singing_aux" else "gold", "accepted",
                  digest, 0, duration, digest, registry.segment_fingerprint(digest, 0, duration, "x")),
             )
+            if source_id != unknown:
+                accepted_samples.append((sample_id, duration, modality))
+    for sample_id, duration, modality in accepted_samples:
+        add_review(
+            registry, "audio", sample_id, "accept", "operator", "audio checked", expected_revision=0,
+            evidence={"actor_type": "human" if modality == "speech" else "evaluator",
+                      "batch_size": 1, "media_reviewed_ms": duration},
+        )
     result = summarize(registry)
     assert result["raw_speech_ms"] == 5400000
     assert result["accepted_physical_speech_ms"] == 3600000

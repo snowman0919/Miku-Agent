@@ -209,7 +209,8 @@ BEGIN
     )
     THEN RAISE(ABORT, 'duplicate accepted audio segment') END;
 END;
-CREATE TRIGGER IF NOT EXISTS agentic_execution_insert_guard
+DROP TRIGGER IF EXISTS agentic_execution_insert_guard;
+CREATE TRIGGER agentic_execution_insert_guard
 BEFORE INSERT ON agentic_trajectories
 WHEN NEW.execution_backed = 1
 BEGIN
@@ -218,9 +219,16 @@ BEGIN
     OR length(NEW.execution_receipt_sha256) != 64
     OR NEW.environment_binding_json IS NULL
     OR NEW.test_receipt_json IS NULL
+    OR NOT EXISTS (SELECT 1 FROM objects WHERE sha256=NEW.execution_receipt_sha256)
+    OR NOT EXISTS (
+      SELECT 1 FROM source_objects
+      WHERE source_id=NEW.source_id AND sha256=NEW.execution_receipt_sha256
+        AND role='agentic:execution_receipt'
+    )
     THEN RAISE(ABORT, 'execution-backed trajectory requires receipts') END;
 END;
-CREATE TRIGGER IF NOT EXISTS agentic_execution_update_guard
+DROP TRIGGER IF EXISTS agentic_execution_update_guard;
+CREATE TRIGGER agentic_execution_update_guard
 BEFORE UPDATE ON agentic_trajectories
 WHEN NEW.execution_backed = 1
 BEGIN
@@ -229,6 +237,12 @@ BEGIN
     OR length(NEW.execution_receipt_sha256) != 64
     OR NEW.environment_binding_json IS NULL
     OR NEW.test_receipt_json IS NULL
+    OR NOT EXISTS (SELECT 1 FROM objects WHERE sha256=NEW.execution_receipt_sha256)
+    OR NOT EXISTS (
+      SELECT 1 FROM source_objects
+      WHERE source_id=NEW.source_id AND sha256=NEW.execution_receipt_sha256
+        AND role='agentic:execution_receipt'
+    )
     THEN RAISE(ABORT, 'execution-backed trajectory requires receipts') END;
 END;
 CREATE TRIGGER IF NOT EXISTS evaluation_population_insert_guard
@@ -412,3 +426,10 @@ class Registry:
         source = connection.execute("SELECT * FROM sources WHERE source_id=?", (source_id,)).fetchone()
         if not source or source["training_status"] != "accepted":
             raise PermissionError("source is not training accepted")
+        review = connection.execute(
+            """SELECT r.decision,e.evidence_json FROM reviews r LEFT JOIN review_evidence e USING(review_id)
+               WHERE r.entity_type='source' AND r.entity_id=? ORDER BY r.revision DESC LIMIT 1""",
+            (source_id,),
+        ).fetchone()
+        if not review or review["decision"] != "accept" or review["evidence_json"] is None:
+            raise PermissionError("source lacks a current evidence-backed accepted review")

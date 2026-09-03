@@ -18,4 +18,8 @@ persona annotation과 append-only history를 한 항목씩 검수한다. Accept 
 분리되어 있으며 `miku-data promote-sample --entity-type ... --entity-id ... --actor ...`가 source rights,
 review evidence와 corpus quality를 다시 검사한다.
 
+`miku-data import-agentic-receipt RECEIPT --actor ACTOR`는 schema-valid command/test/environment receipt를
+canonical object로 먼저 보존한다. Source-bound receipt object가 없으면 SQLite trigger가
+`execution_backed` trajectory 생성을 거부한다.
+
 현재 V0.1.0의 input 16 kHz와 output 22.05 kHz 관측값은 provenance로만 다룬다. CONDITIONAL feasibility 때문에 final training/streaming representation이나 production VoiceChat 성공을 가정하지 않는다.

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://miku-agent.invalid/schemas/dataset/agentic-execution-receipt.schema.json",
+  "title": "Agentic Execution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "source_id",
+    "trajectory_id",
+    "task_type",
+    "events",
+    "failure_recovery",
+    "environment_binding",
+    "test_receipt",
+    "side_effect_class",
+    "provenance",
+    "created_at"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "format": "uuid"},
+    "source_id": {"type": "string", "format": "uuid"},
+    "trajectory_id": {"type": "string", "format": "uuid"},
+    "task_type": {"type": "string", "minLength": 1},
+    "events": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "summary"],
+        "properties": {
+          "kind": {"type": "string", "minLength": 1},
+          "summary": {"type": "string", "minLength": 1},
+          "tool": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "failure_recovery": {"type": "boolean"},
+    "environment_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "base_commit", "result_commit", "runtime"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "base_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "result_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "runtime": {"type": "string", "minLength": 1}
+      }
+    },
+    "test_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "commands"],
+      "properties": {
+        "status": {"const": "passed"},
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["command", "exit_code", "result"],
+            "properties": {
+              "command": {"type": "string", "minLength": 1},
+              "exit_code": {"const": 0},
+              "result": {"type": "string", "minLength": 1},
+              "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          }
+        }
+      }
+    },
+    "side_effect_class": {"type": "string", "minLength": 1},
+    "provenance": {"type": "object", "minProperties": 1},
+    "created_at": {"type": "integer", "minimum": 0}
+  }
+}

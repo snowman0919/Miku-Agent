@@ -71,10 +71,21 @@ def summarize(registry: Registry) -> dict[str, int]:
                   ORDER BY created_at DESC, rights_id DESC LIMIT 1) rights_expires_at,
                  (SELECT training_allowed FROM rights_records r WHERE r.source_id=a.source_id
                   ORDER BY created_at DESC, rights_id DESC LIMIT 1) rights_training_allowed,
+                 (SELECT r.decision FROM reviews r WHERE r.entity_type='source' AND r.entity_id=a.source_id
+                  ORDER BY r.revision DESC LIMIT 1) source_review_decision,
+                 (SELECT e.evidence_json FROM reviews r LEFT JOIN review_evidence e USING(review_id)
+                  WHERE r.entity_type='source' AND r.entity_id=a.source_id
+                  ORDER BY r.revision DESC LIMIT 1) source_review_evidence,
+                 (SELECT r.decision FROM reviews r WHERE r.entity_type='audio' AND r.entity_id=a.sample_id
+                  ORDER BY r.revision DESC LIMIT 1) sample_review_decision,
+                 (SELECT e.evidence_json FROM reviews r LEFT JOIN review_evidence e USING(review_id)
+                  WHERE r.entity_type='audio' AND r.entity_id=a.sample_id
+                  ORDER BY r.revision DESC LIMIT 1) sample_review_evidence,
                  s.training_status source_training_status,
                  s.corpus_class
           FROM audio_samples a JOIN sources s ON s.source_id=a.source_id
         """
+        now = registry.now()
         for row in connection.execute(query):
             result["row_count"] += 1
             result["referenced_duration_ms"] += row["duration_ms"]
@@ -85,29 +96,27 @@ def summarize(registry: Registry) -> dict[str, int]:
                 row["segment_start_ms"],
                 row["segment_end_ms"],
             )
+            accepted = (
+                row["training_status"] == "accepted"
+                and row["rights_status"] in {"owned", "licensed", "permitted"}
+                and row["rights_training_allowed"] == 1
+                and (row["rights_expires_at"] is None or row["rights_expires_at"] > now)
+                and row["source_training_status"] == "accepted"
+                and row["corpus_class"] == "accepted_corpus"
+                and row["source_review_decision"] == "accept"
+                and row["source_review_evidence"] is not None
+                and row["sample_review_decision"] == "accept"
+                and row["sample_review_evidence"] is not None
+            )
             if row["modality"] == "singing_aux":
                 singing.append(interval)
-                if (
-                    row["training_status"] == "accepted"
-                    and row["rights_status"] in {"owned", "licensed", "permitted"}
-                    and row["rights_training_allowed"] == 1
-                    and (row["rights_expires_at"] is None or row["rights_expires_at"] > registry.now())
-                    and row["source_training_status"] == "accepted"
-                    and row["corpus_class"] == "accepted_corpus"
-                ):
+                if accepted:
                     accepted_singing.append(interval)
                 continue
             speech.append(interval)
             if row["training_status"] == "rejected":
                 rejected.append(interval)
-            elif (
-                row["training_status"] != "accepted"
-                or row["rights_status"] not in {"owned", "licensed", "permitted"}
-                or row["rights_training_allowed"] != 1
-                or (row["rights_expires_at"] is not None and row["rights_expires_at"] <= registry.now())
-                or row["source_training_status"] != "accepted"
-                or row["corpus_class"] != "accepted_corpus"
-            ):
+            elif not accepted:
                 quarantine.append(interval)
             else:
                 accepted_speech.append(interval)

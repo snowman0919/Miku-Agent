@@ -4,7 +4,7 @@ import sqlite3
 
 import pytest
 
-from conftest import source
+from conftest import accept_source_review, source
 from miku_foundry.ingest import register_source
 from miku_foundry.review import ReviewConflict, add_review
 from miku_foundry.rights import promote_training, register_rights
@@ -38,6 +38,7 @@ def test_infrastructure_fixture_cannot_be_promoted(foundry):
         registry, source_id, "owned", "record", "fixture", "training",
         reviewer="operator", actor_type="user", training_allowed=True,
     )
+    accept_source_review(registry, source_id)
     with pytest.raises(PermissionError):
         promote_training(registry, source_id, actor="operator")
 
@@ -50,6 +51,7 @@ def test_cleared_rights_require_evidence_and_all_gates(foundry):
                         reviewer="operator", actor_type="user-delegated")
     register_rights(registry, source_id, "owned", "record", "fixture generation record", "training",
                     reviewer="operator", actor_type="user-delegated", training_allowed=True)
+    accept_source_review(registry, source_id)
     promote_training(registry, source_id, actor="operator")
     with registry.connect() as connection:
         assert connection.execute("SELECT training_status FROM sources WHERE source_id=?", (source_id,)).fetchone()[0] == "accepted"
