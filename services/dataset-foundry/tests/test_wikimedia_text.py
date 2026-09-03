@@ -38,6 +38,8 @@ def _article(label: str, *, shared: bool = False, pii: bool = False) -> str:
     if pii:
         sentences.insert(0, "개인 연락처 test@example.com 정보는 학습 문장에서 반드시 제거되어야 한다.")
         sentences.insert(0, "공식 설명은 https://example.com/reference 주소에서도 확인할 수 있다.")
+        sentences.insert(0, "주소 표기 예시는 http://&lt;host&gt;:&lt;port&gt;/&lt;path&gt; 형식으로 작성한다.")
+        sentences.insert(0, "띄어 쓴 주소 http:// example.com/reference 역시 제거해야 한다.")
     return " ".join(sentences)
 
 

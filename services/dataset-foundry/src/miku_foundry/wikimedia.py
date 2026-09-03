@@ -51,7 +51,7 @@ PII_RE = re.compile(
     r"(?<!\d)(?:\+?82[- .]?)?0?1[016789][- .]?\d{3,4}[- .]?\d{4}(?!\d)|"
     r"\b(?:\d{1,3}\.){3}\d{1,3}\b)"
 )
-URL_RE = re.compile(r"(?:https?://|www\.)[^\s<>]+", re.IGNORECASE)
+URL_RE = re.compile(r"(?:https?://|www\.)\s*\S*", re.IGNORECASE)
 
 
 def _hash_file(path: Path, algorithm: str = "sha256") -> str:
