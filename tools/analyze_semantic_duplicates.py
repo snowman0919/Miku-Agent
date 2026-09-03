@@ -33,7 +33,15 @@ def load_texts(registry: Path) -> dict[str, list[tuple[str, str]]]:
             events = json.loads(events_json)
             duplex.append((timeline_id, " ".join(str(event.get("text", ""))
                                                   for event in events if event.get("text"))))
-    return {"speech_render_candidate": speech, "accepted_duplex": duplex}
+        korean = connection.execute("""
+            SELECT sample_id, normalized_text FROM text_samples
+            WHERE corpus='korean_foundation' AND training_status='accepted'
+            ORDER BY sample_id
+        """).fetchall()
+    result = {"speech_render_candidate": speech, "accepted_duplex": duplex}
+    if korean:
+        result["accepted_korean_foundation"] = korean
+    return result
 
 
 def duplex_policy_text(scenario: str, events_json: str, expected: str, forbidden: str) -> str:
@@ -228,6 +236,7 @@ def analyze(registry: Path, cache: Path, thresholds_ppm: list[int], encode_batch
         },
         "model": {
             "id": MODEL_ID, "revision": MODEL_REVISION, "license": MODEL_LICENSE,
+            "max_seq_length": model.max_seq_length,
             "snapshot_manifest": file_manifest(snapshot),
         },
         "runtime": {

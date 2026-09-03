@@ -89,9 +89,8 @@ def lexical_clusters(texts: list[str], kind: str, threshold_ppm: int,
                      permutations: int, bands: int) -> dict[str, int]:
     if permutations <= 0 or bands <= 0 or permutations % bands:
         raise ValueError("permutations must be positive and divisible by bands")
-    feature_sets = [shingles(text, kind) for text in texts]
     coefficients = permutation_coefficients(permutations)
-    signatures = [minhash(features, coefficients) for features in feature_sets]
+    signatures = [minhash(shingles(text, kind), coefficients) for text in texts]
     rows_per_band = permutations // bands
     candidates: set[tuple[int, int]] = set()
     for band in range(bands):
@@ -104,6 +103,8 @@ def lexical_clusters(texts: list[str], kind: str, threshold_ppm: int,
                 candidates.update(itertools.combinations(bucket, 2))
     components = Components(len(texts))
     matched_pairs = 0
+    feature_sets = {index: shingles(texts[index], kind)
+                    for index in set(itertools.chain.from_iterable(candidates))}
     for left, right in candidates:
         common = len(feature_sets[left] & feature_sets[right])
         union = len(feature_sets[left] | feature_sets[right])
@@ -184,7 +185,20 @@ def load_corpora(registry: Path) -> dict[str, list[dict[str, str]]]:
                 "generator_prompt_family": f'{provenance["generator"]}:{provenance["generator_sha256"]}',
                 "lineage_family": row["derivative_family"],
             })
-    return {"speech_render_candidate": speech, "accepted_duplex": duplex}
+        korean = [{
+            "id": row["sample_id"], "text": row["normalized_text"],
+            "template_family": "not_applicable", "generator_family": "not_applicable",
+            "generator_prompt_family": "not_applicable", "lineage_family": row["derivative_family"],
+        } for row in connection.execute("""
+            SELECT t.sample_id, t.normalized_text, s.derivative_family
+            FROM text_samples t JOIN sources s USING(source_id)
+            WHERE t.corpus='korean_foundation' AND t.training_status='accepted'
+            ORDER BY t.sample_id
+        """)]
+    result = {"speech_render_candidate": speech, "accepted_duplex": duplex}
+    if korean:
+        result["accepted_korean_foundation"] = korean
+    return result
 
 
 def analyze(registry: Path, threshold_ppm: int = 800_000,
