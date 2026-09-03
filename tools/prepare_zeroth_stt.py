@@ -8,6 +8,7 @@ import fcntl
 import gzip
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -81,7 +82,7 @@ def cer_ppm(reference: str, hypothesis: str) -> int:
             current.append(min(current[-1] + 1, previous[offset] + 1,
                                previous[offset - 1] + (char != other)))
         previous = current
-    return min(1_000_000, previous[-1] * 1_000_000 // len(left))
+    return previous[-1] * 1_000_000 // len(left)
 
 
 def read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -261,7 +262,7 @@ def transcribe(extracted: Path, work: Path, rows: list[dict[str, object]],
     return completed
 
 
-def alignment_summary(path: Path, duration_ms: int) -> dict[str, int] | None:
+def alignment_summary(path: Path, duration_ms: int) -> dict[str, object] | None:
     if not path.is_file():
         return None
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -274,6 +275,7 @@ def alignment_summary(path: Path, duration_ms: int) -> dict[str, int] | None:
         previous = 0.0
         for start, end, label in entries:
             if (not isinstance(label, str) or not label or start < previous - 1e-6
+                    or not math.isfinite(start) or not math.isfinite(end)
                     or end <= start or end * 1000 > duration_ms + 1):
                 anomalies += 1
             previous = end
@@ -284,6 +286,7 @@ def alignment_summary(path: Path, duration_ms: int) -> dict[str, int] | None:
         "spn_intervals": sum(label == "spn" for _, _, label in phones),
         "boundary_anomalies": anomalies,
         "coverage_ppm": min(1_000_000, round(coverage * 1_000_000_000 / duration_ms)),
+        "tiers": {"words": words, "phones": phones},
     }
 
 

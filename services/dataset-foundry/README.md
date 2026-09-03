@@ -46,3 +46,10 @@ content-addressed object로 보존한다. 각 row의 attribution에는 page titl
 수정 여부를 기록한다.
 
 현재 V0.1.0의 input 16 kHz와 output 22.05 kHz 관측값은 provenance로만 다룬다. CONDITIONAL feasibility 때문에 final training/streaming representation이나 production VoiceChat 성공을 가정하지 않는다.
+
+Zeroth-Korean STT는 `tools/prepare_zeroth_stt.py`로 worker evidence를 준비한다.
+`miku-data import-zeroth-stt MANIFEST --audio-root DIRECTORY --source-id UUID --actor REVIEWER`
+는 source rights/quality/review 및 frozen train split, original FLAC hash, 모델 binding,
+ASR CER, word/phone 구간과 test 전사 격리를 검사한다. `--dry-run`도 같은 검사를 수행한다.
+STT는 `accepted_stt_ms`로 별도 집계하며 target TTS effective hours에 포함하지 않는다.
+현재 처리와 미완료 게이트는 [Korean STT 보고서](../../reports/korean-stt.md)에 기록한다.

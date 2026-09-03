@@ -2,6 +2,10 @@
 
 2026-09-03 canonical registry와 `miku-data-d0.2.0-alpha10` snapshot 기준이다.
 
+아래 표는 immutable alpha10 기준이다. 이후 Zeroth-Korean 격리 source 1개와 공식 권리
+근거 object 2개를 추가했으나 audio sample은 반입하지 않았다. Worker에서 측정한
+51.676802시간은 아직 training count에 포함하지 않는다. [STT 처리 현황](korean-stt.md) 참조.
+
 | Class | Sources | Audio | Text | Persona | Agentic | Duplex | Training state |
 |---|---:|---:|---:|---:|---:|---:|---|
 | infrastructure fixture | 15 | 100 | 256 | 1,000 | 500 | 500 | quarantine |

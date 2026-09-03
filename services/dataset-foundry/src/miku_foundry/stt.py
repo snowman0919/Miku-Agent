@@ -3,6 +3,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import math
 import re
 import shutil
 import unicodedata
@@ -28,6 +29,7 @@ POLICY_SHA256 = hashlib.sha256(
     json.dumps(POLICY, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
 ).hexdigest()
 TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣]+")
+ARCHIVE_SHA256 = "6e109897f4d866eb1a3d31cbb2220c0b5e3dc74704208189ecc3bec787740e5f"
 
 
 def _canonical(value: object) -> str:
@@ -53,7 +55,7 @@ def _cer_ppm(reference: str, hypothesis: str) -> int:
             current.append(min(current[-1] + 1, previous[offset] + 1,
                                previous[offset - 1] + (char != other)))
         previous = current
-    return min(1_000_000, previous[-1] * 1_000_000 // len(left))
+    return previous[-1] * 1_000_000 // len(left)
 
 
 def _flac_streaminfo(path: Path) -> dict[str, int]:
@@ -97,6 +99,33 @@ def _audio_path(root: Path, value: object) -> Path:
     return resolved
 
 
+def _check_alignment(value: dict[str, object], duration_ms: int) -> None:
+    tiers = value.get("tiers")
+    if not isinstance(tiers, dict):
+        raise ValueError("STT alignment lacks interval evidence")
+    for name, count in (("words", "word_intervals"), ("phones", "phone_intervals")):
+        entries = tiers.get(name)
+        if not isinstance(entries, list) or not entries or len(entries) != value[count]:
+            raise ValueError("STT alignment interval count differs")
+        previous = 0.0
+        for entry in entries:
+            if not isinstance(entry, list) or len(entry) != 3:
+                raise ValueError("invalid STT alignment interval")
+            start, end, label = entry
+            if (type(start) not in (int, float) or type(end) not in (int, float)
+                    or not math.isfinite(start) or not math.isfinite(end)
+                    or start < previous - 1e-6 or end <= start or end * 1000 > duration_ms + 1
+                    or not isinstance(label, str) or not label):
+                raise ValueError("invalid STT alignment interval")
+            previous = end
+    phones = tiers["phones"]
+    coverage = min(1_000_000, round(sum(end - start for start, end, _ in phones)
+                                  * 1_000_000_000 / duration_ms))
+    if (coverage != value["coverage_ppm"]
+            or sum(label == "spn" for _, _, label in phones) != value["spn_intervals"]):
+        raise ValueError("STT alignment summary differs from intervals")
+
+
 def _records(manifest: dict[str, object], bundle: Path, audio_root: Path) -> Iterator[dict[str, object]]:
     seen_ids: set[str] = set()
     seen_audio: set[str] = set()
@@ -123,6 +152,7 @@ def _records(manifest: dict[str, object], bundle: Path, audio_root: Path) -> Ite
             info = _flac_streaminfo(path)
             metrics = row["audio_metrics"]
             if (actual_digest != digest or size != row["size_bytes"] or not isinstance(metrics, dict)
+                    or any(info[key] != expected for key, expected in POLICY["format"].items())
                     or info != {key: metrics.get(key) for key in info}
                     or any(not isinstance(metrics.get(key), int) or isinstance(metrics.get(key), bool)
                            or not 0 <= metrics[key] <= 1_000_000
@@ -145,11 +175,16 @@ def _records(manifest: dict[str, object], bundle: Path, audio_root: Path) -> Ite
                     or not isinstance(alignment.get("coverage_ppm"), int)
                     or not 0 < alignment["coverage_ppm"] <= 1_000_000):
                 raise ValueError("STT baseline or alignment evidence is invalid")
+            _check_alignment(alignment, info["duration_ms"])
             expected_id = str(uuid.uuid5(
                 uuid.NAMESPACE_URL,
                 f"openslr:40\0{manifest['archive']['sha256']}\0{row['utterance_id']}\0{digest}",
             ))
-            if sample_id != expected_id or str(row["speaker_id"]) not in PurePosixPath(row["path"]).parts:
+            relative = PurePosixPath(row["path"])
+            if (sample_id != expected_id or len(relative.parts) != 4
+                    or relative.parts[0] != "train_data_01" or relative.parts[2] != row["speaker_id"]
+                    or relative.stem != row["utterance_id"]
+                    or not relative.stem.startswith(f"{row['speaker_id']}_{relative.parts[1]}_")):
                 raise ValueError("STT sample provenance does not match its source path")
             seen_ids.add(sample_id)
             seen_audio.add(digest)
@@ -173,8 +208,8 @@ def import_zeroth_stt(
     archive = manifest.get("archive")
     if (not isinstance(archive, dict) or archive.get("url") != "https://openslr.org/40/"
             or archive.get("license") != "CC-BY-4.0"
-            or not re.fullmatch(r"[0-9a-f]{64}", str(archive.get("sha256", "")))
-            or not isinstance(archive.get("size_bytes"), int) or archive["size_bytes"] <= 0):
+            or archive.get("sha256") != ARCHIVE_SHA256
+            or archive.get("size_bytes") != 10_339_720_618):
         raise ValueError("invalid Zeroth-Korean source identity")
     bundle_name = manifest.get("bundle")
     stats = manifest.get("stats")
@@ -194,8 +229,28 @@ def import_zeroth_stt(
                    for key in required_hashes)
             or not isinstance(manifest.get("decoder"), str) or not manifest["decoder"].strip()):
         raise ValueError("invalid STT manifest bindings or totals")
-    if Path(bundle_name).name != bundle_name:
-        raise ValueError("STT bundle must be adjacent to its manifest")
+    bindings = manifest.get("bindings")
+    if not isinstance(bindings, dict):
+        raise ValueError("STT model bindings are missing")
+    expected_models = {
+        "asr": ("openai/whisper-large-v3-turbo", "41f01f3fe87f28c78e2fbf8b568835947dd65ed9"),
+        "alignment": ("montreal-forced-aligner/korean_mfa-3.0.0", "f76a59f7491eadda0fee212b329521e20e349e75"),
+    }
+    for name, (model_id, revision) in expected_models.items():
+        binding = bindings.get(name)
+        if (not isinstance(binding, dict) or binding.get("model_id") != model_id
+                or binding.get("revision") != revision
+                or hashlib.sha256(_canonical(binding).encode()).hexdigest() != manifest[f"{name}_binding_sha256"]):
+            raise ValueError("STT model binding mismatch")
+    for name, key, expected in (
+        ("asr", "weight_sha256", "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"),
+        ("asr", "config_sha256", "c5b526b3e3cd64cd8940dabb45e8ba726629e22d8ed389c29b552f9140daf04a"),
+        ("alignment", "acoustic_sha256", "46f7a73ab46828c679562b160e0577beecfb4a9a827efe5ab392aee947451a4d"),
+        ("alignment", "dictionary_sha256", "75683f4dc2a7dd95295a068206d248a30bd2f4f2231fd4449210c91d1e78150b"),
+    ):
+        if bindings[name].get(key) != expected:
+            raise ValueError("STT pinned model hash mismatch")
+    manifest_digest, manifest_size = ObjectStore.hash_file(manifest_path)
     bundle = manifest_path.parent / bundle_name
     bundle_digest, bundle_size = ObjectStore.hash_file(bundle)
     if bundle_digest != manifest.get("bundle_sha256"):
@@ -203,7 +258,7 @@ def import_zeroth_stt(
     with registry.connect() as connection:
         registry.assert_exportable(connection, source_id)
         source = connection.execute(
-            "SELECT source_type,derivative_family FROM sources WHERE source_id=?", (source_id,)
+            "SELECT * FROM sources WHERE source_id=?", (source_id,)
         ).fetchone()
         if source is None:
             raise KeyError(source_id)
@@ -211,14 +266,18 @@ def import_zeroth_stt(
             "SELECT split,frozen FROM split_assignments WHERE group_id=? AND policy_version='source-split-v1'",
             (source["derivative_family"],),
         ).fetchone()
-        if source["source_type"] != "stt" or not split or split["split"] != "train" or not split["frozen"]:
+        if (source["source_type"] != "stt" or source["character_id"] != "non-target"
+                or source["origin"] != archive["url"] or source["language"] != "ko-KR"
+                or source["quality_status"] != "passed" or source["review_status"] != "reviewed"
+                or source["corpus_class"] != "accepted_corpus"
+                or not split or split["split"] != "train" or not split["frozen"]):
             raise PermissionError("STT source requires a frozen train split")
         existing = connection.execute(
             "SELECT count(*) FROM audio_samples WHERE source_id=?", (source_id,)
         ).fetchone()[0]
         binding = connection.execute(
-            "SELECT 1 FROM source_objects WHERE source_id=? AND sha256=? AND role='stt:bundle'",
-            (source_id, manifest["bundle_sha256"]),
+            "SELECT 1 FROM source_objects WHERE source_id=? AND sha256=? AND role='stt:manifest'",
+            (source_id, manifest_digest),
         ).fetchone()
         if existing:
             if existing == stats["accepted_rows"] and binding:
@@ -237,6 +296,7 @@ def import_zeroth_stt(
     )
     if not paths.object_path(bundle_digest).is_file():
         missing_bytes += bundle_size
+    missing_bytes += manifest_size + max(row["size_bytes"] for row in rows)
     if shutil.disk_usage(paths.root).free - missing_bytes < 50 * 1024**3:
         raise OSError("STT import would cross the 50 GiB canonical reserve")
     if dry_run:
@@ -246,6 +306,10 @@ def import_zeroth_stt(
         if store.ingest(row["_path"], source_id, role="audio:raw_flac", media_type="audio/flac") != row["audio_sha256"]:
             raise ValueError("canonical STT object hash differs")
     bundle_sha256 = store.ingest(bundle, source_id, role="stt:bundle", media_type="application/gzip")
+    if bundle_sha256 != bundle_digest:
+        raise ValueError("STT bundle changed during import")
+    if store.ingest(manifest_path, source_id, role="stt:manifest", media_type="application/json") != manifest_digest:
+        raise ValueError("STT manifest changed during import")
     evidence = _canonical({
         "actor_type": "evaluator", "batch_size": 1, "media_reviewed_ms": 0,
         "read_complete": False, "policy_sha256": POLICY_SHA256,
