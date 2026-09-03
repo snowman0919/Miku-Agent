@@ -142,6 +142,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--tokenizer-id", required=True)
     command.add_argument("--expected-sha1", required=True)
     command.add_argument("--dump-date", required=True)
+    command.add_argument("--processor-revision", required=True)
     command.add_argument("--max-pages", type=int)
     command = sub.add_parser("import-text-bundle")
     command.add_argument("manifest")
@@ -159,7 +160,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "prepare-wikimedia-text":
         _json(prepare_wikimedia_text(
             Path(args.dump), Path(args.output), Path(args.tokenizer), expected_sha1=args.expected_sha1,
-            dump_date=args.dump_date, tokenizer_id=args.tokenizer_id, max_pages=args.max_pages,
+            dump_date=args.dump_date, tokenizer_id=args.tokenizer_id,
+            processor_revision=args.processor_revision, max_pages=args.max_pages,
         ))
         return 0
     if args.command == "init":

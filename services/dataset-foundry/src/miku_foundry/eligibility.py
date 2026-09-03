@@ -34,6 +34,8 @@ def assert_corpus_row_eligible(corpus: str, row: Mapping[str, object]) -> None:
                 or not _sha256(provenance.get("policy_sha256"))
                 or not _sha256(provenance.get("tokenizer_sha256"))
                 or not _sha256(provenance.get("dump_sha256"))
+                or not isinstance(provenance.get("processor_revision"), str)
+                or re.fullmatch(r"[0-9a-f]{40}", provenance["processor_revision"]) is None
                 or not isinstance(provenance.get("token_count"), int)
                 or isinstance(provenance.get("token_count"), bool) or provenance["token_count"] <= 0
                 or not isinstance(provenance.get("source_page_url"), str)

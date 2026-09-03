@@ -43,7 +43,8 @@ TRAILING_SECTION_RE = re.compile(
     re.DOTALL,
 )
 BOILERPLATE_LINE_RE = re.compile(
-    r"^(?:분류:|파일:|섬네일|위키미디어 공용|이 글은 .*토막글입니다)", re.IGNORECASE
+    r"^(?:분류:|파일:|(?:(?:오른쪽|왼쪽|right|left)\|)?(?:섬네일|thumb)(?:\||$)|"
+    r"위키미디어 공용|이 글은 .*토막글입니다)", re.IGNORECASE
 )
 PII_RE = re.compile(
     r"(?:[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|\b\d{6}-[1-4]\d{6}\b|"
@@ -203,6 +204,7 @@ def prepare_wikimedia_text(
     expected_sha1: str,
     dump_date: str,
     tokenizer_id: str,
+    processor_revision: str,
     max_pages: int | None = None,
 ) -> dict[str, object]:
     dump_path = dump_path.resolve(strict=True)
@@ -213,8 +215,9 @@ def prepare_wikimedia_text(
         raise FileExistsError(output_path)
     if not re.fullmatch(r"[0-9a-f]{40}", expected_sha1) or _hash_file(dump_path, "sha1") != expected_sha1:
         raise ValueError("Wikimedia dump SHA-1 mismatch")
-    if not re.fullmatch(r"\d{8}", dump_date) or not tokenizer_id.strip():
-        raise ValueError("dump date and tokenizer identity are required")
+    if (not re.fullmatch(r"\d{8}", dump_date) or not tokenizer_id.strip()
+            or not re.fullmatch(r"[0-9a-f]{40}", processor_revision)):
+        raise ValueError("dump date, tokenizer identity and processor revision are required")
     tokenizer_sha256 = _hash_file(tokenizer_path)
     dump_sha256 = _hash_file(dump_path)
     tokenizer = Tokenizer.from_file(str(tokenizer_path))
@@ -312,6 +315,7 @@ def prepare_wikimedia_text(
                     "dump_sha256": dump_sha256,
                     "license": "CC-BY-SA-4.0",
                     "policy_sha256": POLICY_SHA256,
+                    "processor_revision": processor_revision,
                     "quality_gates": {
                         "boilerplate": "passed",
                         "document_dedup": "passed",
@@ -356,6 +360,7 @@ def prepare_wikimedia_text(
             "format": "miku-wikimedia-text-bundle-v1",
             "policy": POLICY,
             "policy_sha256": POLICY_SHA256,
+            "processor_revision": processor_revision,
             "stats": stats,
             "tokenizer_id": tokenizer_id,
             "tokenizer_sha256": tokenizer_sha256,
@@ -437,6 +442,7 @@ def import_text_bundle(
                 if (sample_id in seen or not isinstance(text, str) or not text
                         or value.get("coverage_tags") != ["korean_foundation", "wikipedia", "licensed"]
                         or provenance.get("policy_sha256") != POLICY_SHA256
+                        or provenance.get("processor_revision") != manifest.get("processor_revision")
                         or provenance.get("quality_gates") != {
                             "boilerplate": "passed", "document_dedup": "passed", "encoding": "UTF-8",
                             "language": "ko", "pii": "passed", "sentence_near_dedup": "passed",

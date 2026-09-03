@@ -66,7 +66,7 @@ def test_wikimedia_text_is_integrity_checked_deduplicated_reviewed_and_exportabl
 
     manifest = prepare_wikimedia_text(
         dump, bundle, tokenizer_path, expected_sha1=expected_sha1, dump_date="20260901",
-        tokenizer_id="fixture/tokenizer@1",
+        tokenizer_id="fixture/tokenizer@1", processor_revision="1" * 40,
     )
     assert manifest["stats"]["documents_accepted"] == 3
     assert manifest["stats"]["exact_documents_removed"] == 1

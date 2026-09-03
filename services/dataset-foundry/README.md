@@ -34,7 +34,7 @@ frozen `train` family로 먼저 확정하지 않으면 import는 실패한다.
 ```bash
 miku-data prepare-wikimedia-text DUMP.xml.bz2 --output CLEAN.jsonl.gz \
   --tokenizer TOKENIZER.json --tokenizer-id REPOSITORY@REVISION \
-  --expected-sha1 SHA1 --dump-date YYYYMMDD
+  --expected-sha1 SHA1 --dump-date YYYYMMDD --processor-revision GIT_COMMIT
 miku-data import-text-bundle CLEAN.jsonl.gz.manifest.json --source-id UUID --actor REVIEWER
 ```
 
