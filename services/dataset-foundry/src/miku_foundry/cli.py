@@ -153,6 +153,12 @@ def main(argv: list[str] | None = None) -> int:
     paths = paths_from_env(args.data_root)
     registry = Registry(paths.registry)
     dry_run = bool(getattr(args, "dry_run", False))
+    if args.command == "prepare-wikimedia-text":
+        _json(prepare_wikimedia_text(
+            Path(args.dump), Path(args.output), Path(args.tokenizer), expected_sha1=args.expected_sha1,
+            dump_date=args.dump_date, tokenizer_id=args.tokenizer_id, max_pages=args.max_pages,
+        ))
+        return 0
     if args.command == "init":
         if dry_run:
             _json({"would_initialize": str(paths.root)})
@@ -291,11 +297,6 @@ def main(argv: list[str] | None = None) -> int:
             _json({"would_import_duplex_bundle": args.bundle, "actor": args.actor})
         else:
             _json(import_duplex_bundle(paths, registry, Path(args.bundle), actor=args.actor))
-    elif args.command == "prepare-wikimedia-text":
-        _json(prepare_wikimedia_text(
-            Path(args.dump), Path(args.output), Path(args.tokenizer), expected_sha1=args.expected_sha1,
-            dump_date=args.dump_date, tokenizer_id=args.tokenizer_id, max_pages=args.max_pages,
-        ))
     elif args.command == "import-text-bundle":
         _json(import_text_bundle(paths, registry, Path(args.manifest), args.source_id,
                                  actor=args.actor, dry_run=dry_run))
