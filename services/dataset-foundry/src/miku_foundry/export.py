@@ -188,9 +188,9 @@ def snapshot(registry: Registry, paths: FoundryPaths, snapshot_id: str) -> dict[
                         f'"{column[1]}" {type_map.get(str(column[2]).upper(), "VARCHAR")}' for column in columns
                     )
                     duck.execute(f'CREATE OR REPLACE TABLE "{table}" ({declaration})')
-                    rows = [tuple(row) for row in source.execute(f"SELECT * FROM {table}")]
-                    if rows:
-                        placeholders = ",".join("?" for _ in columns)
+                    cursor = source.execute(f"SELECT * FROM {table}")
+                    placeholders = ",".join("?" for _ in columns)
+                    while rows := cursor.fetchmany(1000):
                         duck.executemany(f'INSERT INTO "{table}" VALUES ({placeholders})', rows)
                     dest_path = str(destination).replace("'", "''")
                     duck.execute(f"COPY (SELECT * FROM \"{table}\") TO '{dest_path}' (FORMAT PARQUET, COMPRESSION ZSTD)")
