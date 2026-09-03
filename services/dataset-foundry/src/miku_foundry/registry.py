@@ -208,6 +208,23 @@ BEGIN
     OR NEW.test_receipt_json IS NULL
     THEN RAISE(ABORT, 'execution-backed trajectory requires receipts') END;
 END;
+CREATE TRIGGER IF NOT EXISTS evaluation_population_insert_guard
+BEFORE INSERT ON sources
+WHEN NEW.evaluation_status IN ('populated_holdout', 'frozen_holdout')
+BEGIN
+  SELECT RAISE(ABORT, 'evaluation source must be reserved before population');
+END;
+CREATE TRIGGER IF NOT EXISTS evaluation_population_update_guard
+BEFORE UPDATE OF evaluation_status ON sources
+WHEN NEW.evaluation_status IN ('populated_holdout', 'frozen_holdout')
+BEGIN
+  SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM audio_samples WHERE source_id=NEW.source_id)
+    AND NOT EXISTS (SELECT 1 FROM text_samples WHERE source_id=NEW.source_id)
+    AND NOT EXISTS (SELECT 1 FROM persona_samples WHERE source_id=NEW.source_id)
+    AND NOT EXISTS (SELECT 1 FROM agentic_trajectories WHERE source_id=NEW.source_id)
+    AND NOT EXISTS (SELECT 1 FROM duplex_timelines WHERE source_id=NEW.source_id)
+    THEN RAISE(ABORT, 'empty evaluation source cannot be populated or frozen') END;
+END;
 """
 
 MIGRATION_V2 = (

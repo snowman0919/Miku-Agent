@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
 
 from conftest import source
+from miku_foundry.ingest import register_source
 from miku_foundry.review import ReviewConflict, add_review
 from miku_foundry.rights import promote_training, register_rights
 from miku_foundry.split import assign_group, deterministic_split
@@ -72,3 +75,21 @@ def test_review_revision_conflict_never_overwrites_prior_decision(foundry):
         reviews = list(connection.execute("SELECT decision,reviewer,revision FROM reviews ORDER BY revision"))
         assert [tuple(row) for row in reviews] == [("quarantine", "alice", 1)]
         assert connection.execute("SELECT count(*) FROM audit_events WHERE event_type='review.conflict'").fetchone()[0] == 1
+
+
+def test_empty_evaluation_source_cannot_be_frozen(foundry):
+    _, registry = foundry
+    source_id = source(registry)
+    with registry.connect() as connection, pytest.raises(sqlite3.IntegrityError):
+        connection.execute(
+            "UPDATE sources SET corpus_class='evaluation_corpus',evaluation_status='frozen_holdout' "
+            "WHERE source_id=?",
+            (source_id,),
+        )
+    with pytest.raises(sqlite3.IntegrityError):
+        register_source(
+            registry, source_id=None, source_type="text", title="invalid eval", origin="test-fixture",
+            acquisition_method="test generation", language="ko-KR", character_id="miku",
+            derivative_family="invalid-eval", training_status="holdout",
+            corpus_class="evaluation_corpus", evaluation_status="frozen_holdout",
+        )
