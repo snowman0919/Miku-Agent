@@ -51,5 +51,7 @@ Zeroth-Korean STT는 `tools/prepare_zeroth_stt.py`로 worker evidence를 준비�
 `miku-data import-zeroth-stt MANIFEST --audio-root DIRECTORY --source-id UUID --actor REVIEWER`
 는 source rights/quality/review 및 frozen train split, original FLAC hash, 모델 binding,
 ASR CER, word/phone 구간과 test 전사 격리를 검사한다. `--dry-run`도 같은 검사를 수행한다.
+Source review evidence의 `stt_manifest_sha256`은 검수한 manifest의 정확한 SHA-256이어야 한다.
+일반 source 승인만으로 이후의 다른 worker bundle을 학습 승격할 수 없다.
 STT는 `accepted_stt_ms`로 별도 집계하며 target TTS effective hours에 포함하지 않는다.
 현재 처리와 미완료 게이트는 [Korean STT 보고서](../../reports/korean-stt.md)에 기록한다.

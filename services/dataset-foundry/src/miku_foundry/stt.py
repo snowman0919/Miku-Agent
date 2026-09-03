@@ -126,6 +126,17 @@ def _check_alignment(value: dict[str, object], duration_ms: int) -> None:
         raise ValueError("STT alignment summary differs from intervals")
 
 
+def _assert_manifest_review(connection, source_id: str, digest: str) -> None:
+    row = connection.execute(
+        """SELECT e.evidence_json FROM reviews r JOIN review_evidence e USING(review_id)
+           WHERE r.entity_type='source' AND r.entity_id=?
+           ORDER BY r.revision DESC LIMIT 1""", (source_id,),
+    ).fetchone()
+    evidence = json.loads(row[0]) if row else {}
+    if evidence.get("stt_manifest_sha256") != digest:
+        raise PermissionError("STT source review does not approve this exact manifest")
+
+
 def _records(manifest: dict[str, object], bundle: Path, audio_root: Path) -> Iterator[dict[str, object]]:
     seen_ids: set[str] = set()
     seen_audio: set[str] = set()
@@ -291,6 +302,8 @@ def import_zeroth_stt(
             or duration != stats["accepted_duration_ms"]
             or size != stats["accepted_audio_bytes"]):
         raise ValueError("STT bundle totals differ from its manifest")
+    with registry.connect() as connection:
+        _assert_manifest_review(connection, source_id, manifest_digest)
     missing_bytes = sum(
         row["size_bytes"] for row in rows if not paths.object_path(row["audio_sha256"]).is_file()
     )
@@ -319,6 +332,7 @@ def import_zeroth_stt(
     created_at = registry.now()
     with registry.transaction() as connection:
         registry.assert_exportable(connection, source_id)
+        _assert_manifest_review(connection, source_id, manifest_digest)
         audio, metrics, reviews, review_evidence = [], [], [], []
         for row in rows:
             sample_id, digest = row["sample_id"], row["audio_sha256"]

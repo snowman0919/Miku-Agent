@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from conftest import accept_source_review
 from miku_foundry.effective_hours import summarize
 from miku_foundry.ingest import register_source
 from miku_foundry.rights import promote_training, register_rights
+from miku_foundry.review import add_review
 from miku_foundry.split import assign_group
 from miku_foundry.stt import ARCHIVE_SHA256, POLICY, POLICY_SHA256, import_zeroth_stt
 
@@ -89,10 +89,17 @@ def test_zeroth_stt_import_is_bound_validated_and_idempotent(foundry, tmp_path: 
     register_rights(registry, source_id, "licensed", "license", "CC BY 4.0 fixture",
                     "private ML training", reviewer="operator", actor_type="user",
                     training_allowed=True)
-    accept_source_review(registry, source_id)
+    add_review(registry, "source", source_id, "accept", "operator", "source reviewed",
+               expected_revision=0, evidence={"actor_type": "evaluator", "batch_size": 1})
     promote_training(registry, source_id, actor="operator")
     assign_group(registry, "zeroth-fixture", split="train", freeze=True)
 
+    with pytest.raises(PermissionError, match="exact manifest"):
+        import_zeroth_stt(paths, registry, manifest_path, audio_root, source_id,
+                          actor="operator", dry_run=True)
+    add_review(registry, "source", source_id, "accept", "operator", "exact STT bundle reviewed",
+               expected_revision=1, evidence={"actor_type": "evaluator", "batch_size": 1,
+                                               "stt_manifest_sha256": _sha256(manifest_path)})
     assert import_zeroth_stt(paths, registry, manifest_path, audio_root, source_id,
                              actor="operator", dry_run=True)["count"] == 1
     row["asr"]["cer_ppm"] = 1
@@ -126,7 +133,7 @@ def test_zeroth_stt_import_is_bound_validated_and_idempotent(foundry, tmp_path: 
     assert totals["accepted_stt_ms"] == 1000
     assert totals["accepted_physical_speech_ms"] == totals["effective_speech_ms"] == 0
     with registry.connect() as connection:
-        assert connection.execute("SELECT count(*) FROM review_evidence").fetchone()[0] == 2
+        assert connection.execute("SELECT count(*) FROM review_evidence").fetchone()[0] == 3
     manifest["stats"]["accepted_duration_ms"] += 1
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(RuntimeError, match="different STT import"):
