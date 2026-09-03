@@ -66,9 +66,9 @@ def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry
     cleared = source(registry, family="cleared", training="accepted")
     unknown = source(registry, family="unknown", training="accepted")
     singing = source(registry, family="singing", training="accepted")
-    register_rights(registry, cleared, "owned", "record", "fixture", "training", reviewer="op", actor_type="user")
+    register_rights(registry, cleared, "owned", "record", "fixture", "training", reviewer="op", actor_type="user", training_allowed=True)
     register_rights(registry, unknown, "unknown", "discovery", "unverified", "none", reviewer="op", actor_type="user")
-    register_rights(registry, singing, "owned", "record", "fixture", "auxiliary", reviewer="op", actor_type="user")
+    register_rights(registry, singing, "owned", "record", "fixture", "auxiliary", reviewer="op", actor_type="user", training_allowed=True)
     with registry.transaction() as connection:
         for index, (source_id, modality, duration) in enumerate(((cleared, "speech", 3600000),
                                                                   (unknown, "speech", 1800000),
@@ -76,6 +76,10 @@ def test_singing_and_unknown_rights_never_inflate_speech_effective_hours(foundry
             digest = f"{index + 1:064x}"
             now = registry.now()
             connection.execute("INSERT INTO objects VALUES (?,?,?,?,?)", (digest, 1, None, now, now))
+            connection.execute(
+                "INSERT INTO audio_metrics VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (digest, 16000, 1, duration, 2, 0, 0, 0, 0, "test-fixture", now),
+            )
             connection.execute(
                 """INSERT INTO audio_samples(
                      sample_id,source_id,object_sha256,duration_ms,language,raw_text,spoken_text,
@@ -103,6 +107,10 @@ def test_duplicate_and_overlapping_segments_do_not_inflate_physical_duration(fou
     with registry.transaction() as connection:
         now = registry.now()
         connection.execute("INSERT INTO objects VALUES (?,?,?,?,?)", (digest, 1, None, now, now))
+        connection.execute(
+            "INSERT INTO audio_metrics VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (digest, 16000, 1, 1500, 2, 0, 0, 0, 0, "test-fixture", now),
+        )
         for index, (start, end) in enumerate(((0, 1000), (0, 1000), (500, 1500))):
             connection.execute(
                 """INSERT INTO audio_samples(
@@ -124,4 +132,9 @@ def test_duplicate_and_overlapping_segments_do_not_inflate_physical_duration(fou
         connection.execute(
             "UPDATE audio_samples SET duration_ms=duration_ms+1 "
             "WHERE sample_id=(SELECT sample_id FROM audio_samples LIMIT 1)"
+        )
+    with registry.connect() as connection, pytest.raises(sqlite3.IntegrityError, match="unverified parent"):
+        connection.execute(
+            "UPDATE audio_samples SET duration_ms=1600,segment_end_ms=1600 "
+            "WHERE sample_id=(SELECT sample_id FROM audio_samples WHERE segment_start_ms=0 LIMIT 1)"
         )

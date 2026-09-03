@@ -20,7 +20,7 @@ def test_rights_gate_rejects_unknown_and_agent_self_promotion(foundry):
         promote_training(registry, source_id, actor="agent")
     with pytest.raises(PermissionError):
         register_rights(registry, source_id, "permitted", "license", "license text", "training",
-                        reviewer="agent", actor_type="agent")
+                        reviewer="agent", actor_type="agent", training_allowed=True)
     with registry.connect() as connection:
         row = connection.execute("SELECT training_status FROM sources WHERE source_id=?", (source_id,)).fetchone()
         assert row[0] == "quarantine"
@@ -36,7 +36,7 @@ def test_infrastructure_fixture_cannot_be_promoted(foundry):
         )
     register_rights(
         registry, source_id, "owned", "record", "fixture", "training",
-        reviewer="operator", actor_type="user",
+        reviewer="operator", actor_type="user", training_allowed=True,
     )
     with pytest.raises(PermissionError):
         promote_training(registry, source_id, actor="operator")
@@ -49,10 +49,19 @@ def test_cleared_rights_require_evidence_and_all_gates(foundry):
         register_rights(registry, source_id, "owned", "record", "", "training",
                         reviewer="operator", actor_type="user-delegated")
     register_rights(registry, source_id, "owned", "record", "fixture generation record", "training",
-                    reviewer="operator", actor_type="user-delegated")
+                    reviewer="operator", actor_type="user-delegated", training_allowed=True)
     promote_training(registry, source_id, actor="operator")
     with registry.connect() as connection:
         assert connection.execute("SELECT training_status FROM sources WHERE source_id=?", (source_id,)).fetchone()[0] == "accepted"
+
+
+def test_cleared_rights_without_training_scope_cannot_promote(foundry):
+    _, registry = foundry
+    source_id = source(registry)
+    register_rights(registry, source_id, "owned", "record", "fixture generation record",
+                    "private evaluation only", reviewer="operator", actor_type="user")
+    with pytest.raises(PermissionError, match="rights gate"):
+        promote_training(registry, source_id, actor="operator")
 
 
 def test_split_is_stable_and_frozen_assignment_cannot_move(foundry):

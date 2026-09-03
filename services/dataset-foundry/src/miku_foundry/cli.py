@@ -16,6 +16,7 @@ from .lineage import plan_transform
 from .pilot import build as build_pilot
 from .registry import Registry
 from .report import inventory
+from .review import promote_sample
 from .review_server import serve
 from .rights import promote_training, register_rights
 from .split import assign_group, leakage_findings
@@ -25,7 +26,7 @@ from .worker_import import import_worker_result
 
 WRITE_COMMANDS = {"init", "ingest", "register-source", "register-rights", "plan-transform", "run-job",
                   "segment", "transcribe", "align", "normalize", "score", "dedup", "split", "snapshot",
-                  "export", "queue-5090", "pilot"}
+                  "export", "queue-5090", "pilot", "promote", "promote-sample"}
 WRITE_COMMANDS.add("import-worker-result")
 
 
@@ -63,9 +64,15 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--allowed-use", required=True)
     command.add_argument("--reviewer", required=True)
     command.add_argument("--actor-type", required=True)
+    command.add_argument("--training-allowed", action=argparse.BooleanOptionalAction, default=False)
     command.add_argument("--dry-run", action="store_true")
     command = sub.add_parser("promote")
     command.add_argument("--source-id", required=True)
+    command.add_argument("--actor", required=True)
+    command.add_argument("--dry-run", action="store_true")
+    command = sub.add_parser("promote-sample")
+    command.add_argument("--entity-type", choices=("audio", "text", "persona", "agentic", "duplex"), required=True)
+    command.add_argument("--entity-id", required=True)
     command.add_argument("--actor", required=True)
     command.add_argument("--dry-run", action="store_true")
     command = sub.add_parser("plan-transform")
@@ -153,16 +160,24 @@ def main(argv: list[str] | None = None) -> int:
         return int(bool(failures))
     elif args.command == "register-rights":
         if dry_run:
-            _json({"would_register": args.status, "source_id": args.source_id})
+            _json({"would_register": args.status, "source_id": args.source_id,
+                   "training_allowed": args.training_allowed})
         else:
             _json({"rights_id": register_rights(registry, args.source_id, args.status, args.evidence_type,
-                   args.evidence_ref, args.allowed_use, reviewer=args.reviewer, actor_type=args.actor_type)})
+                   args.evidence_ref, args.allowed_use, reviewer=args.reviewer, actor_type=args.actor_type,
+                   training_allowed=args.training_allowed)})
     elif args.command == "promote":
         if dry_run:
             _json({"would_promote": args.source_id})
         else:
             promote_training(registry, args.source_id, actor=args.actor)
             _json({"promoted": args.source_id})
+    elif args.command == "promote-sample":
+        if dry_run:
+            _json({"would_promote_sample": args.entity_id, "entity_type": args.entity_type})
+        else:
+            changed = promote_sample(registry, args.entity_type, args.entity_id, actor=args.actor)
+            _json({"promoted": args.entity_id, "entity_type": args.entity_type, "changed": changed})
     elif args.command == "plan-transform":
         spec = _load_json(args.spec)
         if dry_run:

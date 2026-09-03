@@ -69,6 +69,8 @@ def summarize(registry: Registry) -> dict[str, int]:
                   ORDER BY created_at DESC, rights_id DESC LIMIT 1) rights_status,
                  (SELECT expires_at FROM rights_records r WHERE r.source_id=a.source_id
                   ORDER BY created_at DESC, rights_id DESC LIMIT 1) rights_expires_at,
+                 (SELECT training_allowed FROM rights_records r WHERE r.source_id=a.source_id
+                  ORDER BY created_at DESC, rights_id DESC LIMIT 1) rights_training_allowed,
                  s.training_status source_training_status,
                  s.corpus_class
           FROM audio_samples a JOIN sources s ON s.source_id=a.source_id
@@ -88,6 +90,7 @@ def summarize(registry: Registry) -> dict[str, int]:
                 if (
                     row["training_status"] == "accepted"
                     and row["rights_status"] in {"owned", "licensed", "permitted"}
+                    and row["rights_training_allowed"] == 1
                     and (row["rights_expires_at"] is None or row["rights_expires_at"] > registry.now())
                     and row["source_training_status"] == "accepted"
                     and row["corpus_class"] == "accepted_corpus"
@@ -100,6 +103,7 @@ def summarize(registry: Registry) -> dict[str, int]:
             elif (
                 row["training_status"] != "accepted"
                 or row["rights_status"] not in {"owned", "licensed", "permitted"}
+                or row["rights_training_allowed"] != 1
                 or (row["rights_expires_at"] is not None and row["rights_expires_at"] <= registry.now())
                 or row["source_training_status"] != "accepted"
                 or row["corpus_class"] != "accepted_corpus"

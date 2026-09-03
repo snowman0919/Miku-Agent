@@ -6,7 +6,9 @@ from .registry import RIGHTS_CLEARED, Registry
 def register_rights(registry: Registry, source_id: str, status: str, evidence_type: str,
                     evidence_ref: str, allowed_use: str, *, reviewer: str,
                     actor_type: str, restrictions: str = "", evidence_sha256: str | None = None,
-                    expires_at: int | None = None) -> str:
+                    expires_at: int | None = None, training_allowed: bool = False) -> str:
+    if not isinstance(training_allowed, bool):
+        raise ValueError("training_allowed must be a boolean")
     if status in RIGHTS_CLEARED and not evidence_ref.strip():
         raise ValueError("cleared rights require evidence")
     with registry.transaction() as connection:
@@ -15,13 +17,17 @@ def register_rights(registry: Registry, source_id: str, status: str, evidence_ty
             raise PermissionError("an agent cannot promote unresolved rights")
         rights_id = registry.new_id()
         connection.execute(
-            "INSERT INTO rights_records VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            """INSERT INTO rights_records(
+                 rights_id,source_id,status,evidence_type,evidence_ref,evidence_sha256,allowed_use,
+                 restrictions,expires_at,reviewer,actor_type,created_at,training_allowed
+               ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (rights_id, source_id, status, evidence_type, evidence_ref, evidence_sha256,
-             allowed_use, restrictions, expires_at, reviewer, actor_type, registry.now()),
+             allowed_use, restrictions, expires_at, reviewer, actor_type, registry.now(), int(training_allowed)),
         )
         registry.audit(connection, "rights.revised", reviewer, "source", source_id,
                        {"previous": previous["status"] if previous else None, "new": status,
-                        "rights_id": rights_id, "actor_type": actor_type})
+                        "rights_id": rights_id, "actor_type": actor_type,
+                        "training_allowed": training_allowed})
     return rights_id
 
 
@@ -31,7 +37,8 @@ def promote_training(registry: Registry, source_id: str, *, actor: str) -> None:
         if source is None:
             raise KeyError(source_id)
         rights = registry.current_rights(connection, source_id)
-        if not rights or rights["status"] not in RIGHTS_CLEARED or not rights["evidence_ref"]:
+        if (not rights or rights["status"] not in RIGHTS_CLEARED or not rights["evidence_ref"]
+                or not rights["training_allowed"]):
             raise PermissionError("rights gate failed")
         if rights["expires_at"] is not None and rights["expires_at"] <= registry.now():
             raise PermissionError("rights evidence expired")

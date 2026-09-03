@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS rights_records(
   evidence_type TEXT NOT NULL, evidence_ref TEXT NOT NULL, evidence_sha256 TEXT,
   allowed_use TEXT NOT NULL, restrictions TEXT NOT NULL, expires_at INTEGER,
   reviewer TEXT NOT NULL, actor_type TEXT NOT NULL, created_at INTEGER NOT NULL,
+  training_allowed INTEGER NOT NULL DEFAULT 0 CHECK(training_allowed IN (0,1)),
   CHECK(status IN ('owned','licensed','permitted','unknown','restricted','rejected'))
 );
 CREATE TABLE IF NOT EXISTS transforms(
@@ -108,6 +109,14 @@ CREATE TABLE IF NOT EXISTS reviews(
   reviewer TEXT NOT NULL, previous_decision TEXT, decision TEXT NOT NULL, reason TEXT NOT NULL,
   created_at INTEGER NOT NULL, UNIQUE(entity_type, entity_id, revision)
 );
+CREATE TABLE IF NOT EXISTS review_evidence(
+  review_id TEXT PRIMARY KEY REFERENCES reviews(review_id),
+  actor_type TEXT NOT NULL CHECK(actor_type IN ('human','evaluator','system')),
+  media_reviewed_ms INTEGER NOT NULL DEFAULT 0 CHECK(media_reviewed_ms>=0),
+  read_complete INTEGER NOT NULL DEFAULT 0 CHECK(read_complete IN (0,1)),
+  batch_size INTEGER NOT NULL CHECK(batch_size=1),
+  evidence_json TEXT NOT NULL, created_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS split_assignments(
   group_id TEXT NOT NULL, policy_version TEXT NOT NULL, split TEXT NOT NULL,
   frozen INTEGER NOT NULL DEFAULT 0 CHECK(frozen IN (0,1)), assigned_at INTEGER NOT NULL,
@@ -141,12 +150,19 @@ CREATE TABLE IF NOT EXISTS audit_events(
 """
 
 TRIGGERS_V2 = """
-CREATE TRIGGER IF NOT EXISTS audio_segment_insert_guard
+DROP TRIGGER IF EXISTS audio_segment_insert_guard;
+CREATE TRIGGER audio_segment_insert_guard
 BEFORE INSERT ON audio_samples
 BEGIN
   SELECT CASE WHEN NEW.segment_start_ms < 0 OR NEW.segment_end_ms <= NEW.segment_start_ms
     OR NEW.duration_ms != NEW.segment_end_ms - NEW.segment_start_ms
     THEN RAISE(ABORT, 'invalid audio segment interval') END;
+  SELECT CASE WHEN NOT EXISTS (
+      SELECT 1 FROM audio_metrics
+      WHERE object_sha256 = NEW.parent_object_sha256
+        AND NEW.segment_end_ms <= duration_ms
+    )
+    THEN RAISE(ABORT, 'audio segment is outside an unverified parent') END;
   SELECT CASE WHEN NEW.training_status = 'accepted'
     AND NEW.clip_object_sha256 IS NULL
     AND NOT EXISTS (
@@ -163,12 +179,19 @@ BEGIN
     )
     THEN RAISE(ABORT, 'duplicate accepted audio segment') END;
 END;
-CREATE TRIGGER IF NOT EXISTS audio_segment_update_guard
+DROP TRIGGER IF EXISTS audio_segment_update_guard;
+CREATE TRIGGER audio_segment_update_guard
 BEFORE UPDATE ON audio_samples
 BEGIN
   SELECT CASE WHEN NEW.segment_start_ms < 0 OR NEW.segment_end_ms <= NEW.segment_start_ms
     OR NEW.duration_ms != NEW.segment_end_ms - NEW.segment_start_ms
     THEN RAISE(ABORT, 'invalid audio segment interval') END;
+  SELECT CASE WHEN NOT EXISTS (
+      SELECT 1 FROM audio_metrics
+      WHERE object_sha256 = NEW.parent_object_sha256
+        AND NEW.segment_end_ms <= duration_ms
+    )
+    THEN RAISE(ABORT, 'audio segment is outside an unverified parent') END;
   SELECT CASE WHEN NEW.training_status = 'accepted'
     AND NEW.clip_object_sha256 IS NULL
     AND NOT EXISTS (
@@ -274,6 +297,12 @@ class Registry:
                     self._migrate_v2(connection)
                 elif version != SCHEMA_VERSION:
                     raise RuntimeError("unsupported registry schema version")
+            rights_columns = {row[1] for row in connection.execute("PRAGMA table_info(rights_records)")}
+            if "training_allowed" not in rights_columns:
+                connection.execute(
+                    "ALTER TABLE rights_records ADD COLUMN training_allowed INTEGER NOT NULL DEFAULT 0 "
+                    "CHECK(training_allowed IN (0,1))"
+                )
             connection.executescript(TRIGGERS_V2)
         self.path.chmod(0o600)
 
@@ -375,7 +404,8 @@ class Registry:
 
     def assert_exportable(self, connection: sqlite3.Connection, source_id: str) -> None:
         rights = self.current_rights(connection, source_id)
-        if not rights or rights["status"] not in RIGHTS_CLEARED or not rights["evidence_ref"]:
+        if (not rights or rights["status"] not in RIGHTS_CLEARED or not rights["evidence_ref"]
+                or not rights["training_allowed"]):
             raise PermissionError("current rights evidence does not permit training export")
         if rights["expires_at"] is not None and rights["expires_at"] <= self.now():
             raise PermissionError("rights evidence has expired")
