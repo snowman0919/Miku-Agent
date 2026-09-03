@@ -37,6 +37,7 @@ def _article(label: str, *, shared: bool = False, pii: bool = False) -> str:
     sentences = common + unique
     if pii:
         sentences.insert(0, "개인 연락처 test@example.com 정보는 학습 문장에서 반드시 제거되어야 한다.")
+        sentences.insert(0, "공식 설명은 https://example.com/reference 주소에서도 확인할 수 있다.")
     return " ".join(sentences)
 
 
@@ -73,6 +74,9 @@ def test_wikimedia_text_is_integrity_checked_deduplicated_reviewed_and_exportabl
     assert manifest["stats"]["exact_documents_removed"] == 1
     assert manifest["stats"]["near_sentences_removed"] >= 3
     assert manifest["stats"]["pii_sentences_removed"] == 1
+    import gzip
+    rows = [json.loads(line) for line in gzip.open(bundle, "rt", encoding="utf-8")]
+    assert all("https://" not in row["text"] for row in rows)
 
     source_id = register_source(
         registry, source_id=None, source_type="text", title="Korean Wikipedia fixture",

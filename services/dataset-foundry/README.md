@@ -28,7 +28,7 @@ human adjudication으로 표시하지 않는다.
 
 한국어 Wikimedia dump는 공식 SHA-1과 고정된 base-model tokenizer를 입력으로 정제한 뒤 별도
 단계에서 승격한다. 정제 bundle은 문서 exact dedup, 문장 token-trigram MinHash/Jaccard dedup,
-한국어 비율, UTF-8, boilerplate와 제한된 PII pattern을 기록한다. Source를 `licensed`, reviewed,
+한국어 비율, UTF-8, URL/boilerplate와 제한된 PII pattern을 기록한다. Source를 `licensed`, reviewed,
 frozen `train` family로 먼저 확정하지 않으면 import는 실패한다.
 
 ```bash

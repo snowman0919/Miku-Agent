@@ -32,7 +32,7 @@ POLICY = {
     "document_dedup": "sha256(nfc+collapsed-whitespace)",
     "sentence_dedup": "token-trigram-partitioned-minhash+jaccard>=0.90",
     "pii": "drop sentence matching email, Korean resident number, phone, or IPv4",
-    "boilerplate": "strip wikitext and trailing references/external-links sections",
+    "boilerplate": "strip wikitext, URL literals, and trailing references/external-links sections",
 }
 POLICY_JSON = json.dumps(POLICY, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 POLICY_SHA256 = hashlib.sha256(POLICY_JSON.encode()).hexdigest()
@@ -51,6 +51,7 @@ PII_RE = re.compile(
     r"(?<!\d)(?:\+?82[- .]?)?0?1[016789][- .]?\d{3,4}[- .]?\d{4}(?!\d)|"
     r"\b(?:\d{1,3}\.){3}\d{1,3}\b)"
 )
+URL_RE = re.compile(r"(?:https?://|www\.)[^\s<>]+", re.IGNORECASE)
 
 
 def _hash_file(path: Path, algorithm: str = "sha256") -> str:
@@ -172,6 +173,7 @@ def _hangul_ratio_ppm(value: str) -> int:
 def _plain_text(wikitext: str) -> str:
     wikitext = TRAILING_SECTION_RE.sub("", wikitext)
     stripped = mwparserfromhell.parse(wikitext).strip_code(normalize=True, collapse=True) or ""
+    stripped = URL_RE.sub("", stripped)
     return "\n".join(
         line for line in (_normalize(line) for line in stripped.splitlines())
         if line and not BOILERPLATE_LINE_RE.match(line)
