@@ -193,6 +193,7 @@ def align(extracted: Path, work: Path, rows: list[dict[str, object]], mfa_root: 
     model = mfa_root / "models/mfa-korean-3.0.0"
     environment = os.environ.copy()
     environment["MFA_ROOT_DIR"] = str(mfa_root / "cache/mfa")
+    environment["PATH"] = str(executable.parent) + os.pathsep + environment.get("PATH", "")
     subprocess.run([
         str(executable), "align", str(corpus),
         str(model / "korean_mfa_dictionary_v3.0.0.dict"),
