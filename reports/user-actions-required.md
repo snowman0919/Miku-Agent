@@ -24,5 +24,5 @@ human review 0행, accepted 0행이다. Release minimum 30 effective hours를 �
 - Intake 후 `miku-data review serve`로 항목별 evidence-backed 판정을 완료하고, 별도
   `promote-sample` 단계에서 training 승격한다.
 
-이 입력 전까지 target speech effective hours, human-reviewed persona, execution-backed agentic와
-accepted duplex 핵심 수치는 0이다.
+현재 target speech effective hours, human-reviewed persona와 accepted duplex는 0이다.
+Execution-backed agentic은 local engineering receipt 1건을 accepted로 검증했으며 1,999건이 더 필요하다.
