@@ -11,6 +11,7 @@ from tokenizers.pre_tokenizers import Whitespace
 from conftest import accept_source_review
 from miku_foundry.export import export_training
 from miku_foundry.ingest import register_source
+from miku_foundry.report import inventory
 from miku_foundry.rights import promote_training, register_rights
 from miku_foundry.split import assign_group
 from miku_foundry.store import ObjectStore
@@ -94,6 +95,12 @@ def test_wikimedia_text_is_integrity_checked_deduplicated_reviewed_and_exportabl
                               actor="operator")["idempotent"] is True
     exported = export_training(registry, tmp_path / "train.jsonl", split="train", corpus="text")
     assert exported["count"] == 3
+    assert inventory(registry)["korean_text"] == {
+        "accepted_documents": 3,
+        "accepted_tokens": manifest["stats"]["tokens_accepted"],
+        "exact_unique_documents": 3,
+        "tokenizers": ["fixture/tokenizer@1"],
+    }
     with registry.connect() as connection:
         assert connection.execute(
             "SELECT count(*) FROM reviews WHERE entity_type='text' AND decision='accept'"

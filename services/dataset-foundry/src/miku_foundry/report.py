@@ -58,6 +58,20 @@ def inventory(registry: Registry) -> dict[str, object]:
                    WHERE training_status='accepted' GROUP BY scenario ORDER BY scenario"""
             )
         }
+        korean_text = dict(connection.execute(
+            """SELECT
+                 count(*) FILTER (WHERE training_status='accepted') accepted_documents,
+                 coalesce(sum(CASE WHEN training_status='accepted'
+                   THEN json_extract(provenance_json,'$.token_count') ELSE 0 END),0) accepted_tokens,
+                 count(DISTINCT json_extract(provenance_json,'$.document_sha256'))
+                   FILTER (WHERE training_status='accepted') exact_unique_documents
+               FROM text_samples WHERE corpus='korean_foundation'"""
+        ).fetchone())
+        korean_text["tokenizers"] = [row[0] for row in connection.execute(
+            """SELECT DISTINCT json_extract(provenance_json,'$.tokenizer_id')
+               FROM text_samples WHERE corpus='korean_foundation' AND training_status='accepted'
+               ORDER BY 1"""
+        )]
     return {
         "counts": counts,
         "corpus": corpus,
@@ -65,6 +79,7 @@ def inventory(registry: Registry) -> dict[str, object]:
         "source_training_status": training,
         "agentic": agentic,
         "duplex": duplex,
+        "korean_text": korean_text,
         "audio": summarize(registry),
         "split_leakage": leakage_findings(registry),
     }
