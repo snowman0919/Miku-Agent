@@ -361,6 +361,7 @@ def prepare_wikimedia_text(
             "policy": POLICY,
             "policy_sha256": POLICY_SHA256,
             "processor_revision": processor_revision,
+            "selection": {"main_namespace_pages_seen_limit": max_pages},
             "stats": stats,
             "tokenizer_id": tokenizer_id,
             "tokenizer_sha256": tokenizer_sha256,
